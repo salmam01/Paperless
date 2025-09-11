@@ -7,7 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Paperless.DAL\Paperless.DAL.csproj" />
+    <ProjectReference Include="..\Paperless.BL\Paperless.BL.csproj" />
   </ItemGroup>
 
 </Project>
