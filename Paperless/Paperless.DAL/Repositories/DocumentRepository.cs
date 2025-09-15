@@ -14,27 +14,27 @@ namespace Paperless.DAL.Repositories
             throw new NotImplementedException();
         }
 
-        public IEnumerable<Entities.Document> GetAllDocuments()
+        public IEnumerable<Entities.DocumentEntity> GetAllDocuments()
         {
             throw new NotImplementedException();
         }
 
-        public Entities.Document GetDocumentById(Guid Id)
+        public Entities.DocumentEntity GetDocumentById(Guid Id)
         {
             throw new NotImplementedException();
         }
 
-        public void InsertDocument(Entities.Document document)
+        public void InsertDocument(Entities.DocumentEntity document)
         {
             throw new NotImplementedException();
         }
 
-        public IEnumerable<Entities.Document> SearchForDocument(string query)
+        public IEnumerable<Entities.DocumentEntity> SearchForDocument(string query)
         {
             throw new NotImplementedException();
         }
 
-        public void UpdateDocument(Entities.Document document)
+        public void UpdateDocument(Entities.DocumentEntity document)
         {
             throw new NotImplementedException();
         }

@@ -10,7 +10,7 @@ namespace Paperless.DAL.Data
 {
     public class PaperlessDbContext : DbContext
     {
-        public DbSet<Document> Documents { get; set; }
+        public DbSet<DocumentEntity> Documents { get; set; }
 
         public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options) : base(options) { }
 

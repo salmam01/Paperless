@@ -9,11 +9,11 @@ namespace Paperless.DAL.Repositories
 {
     public interface IDocumentRepository
     {
-        Document GetDocumentById(Guid Id);
-        IEnumerable<Document> GetAllDocuments();
-        IEnumerable<Document> SearchForDocument(string query);
-        void InsertDocument(Document document);
-        void UpdateDocument(Document document);
+        DocumentEntity GetDocumentById(Guid Id);
+        IEnumerable<DocumentEntity> GetAllDocuments();
+        IEnumerable<DocumentEntity> SearchForDocument(string query);
+        void InsertDocument(DocumentEntity document);
+        void UpdateDocument(DocumentEntity document);
         void DeleteDocument(Guid Id);
     }
 }
