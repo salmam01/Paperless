@@ -14,6 +14,8 @@ namespace Paperless.DAL.Data
         public DbSet<DocumentEntity> Documents { get; set; }
 
         public PaperlessDbContext() { }
+        
+        public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options): base(options) { } //Unittest
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
