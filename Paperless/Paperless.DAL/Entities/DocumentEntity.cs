@@ -18,7 +18,6 @@ namespace Paperless.DAL.Entities
         public string? Content { get; set; }
         [Required]
         public string? Summary { get; set; }
-
         [Required]
         public DateTime CreationDate { get; set; }
         [Required]

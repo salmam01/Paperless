@@ -1,17 +1,18 @@
 using AutoMapper;
 using Paperless.API.DTOs;
+using Paperless.DAL.Data;
 using Paperless.DAL.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-ILoggerFactory loggerFactory;
+builder.Services.AddScoped<PaperlessDbContext>();
 
 //  Automapper: change to DocumentDTO => DocumentEntity later
-var config = new MapperConfiguration(
+var mapperConfig = new MapperConfiguration(
     cfg => cfg.CreateMap<DocumentDTO, DocumentEntity>()
 );
-var mapper = config.CreateMapper();
+var mapper = mapperConfig.CreateMapper();
 
 builder.Services.AddControllers();
 

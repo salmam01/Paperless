@@ -10,15 +10,23 @@ namespace Paperless.DAL.Data
 {
     public class PaperlessDbContext : DbContext
     {
+        private readonly string _connectionString = "Host=localhost;Port=5432;Database=PaperlessDB;Username=swen3;Password=paperless123";
         public DbSet<DocumentEntity> Documents { get; set; }
 
-        public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options) : base(options) { }
+        public PaperlessDbContext() { }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if(!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseNpgsql(_connectionString);
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            //  TODO: implement the Document entity
             modelBuilder.Entity<DocumentEntity>();
 
             //  TODO: Full-text search vector
