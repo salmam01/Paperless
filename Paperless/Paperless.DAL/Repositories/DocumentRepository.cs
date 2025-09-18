@@ -35,7 +35,7 @@ namespace Paperless.DAL.Repositories
         
         public void InsertDocument(DocumentEntity document)
         {
-            if (document == null)  return;
+            if (document == null)  throw new ArgumentNullException(nameof(document), "InserDocument: Document shouldn't be empty!");
 
             _context.Add(document);
             Save();
@@ -44,7 +44,7 @@ namespace Paperless.DAL.Repositories
         public void UpdateDocument(DocumentEntity document) //Ich würde sagen wir ändern nur die Felder die veändert wurden; nicht alles überschreiben; was sagst du?
         {
             DocumentEntity? existDocument = _context.Documents.Find(document.Id);
-            if (existDocument == null) return;
+            if (existDocument == null) throw new ArgumentNullException(nameof(existDocument), "UpdateDocument: Document doesnt exist!");
                 //_context.Documents.Update(document); //Das überschreibt alles; auch Felder die nicht geändert wurden 
                 existDocument.Name = document.Name ?? existDocument.Name;
                 existDocument.Content = document.Content ?? existDocument.Content;
@@ -58,7 +58,7 @@ namespace Paperless.DAL.Repositories
         public void DeleteDocument(Guid id)
         {
             DocumentEntity? document = _context.Documents.Find(id);
-            if (document == null) return;
+            if (document == null) throw new ArgumentNullException(nameof(document), "DeleteDocument: Document doesn't exist!");
             _context.Documents.Remove(document);
             Save();
         }
