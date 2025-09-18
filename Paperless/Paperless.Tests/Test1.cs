@@ -9,7 +9,7 @@ public class DocumentRepositoryTests
 {
     private PaperlessDbContext CreateInMemoryDbContext()
     {
-        var options = new DbContextOptionsBuilder<PaperlessDbContext>()
+        DbContextOptions<PaperlessDbContext> options = new DbContextOptionsBuilder<PaperlessDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         return new PaperlessDbContext(options);
@@ -18,9 +18,9 @@ public class DocumentRepositoryTests
     [Fact]
     public void Insert_And_Get_By_Id_Works()
     {
-        using var ctx = CreateInMemoryDbContext();
-        var repo = new DocumentRepository(ctx);
-        var entity = new DocumentEntity
+        using PaperlessDbContext ctx = CreateInMemoryDbContext();
+        DocumentRepository repo = new DocumentRepository(ctx);
+        DocumentEntity entity = new DocumentEntity
         {
             Id = Guid.NewGuid(),
             Name = "Doc 1",
@@ -32,16 +32,16 @@ public class DocumentRepositoryTests
         };
         repo.InsertDocument(entity);
 
-        var loaded = repo.GetDocumentById(entity.Id);
+        DocumentEntity? loaded = repo.GetDocumentById(entity.Id);
         Assert.Equal("Doc 1", loaded.Name);
     }
 
     [Fact]
     public void Update_Works()
     {
-        using var ctx = CreateInMemoryDbContext();
-        var repo = new DocumentRepository(ctx);
-        var entity = new DocumentEntity
+        using PaperlessDbContext ctx = CreateInMemoryDbContext();
+        DocumentRepository repo = new DocumentRepository(ctx);
+        DocumentEntity entity = new DocumentEntity
         {
             Id = Guid.NewGuid(),
             Name = "Doc",
@@ -56,16 +56,16 @@ public class DocumentRepositoryTests
         entity.Name = "Updated";
         repo.UpdateDocument(entity);
 
-        var loaded = repo.GetDocumentById(entity.Id);
+        DocumentEntity? loaded = repo.GetDocumentById(entity.Id);
         Assert.Equal("Updated", loaded.Name);
     }
 
     [Fact]
     public void Delete_Works()
     {
-        using var ctx = CreateInMemoryDbContext();
-        var repo = new DocumentRepository(ctx);
-        var entity = new DocumentEntity
+        using PaperlessDbContext ctx = CreateInMemoryDbContext();
+        DocumentRepository repo = new DocumentRepository(ctx);
+        DocumentEntity entity = new DocumentEntity
         {
             Id = Guid.NewGuid(),
             Name = "Doc",
@@ -84,12 +84,12 @@ public class DocumentRepositoryTests
     [Fact]
     public void Search_Works()
     {
-        using var ctx = CreateInMemoryDbContext();
-        var repo = new DocumentRepository(ctx);
+        using PaperlessDbContext ctx = CreateInMemoryDbContext();
+        DocumentRepository repo = new DocumentRepository(ctx);
         repo.InsertDocument(new DocumentEntity { Id = Guid.NewGuid(), Name = "Alpha", Content = "text", Summary = "s", CreationDate = DateTime.UtcNow, Type = "t", Size = 1 });
         repo.InsertDocument(new DocumentEntity { Id = Guid.NewGuid(), Name = "Beta", Content = "another", Summary = "s", CreationDate = DateTime.UtcNow, Type = "t", Size = 1 });
 
-        var results = repo.SearchForDocument("alp").ToList();
+        List<DocumentEntity> results = repo.SearchForDocument("alp").ToList();
         Assert.Single(results);
         Assert.Equal("Alpha", results[0].Name);
     }
@@ -97,14 +97,14 @@ public class DocumentRepositoryTests
     [Fact]
     public void GetAllDocuments_Works()
     {
-        using var ctx = CreateInMemoryDbContext();
-        var repo = new DocumentRepository(ctx);
+        using PaperlessDbContext ctx = CreateInMemoryDbContext();
+        DocumentRepository repo = new DocumentRepository(ctx);
         
         // Insert multiple documents
         repo.InsertDocument(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc1", Content = "Content1", Summary = "Summary1", CreationDate = DateTime.UtcNow, Type = "txt", Size = 1 });
         repo.InsertDocument(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc2", Content = "Content2", Summary = "Summary2", CreationDate = DateTime.UtcNow, Type = "pdf", Size = 2 });
 
-        var allDocs = repo.GetAllDocuments().ToList();
+        List<DocumentEntity> allDocs = repo.GetAllDocuments().ToList();
         Assert.Equal(2, allDocs.Count);
         Assert.Contains(allDocs, d => d.Name == "Doc1");
         Assert.Contains(allDocs, d => d.Name == "Doc2");
