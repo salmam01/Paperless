@@ -11,16 +11,9 @@ namespace Paperless.API.Controllers
     //  TODO: change calls to async
     [ApiController]
     [Route("[controller]")]
-    public class DocumentController : ControllerBase
-    {
-        private readonly IDocumentRepository _documentRepository;
-        private readonly IMapper _mapper;
-
-        public DocumentController(IDocumentRepository documentRepository, IMapper mapper)
-        {
-            _documentRepository = documentRepository;
-            _mapper = mapper;
-        }
+    public class DocumentController(IDocumentRepository documentRepository, IMapper mapper) : ControllerBase {
+        private readonly IDocumentRepository _documentRepository = documentRepository;
+        private readonly IMapper _mapper = mapper;
 
         [HttpGet(Name = "Document")]
         public ActionResult<IEnumerable<DocumentDTO>> GetAll()
@@ -34,24 +27,31 @@ namespace Paperless.API.Controllers
 
         
         [HttpGet("{id}")]
-        public ActionResult<DocumentDTO> Get(string id)
+        public IActionResult Get(string id)
         {
-            Guid guid = Guid.Parse(id);
-            DocumentDTO document = _mapper.Map<DocumentDTO>(_documentRepository.GetDocumentById(guid));
-            if(document == null)
-                return NotFound();
-
+            if (!Guid.TryParse(id, out Guid guid))
+                return BadRequest("Invalid Id");
+        
+            DocumentEntity? document = _documentRepository.GetDocumentById(guid);
+            if (document == null)
+                return NotFound($"Document {id} not found");
+        
             return Ok(document);
         }
 
-        [HttpPost(Name = "PostDocument")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public void Create(DocumentDTO document)
-        {
+         [HttpPost(Name = "PostDocument")] 
+         [ProducesResponseType(StatusCodes.Status201Created)]
+         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+         public ActionResult<DocumentDTO> Create(DocumentDTO document) {
+            if (document.Id != Guid.Empty) return BadRequest();
+            if (document == null || string.IsNullOrWhiteSpace(document.Name)) {
+                return BadRequest("Invalid document data.");
+            }
+            document.Id = Guid.NewGuid();
             _documentRepository.InsertDocument(_mapper.Map<DocumentEntity>(document));
-        }
-
+            return CreatedAtAction(nameof(Get), new { id = document.Id }, document); 
+         }
+        
         [HttpPut(Name = "PutDocument")]
         public void Put()
         {

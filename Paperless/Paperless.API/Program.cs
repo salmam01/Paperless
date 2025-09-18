@@ -4,11 +4,11 @@ using Paperless.DAL.Data;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<PaperlessDbContext>();
-builder.Services.AddScoped<IDocumentRepository, DocumentRepository>(); // das hab ich hinzugefügt weil unser DI Container sonst nicht weiss wie er IDocumentRepository bereitstellen soll. Wir brauchen das für den Controller
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>(); // das hab ich hinzugefügt weil unser DI Container sonst nicht weiss wie er IDocumentRepository bereitstellen soll.
 builder.Services.AddAutoMapper(typeof(Program));
 
 //  Automapper: change to DocumentDTO => DocumentEntity later
