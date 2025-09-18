@@ -19,6 +19,9 @@ namespace Paperless.DAL.Data
             base.OnModelCreating(modelBuilder);
 
             //  TODO: implement the Document entity
+            modelBuilder.Entity<DocumentEntity>();
+
+            //  TODO: Full-text search vector
         }
     }
 }
