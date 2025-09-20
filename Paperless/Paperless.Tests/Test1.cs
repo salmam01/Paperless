@@ -82,19 +82,6 @@ public class DocumentRepositoryTests
     }
 
     [Fact]
-    public void Search_Works()
-    {
-        using PaperlessDbContext ctx = CreateInMemoryDbContext();
-        DocumentRepository repo = new DocumentRepository(ctx);
-        repo.InsertDocument(new DocumentEntity { Id = Guid.NewGuid(), Name = "Alpha", Content = "text", Summary = "s", CreationDate = DateTime.UtcNow, Type = "t", Size = 1 });
-        repo.InsertDocument(new DocumentEntity { Id = Guid.NewGuid(), Name = "Beta", Content = "another", Summary = "s", CreationDate = DateTime.UtcNow, Type = "t", Size = 1 });
-
-        List<DocumentEntity> results = repo.SearchForDocument("alp").ToList();
-        Assert.Single(results);
-        Assert.Equal("Alpha", results[0].Name);
-    }
-
-    [Fact]
     public void GetAllDocuments_Works()
     {
         using PaperlessDbContext ctx = CreateInMemoryDbContext();

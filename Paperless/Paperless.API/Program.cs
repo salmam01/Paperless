@@ -8,14 +8,17 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<PaperlessDbContext>();
-builder.Services.AddScoped<IDocumentRepository, DocumentRepository>(); // das hab ich hinzugefügt weil unser DI Container sonst nicht weiss wie er IDocumentRepository bereitstellen soll.
-builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
 //  Automapper: change to DocumentDTO => DocumentEntity later
-/*var mapperConfig = new MapperConfiguration( // AddAutoMapper macht das gleiche wie dieser Code hier
-    cfg => cfg.CreateMap<DocumentDTO, DocumentEntity>()
+var mapperConfig = new MapperConfiguration(
+    cfg => {
+        cfg.CreateMap<DocumentDTO, DocumentEntity>();
+        cfg.CreateMap<DocumentEntity, DocumentDTO>();
+    }
 );
-var mapper = mapperConfig.CreateMapper();*/
+IMapper mapper = mapperConfig.CreateMapper();
+builder.Services.AddSingleton(mapper);
 
 builder.Services.AddControllers();
 

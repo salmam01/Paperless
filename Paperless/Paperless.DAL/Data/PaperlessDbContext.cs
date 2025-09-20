@@ -15,7 +15,8 @@ namespace Paperless.DAL.Data
 
         public PaperlessDbContext() { }
         
-        public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options): base(options) { } //Unittest
+        //  For Unit tests
+        public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options): base(options) { }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

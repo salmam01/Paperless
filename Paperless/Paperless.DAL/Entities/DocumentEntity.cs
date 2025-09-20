@@ -7,17 +7,21 @@ using System.Threading.Tasks;
 
 namespace Paperless.DAL.Entities
 {
-    //  Document should be stored somewhere on the filesystem (with reference to ID)
+    //  TODO: Document should be stored somewhere on the filesystem (with reference to ID) in later sprints
     public class DocumentEntity
     {
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();
+
+        //  Content
         [Required]
         public string? Name { get; set; }
         [Required]
         public string? Content { get; set; }
         [Required]
         public string? Summary { get; set; }
+
+        //  Meta data
         [Required]
         public DateTime CreationDate { get; set; }
         [Required]
