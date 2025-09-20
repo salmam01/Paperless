@@ -7,7 +7,6 @@ using Paperless.DAL.Repositories;
 namespace Paperless.API.Controllers
 {
     //  Ignore BL for now and just query directly to DAL (Sprint 1)
-    //  TODO: change calls to async
     [ApiController]
     [Route("[controller]")]
     public class DocumentController(IDocumentRepository documentRepository, IMapper mapper) : ControllerBase {
@@ -24,35 +23,37 @@ namespace Paperless.API.Controllers
             return Ok(documents);
         }
 
-        
         [HttpGet("{id}")]
         public IActionResult Get(string id)
         {
             if (!Guid.TryParse(id, out Guid guid))
                 return BadRequest("Invalid ID");
-        
-            DocumentEntity? document = _documentRepository.GetDocumentById(guid);
-            if (document == null)
-                return NotFound($"Document ID {id} not found");
-        
-            return Ok(document);
+
+            try
+            {
+                DocumentDTO document = _mapper.Map<DocumentDTO>(_documentRepository.GetDocumentById(guid));
+                if (document == null)
+                    return NotFound($"Document ID {id} not found");
+                return Ok(document);
+            }
+            catch (Exception ex)
+            {
+                return NotFound($"Document ID {id} not found:\n" + ex.Message);
+            }
         }
 
          [HttpPost(Name = "PostDocument")] 
          [ProducesResponseType(StatusCodes.Status201Created)]
          [ProducesResponseType(StatusCodes.Status400BadRequest)]
-         public ActionResult<DocumentDTO> Create([Bind("Name,Content")] DocumentDTO document) {
-            if (document == null) 
-                return BadRequest("Empty document.");
+         public ActionResult<DocumentDTO> Create(DocumentDTO document) {
+            if (document == null || !CheckDocumentValidity(document)) 
+                return BadRequest("Empty or invalid document data.");
 
             document.Id = Guid.NewGuid();
             document.Summary = "summary";
             document.CreationDate = DateTime.UtcNow;
             document.Type = "pdf";
             document.Size = 25;
-
-            if (!CheckDocumentValidity(document))
-                return BadRequest("Invalid document data.");
 
             _documentRepository.InsertDocument(_mapper.Map<DocumentEntity>(document));
 
@@ -68,15 +69,8 @@ namespace Paperless.API.Controllers
         [HttpDelete(Name = "DeleteDocument")]
         public ActionResult DeleteAll()
         {
-            try
-            {
-                _documentRepository.DeleteAllDocuments();
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            _documentRepository.DeleteAllDocuments();
+            return Ok();
         }
 
         [HttpDelete("{id}")]
@@ -92,7 +86,7 @@ namespace Paperless.API.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest($"Document ID {id} not found:\n" + ex.Message);
             }
         }
 
@@ -102,12 +96,6 @@ namespace Paperless.API.Controllers
             if (String.IsNullOrWhiteSpace(document.Name))
                 return false;
             if (String.IsNullOrWhiteSpace(document.Content))
-                return false;
-            if (String.IsNullOrWhiteSpace(document.Summary))
-                return false;
-            if (String.IsNullOrWhiteSpace(document.Type))
-                return false;
-            if (document.Size <= 0)
                 return false;
 
             return true;
