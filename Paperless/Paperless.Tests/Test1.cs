@@ -7,7 +7,7 @@ namespace Paperless.Tests;
 
 public class DocumentRepositoryTests
 {
-    private PaperlessDbContext CreateInMemoryDbContext()
+    private static PaperlessDbContext CreateInMemoryDbContext()
     {
         DbContextOptions<PaperlessDbContext> options = new DbContextOptionsBuilder<PaperlessDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
