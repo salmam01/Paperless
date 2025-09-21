@@ -17,6 +17,7 @@ namespace Paperless.Tests
 
         public DocumentControllerTests()
         {
+            
             _mockRepository = new Mock<IDocumentRepository>();
             
             // Setup AutoMapper
