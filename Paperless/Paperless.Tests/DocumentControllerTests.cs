@@ -19,7 +19,6 @@ namespace Paperless.Tests
             _mockRepository = new Mock<IDocumentRepository>();
             
             // Setup AutoMapper
-
             var mapperConfig = new MapperConfiguration(
                 cfg => {
                     cfg.CreateMap<DocumentDTO, DocumentEntity>();

@@ -14,6 +14,8 @@ namespace Paperless.API.Controllers
         private readonly IMapper _mapper = mapper;
 
         [HttpGet(Name = "GetDocument")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult<IEnumerable<DocumentDTO>> GetAll()
         {
             IEnumerable<DocumentDTO> documents = _mapper.Map<IEnumerable<DocumentDTO>>(_documentRepository.GetAllDocuments());
@@ -23,7 +25,10 @@ namespace Paperless.API.Controllers
             return Ok(documents);
         }
 
-        [HttpGet("{id}", Name = "GetDocument")]
+        [HttpGet("{id}", Name = "GetDocumentById")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult Get(string id)
         {
             if (!Guid.TryParse(id, out Guid guid))
@@ -42,8 +47,10 @@ namespace Paperless.API.Controllers
             }
         }
 
-         [HttpPost(Name = "PostDocument")]
-         public ActionResult<DocumentDTO> Create(DocumentDTO document) {
+        [HttpPost(Name = "PostDocument")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public ActionResult<DocumentDTO> Create(DocumentDTO document) {
             if (document == null || !CheckDocumentValidity(document)) 
                 return BadRequest("Empty or invalid document data.");
 
@@ -65,13 +72,17 @@ namespace Paperless.API.Controllers
         }
 
         [HttpDelete(Name = "DeleteDocument")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         public ActionResult DeleteAll()
         {
             _documentRepository.DeleteAllDocuments();
             return Ok();
         }
 
-        [HttpDelete("{id}", Name = "DeleteDocument")]
+        [HttpDelete("{id}", Name = "DeleteDocumentById")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult Delete(string id)
         {
             try
@@ -84,7 +95,7 @@ namespace Paperless.API.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest($"Document ID {id} not found:\n" + ex.Message);
+                return NotFound($"Document ID {id} not found:\n" + ex.Message);
             }
         }
 
