@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Paperless.API.Controllers;
 using Paperless.API.DTOs;
-using Paperless.API.Mapping;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
 
@@ -20,8 +19,15 @@ namespace Paperless.Tests
             _mockRepository = new Mock<IDocumentRepository>();
             
             // Setup AutoMapper
-            MapperConfiguration config = new MapperConfiguration(cfg => cfg.AddProfile<DocumentProfile>());
-            _mapper = config.CreateMapper();
+
+            var mapperConfig = new MapperConfiguration(
+                cfg => {
+                    cfg.CreateMap<DocumentDTO, DocumentEntity>();
+                    cfg.CreateMap<DocumentEntity, DocumentDTO>();
+                }
+            );
+            _mapper = mapperConfig.CreateMapper(); 
+
             _controller = new DocumentController(_mockRepository.Object, _mapper);
         }
 

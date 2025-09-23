@@ -13,7 +13,7 @@ namespace Paperless.API.Controllers
         private readonly IDocumentRepository _documentRepository = documentRepository;
         private readonly IMapper _mapper = mapper;
 
-        [HttpGet(Name = "Document")]
+        [HttpGet(Name = "GetDocument")]
         public ActionResult<IEnumerable<DocumentDTO>> GetAll()
         {
             IEnumerable<DocumentDTO> documents = _mapper.Map<IEnumerable<DocumentDTO>>(_documentRepository.GetAllDocuments());
@@ -23,8 +23,8 @@ namespace Paperless.API.Controllers
             return Ok(documents);
         }
 
-        [HttpGet("{id}")]
-        public IActionResult Get(string id)
+        [HttpGet("{id}", Name = "GetDocument")]
+        public ActionResult Get(string id)
         {
             if (!Guid.TryParse(id, out Guid guid))
                 return BadRequest("Invalid ID");
@@ -42,9 +42,7 @@ namespace Paperless.API.Controllers
             }
         }
 
-         [HttpPost(Name = "PostDocument")] 
-         [ProducesResponseType(StatusCodes.Status201Created)]
-         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+         [HttpPost(Name = "PostDocument")]
          public ActionResult<DocumentDTO> Create(DocumentDTO document) {
             if (document == null || !CheckDocumentValidity(document)) 
                 return BadRequest("Empty or invalid document data.");
@@ -73,7 +71,7 @@ namespace Paperless.API.Controllers
             return Ok();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}", Name = "DeleteDocument")]
         public ActionResult Delete(string id)
         {
             try
