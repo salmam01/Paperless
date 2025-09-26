@@ -3,6 +3,22 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+### react ###
+.DS_*
+*.log
+logs
+**/*.backup.*
+**/*.back.*
+
+node_modules
+bower_components
+
+*.sublime*
+
+psd
+thumb
+sketch
+
 # User-specific files
 *.rsuser
 *.suo
@@ -416,3 +432,4 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
