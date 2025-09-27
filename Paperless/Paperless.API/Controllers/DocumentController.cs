@@ -8,7 +8,7 @@ namespace Paperless.API.Controllers
 {
     //  Ignore BL for now and just query directly to DAL (Sprint 1)
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class DocumentController(IDocumentRepository documentRepository, IMapper mapper) : ControllerBase {
         private readonly IDocumentRepository _documentRepository = documentRepository;
         private readonly IMapper _mapper = mapper;
