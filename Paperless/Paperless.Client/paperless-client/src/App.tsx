@@ -1,34 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
 import './App.css'
 
+interface Document {
+  id: number;
+  title: string;
+  content: string;
+  createdAt: string;
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/Document');
+      if (!response.ok) {
+        throw new Error('Failed to fetch documents');
+      }
+      const data = await response.json();
+      setDocuments(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="app">
+      <header className="app-header">
+        <h1>Paperless Dashboard</h1>
+        <p>Document Management System</p>
+      </header>
+      
+      <main className="app-main">
+        {loading && <div className="loading">Loading documents...</div>}
+        {error && <div className="error">Error: {error}</div>}
+        
+        {!loading && !error && (
+          <div className="documents-section">
+            <h2>Documents ({documents.length})</h2>
+            {documents.length === 0 ? (
+              <p>No documents found.</p>
+            ) : (
+              <div className="documents-grid">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="document-card">
+                    <h3>{doc.title}</h3>
+                    <p className="document-content">{doc.content}</p>
+                    <p className="document-date">
+                      Created: {new Date(doc.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        
+        <div className="api-status">
+          <h3>API Status</h3>
+          <p>Backend API is running and accessible</p>
+          <button onClick={fetchDocuments} disabled={loading}>
+            {loading ? 'Refreshing...' : 'Refresh Documents'}
+          </button>
+        </div>
+      </main>
+    </div>
   )
 }
 
