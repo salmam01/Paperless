@@ -1,6 +1,7 @@
 version: '3.8'
 services:
-  tourplanner-db:
+  
+  paperless-db:
     image: postgres:latest
     container_name: paperless-db
     environment:
@@ -13,6 +14,42 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U swen3 -d PaperlessDB"]
+    networks:
+      - paperless-network
+
+  # Backend 
+  paperless-api:
+    build:
+      context: .
+      dockerfile: Paperless.API/Dockerfile
+    container_name: paperless-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=paperless-db;Port=5432;Database=PaperlessDB;Username=swen3;Password=paperless123
+    ports:
+      - "8080:8080"
+    depends_on:
+      paperless-db:
+        condition: service_healthy
+    networks:
+      - paperless-network
+
+  # Frontend
+  paperless-frontend:
+    build:
+      context: ./Paperless.Client/paperless-client
+      dockerfile: Dockerfile
+    container_name: paperless-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - paperless-api
+    networks:
+      - paperless-network
+
+networks:
+  paperless-network:
+    driver: bridge
 
 volumes:
   pgdata:
