@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Paperless.API.DTOs;
 using Paperless.DAL.Data;
 using Paperless.DAL.Entities;
@@ -54,5 +55,10 @@ app.UseCors("AllowFrontend");
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<PaperlessDbContext>().Database.Migrate();
+}
 
 app.Run();

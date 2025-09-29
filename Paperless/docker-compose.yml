@@ -1,5 +1,4 @@
 services:
-  
   paperless-db:
     image: postgres:latest
     container_name: paperless-db
