@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { deleteDocument, deleteDocuments, getDocuments } from "./services/documentService";
+import { deleteDocument, deleteDocuments, getDocuments, postDocument } from "./services/documentService";
 import { DocumentsGrid } from './components/DocumentsGrid';
-import type { DocumentDto } from './dto/documentDto';
+import type { DocumentDto } from './dto/DocumentDto';
 
 function App() {
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
@@ -39,12 +39,13 @@ function App() {
         {!loading && !error && (
           <div className="documents-section">
             <h2>Documents ({documents.length})</h2>
-            {documents.length === 0 ? (
-              <p>No documents found.</p>
-            ) : (
 
               <DocumentsGrid 
                 documents={documents}
+                onUploaded={async (document) => {
+                  await postDocument(document)
+                  await getDocumentsHandler();
+                }}
                 onDelete={async (id) => {
                   await deleteDocument(id);
                   setDocuments(prev => prev.filter(d => d.id !== id));
@@ -55,13 +56,10 @@ function App() {
                 }}
               />
 
-            )}
           </div>
         )}
         
         <div className="api-status">
-          <h3>API Status</h3>
-          <p>Backend API is running and accessible</p>
           <button onClick={getDocumentsHandler} disabled={loading}>
             {loading ? 'Refreshing...' : 'Refresh Documents'}
           </button>

@@ -1,4 +1,4 @@
-import type { DocumentDto } from "../dto/documentDto";
+import type { CreateDocumentDto, DocumentDto } from "../dto/DocumentDto";
 
 const apiUrl = 'http://localhost:8080/api/Document'
 
@@ -23,7 +23,7 @@ export async function getDocument(id: string): Promise<DocumentDto> {
 }
 
 
-export async function postDocument(document: DocumentDto): Promise<DocumentDto> {
+export async function postDocument(document: CreateDocumentDto): Promise<DocumentDto> {
     const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {

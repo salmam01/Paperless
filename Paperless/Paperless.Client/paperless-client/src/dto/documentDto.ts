@@ -1,6 +1,10 @@
 export interface DocumentDto {
   id: string;
-  title: string;
+  name: string;
   content: string;
-  //createdAt: string;
+}
+
+export interface CreateDocumentDto {
+  name: string;
+  content: string;
 }
