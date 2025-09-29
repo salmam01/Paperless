@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { getDocuments } from "./services/documentService";
+import { deleteDocument, deleteDocuments, getDocuments } from "./services/documentService";
+import { DocumentsGrid } from './components/DocumentsGrid';
+import type { DocumentDto } from './dto/documentDto';
 
 function App() {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<DocumentDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDocuments();
+    getDocumentsHandler();
+
   }, []);
 
-  const fetchDocuments = async () => {
+  const getDocumentsHandler = async () => {
     try {
       setLoading(true);
       setDocuments(await getDocuments());
@@ -39,17 +42,19 @@ function App() {
             {documents.length === 0 ? (
               <p>No documents found.</p>
             ) : (
-              <div className="documents-grid">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="document-card">
-                    <h3>{doc.title}</h3>
-                    <p className="document-content">{doc.content}</p>
-                    <p className="document-date">
-                      Created: {new Date(doc.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
+
+              <DocumentsGrid 
+                documents={documents}
+                onDelete={async (id) => {
+                  await deleteDocument(id);
+                  setDocuments(prev => prev.filter(d => d.id !== id));
+                }}
+                onDeleteAll={async() => {
+                  await deleteDocuments();
+                  setDocuments([])
+                }}
+              />
+
             )}
           </div>
         )}
@@ -57,7 +62,7 @@ function App() {
         <div className="api-status">
           <h3>API Status</h3>
           <p>Backend API is running and accessible</p>
-          <button onClick={fetchDocuments} disabled={loading}>
+          <button onClick={getDocumentsHandler} disabled={loading}>
             {loading ? 'Refreshing...' : 'Refresh Documents'}
           </button>
         </div>

@@ -13,7 +13,7 @@ export async function getDocuments(): Promise<DocumentDto[]> {
 }
 
 export async function getDocument(id: string): Promise<DocumentDto> {
-    const response = await fetch(apiUrl + `/${id}`)
+    const response = await fetch(`${apiUrl}/${id}`)
 
     if (!response.ok) {
         throw new Error(`Failed to fetch document with ID: ${id}`);
@@ -48,7 +48,7 @@ export async function deleteDocuments(): Promise<void> {
 }
 
 export async function deleteDocument(id: string): Promise<void> {
-    const response = await fetch(apiUrl + `/${id}`, {
+    const response = await fetch(`${apiUrl}/${id}`, {
         method: 'DELETE'
     });
 
