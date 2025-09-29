@@ -63,7 +63,7 @@ namespace Paperless.API.Controllers
             _documentRepository.InsertDocument(_mapper.Map<DocumentEntity>(document));
 
             return CreatedAtAction(nameof(Get), new { id = document.Id }, document); 
-         }
+        }
         
         [HttpPut(Name = "PutDocument")]
         public void Put()

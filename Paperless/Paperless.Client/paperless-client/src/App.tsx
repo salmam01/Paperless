@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-
-interface Document {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-}
+import { getDocuments } from "./services/documentService";
 
 function App() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -20,12 +14,7 @@ function App() {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/Document');
-      if (!response.ok) {
-        throw new Error('Failed to fetch documents');
-      }
-      const data = await response.json();
-      setDocuments(data);
+      setDocuments(await getDocuments());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
