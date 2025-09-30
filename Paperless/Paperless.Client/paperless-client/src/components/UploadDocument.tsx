@@ -4,8 +4,6 @@ interface Props {
     onUploaded?: (document: CreateDocumentDto) => void;
 }
 
-let i = 1
-
 export function UploadDocument({ onUploaded }: Props) {
     const dummyDocument: CreateDocumentDto = {
         name: `Document ${Math.floor(Math.random() * 100)}`, 

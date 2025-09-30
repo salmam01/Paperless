@@ -4,6 +4,7 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
 }
 
 .app-header {
@@ -27,7 +28,6 @@
 }
 
 .app-main {
-  width: 100%;
   margin: 0 auto;
   padding: 2rem 4rem;
 }
@@ -61,6 +61,7 @@
   grid-template-columns: repeat(6, 1fr);
   gap: 2rem;
   margin-bottom: 2rem;
+  box-sizing: border-box;
 }
 
 .document-card {
@@ -100,42 +101,41 @@
   font-style: italic;
 }
 
-.api-status {
+.documents-options {
+  width: 100%;
+  box-sizing: border-box;
+  grid-column: span 1;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 20px;
+  margin: 0 auto;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.api-status h3 {
+.documents-options h3 {
   margin: 0 0 1rem 0;
   font-size: 1.3rem;
   font-weight: 400;
 }
 
-.api-status p {
-  margin: 0 0 1rem 0;
-  opacity: 0.8;
-}
-
-.api-status button {
-  background: rgba(255, 255, 255, 0.2);
+.documents-options button {
+  background-color: #734373;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
   padding: 0.75rem 1.5rem;
+  margin: 20px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 1rem;
   transition: all 0.2s ease;
 }
 
-.api-status button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.3);
+.documents-options button:hover:not(:disabled) {
+  background: #9D446E;
   transform: translateY(-1px);
 }
 
-.api-status button:disabled {
+.documents-options button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

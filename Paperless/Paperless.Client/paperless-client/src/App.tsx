@@ -3,6 +3,7 @@ import './App.css'
 import { deleteDocument, deleteDocuments, getDocuments, postDocument } from "./services/documentService";
 import { DocumentsGrid } from './components/DocumentsGrid';
 import type { DocumentDto } from './dto/DocumentDto';
+import { UploadDocument } from './components/UploadDocument';
 
 function App() {
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
@@ -42,27 +43,28 @@ function App() {
 
               <DocumentsGrid 
                 documents={documents}
-                onUploaded={async (document) => {
-                  await postDocument(document)
-                  await getDocumentsHandler();
-                }}
                 onDelete={async (id) => {
                   await deleteDocument(id);
                   setDocuments(prev => prev.filter(d => d.id !== id));
-                }}
-                onDeleteAll={async() => {
-                  await deleteDocuments();
-                  setDocuments([])
                 }}
               />
 
           </div>
         )}
-        
-        <div className="api-status">
+        <div className="documents-options">
+          <UploadDocument
+            onUploaded={async (document) => {
+              await postDocument(document)
+              await getDocumentsHandler();
+            }}
+          />
           <button onClick={getDocumentsHandler} disabled={loading}>
             {loading ? 'Refreshing...' : 'Refresh Documents'}
           </button>
+          <button onClick={async() => {
+            await deleteDocuments();
+            setDocuments([])
+          }}>Delete All</button>
         </div>
       </main>
     </div>

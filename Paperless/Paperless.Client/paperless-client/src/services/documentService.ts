@@ -5,9 +5,7 @@ const apiUrl = 'http://localhost:8080/api/Document'
 export async function getDocuments(): Promise<DocumentDto[]> {
     const response = await fetch(apiUrl)
 
-    if (!response.ok) {
-        throw new Error('Failed to fetch documents');
-    }
+    if (!response.ok) throw new Error('Failed to fetch documents');
 
     return await response.json();
 }
@@ -15,9 +13,7 @@ export async function getDocuments(): Promise<DocumentDto[]> {
 export async function getDocument(id: string): Promise<DocumentDto> {
     const response = await fetch(`${apiUrl}/${id}`)
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch document with ID: ${id}`);
-    }
+    if (!response.ok) throw new Error(`Failed to fetch document with ID: ${id}`);
 
     return await response.json();
 }
@@ -32,10 +28,8 @@ export async function postDocument(document: CreateDocumentDto): Promise<Documen
         body: JSON.stringify(document),
     });
 
-    if (!response.ok) {
-        throw new Error('Failed to create document');
-    }
-
+    if (!response.ok) throw new Error('Failed to create document');
+    
     return await response.json();
 }
 
