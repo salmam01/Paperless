@@ -12,7 +12,6 @@ function App() {
 
   useEffect(() => {
     getDocumentsHandler();
-
   }, []);
 
   const getDocumentsHandler = async () => {

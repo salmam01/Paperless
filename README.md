@@ -5,14 +5,14 @@
 - npm install
 
 # Move back to the root folder and build docker containers
-- cd ../../..
+- cd ../..
 - docker compose build
 - docker compose up -d
 
 # One-liner (copy & paste)
 cd Paperless/Paperless.Client/paperless-client
 npm install
-cd ../../..
+cd ../..
 docker compose build
 docker compose up -d
 
