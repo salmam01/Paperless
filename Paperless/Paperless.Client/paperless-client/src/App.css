@@ -55,6 +55,36 @@
   font-weight: 300;
 }
 
+/* Toolbar above documents grid */
+.documents-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.documents-toolbar button {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.15s ease;
+}
+
+.documents-toolbar button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
+}
+
+.documents-toolbar button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .documents-grid {
   display: grid;
   width: 100%;
@@ -71,6 +101,11 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.document-card.has-actions {
+  padding-bottom: 2.25rem;
 }
 
 .document-card:hover {
@@ -138,6 +173,129 @@
 .documents-options button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+
+/* Right side details layout */
+.documents-layout {
+  display: grid;
+  grid-template-columns: 1fr minmax(400px, 600px);
+  gap: 20px;
+  align-items: start;
+  min-height: 0;
+}
+
+.documents-list {
+  min-width: 0;
+}
+
+.details-panel {
+  position: relative;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  min-height: 300px;
+  height: fit-content;
+  max-height: calc(100vh - 200px);
+  overflow: auto;
+  padding: 16px;
+}
+
+.details-empty {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* Tabs styling */
+.document-details .tabs {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 8px;
+  margin: -8px -8px 12px -8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  z-index: 10;
+}
+
+.document-details .tabs input[type="radio"] {
+  display: none;
+}
+
+.document-details .tabs label {
+  padding: 10px 16px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.08);
+  text-align: center;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.document-details .tabs label:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.document-details .tab-panels {
+  grid-column: 1 / -1;
+  padding-top: 12px;
+}
+
+.document-details .tab-panel { display: none; }
+
+.document-details #tab-summary:checked ~ label[for="tab-summary"],
+.document-details #tab-content:checked ~ label[for="tab-content"],
+.document-details #tab-meta:checked ~ label[for="tab-meta"] {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.4);
+}
+
+.document-details #tab-summary:checked ~ .tab-panels .tab-panel[data-for="tab-summary"],
+.document-details #tab-content:checked ~ .tab-panels .tab-panel[data-for="tab-content"],
+.document-details #tab-meta:checked ~ .tab-panels .tab-panel[data-for="tab-meta"] {
+  display: block;
+}
+
+/* Card action buttons */
+.card-action-button {
+  position: absolute;
+  bottom: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.card-action-button--info {
+  left: 8px;
+}
+
+.card-action-button--delete {
+  right: 8px;
+}
+
+/* Document details header */
+.document-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.document-details-title {
+  margin: 0;
+}
+
+.document-details-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
 }
 
 /*
