@@ -12,7 +12,7 @@ using Paperless.DAL.Data;
 namespace Paperless.DAL.Migrations
 {
     [DbContext(typeof(PaperlessDbContext))]
-    [Migration("20250918100023_InitialCreate")]
+    [Migration("20251005170911_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -37,6 +37,10 @@ namespace Paperless.DAL.Migrations
 
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()

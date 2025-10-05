@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Paperless.API.DTOs;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
@@ -50,15 +51,13 @@ namespace Paperless.API.Controllers
         [HttpPost(Name = "PostDocument")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult<DocumentDTO> Create(DocumentDTO document) {
-            if (document == null || !CheckDocumentValidity(document)) 
-                return BadRequest("Empty or invalid document data.");
+        public ActionResult<DocumentDTO> UploadDocument(IFormFile form) {
+            if (form == null || form.Length == 0) 
+                return BadRequest("Empty or invalid document.");
 
-            document.Id = Guid.NewGuid();
-            document.Summary = "summary";
-            document.CreationDate = DateTime.UtcNow;
-            document.Type = "pdf";
-            document.Size = 25;
+            DocumentDTO document = parseFormData(form);
+            if (document == null)
+                return BadRequest("Empty or invalid document.");
 
             _documentRepository.InsertDocument(_mapper.Map<DocumentEntity>(document));
 
@@ -99,8 +98,28 @@ namespace Paperless.API.Controllers
             }
         }
 
-        //  Temporary method
-        private bool CheckDocumentValidity(DocumentDTO document)
+        //  Temporary method, should be in BL
+        private DocumentDTO parseFormData(IFormFile form)
+        {
+            DocumentDTO document = new
+            (
+                Guid.NewGuid(),
+                form.FileName,
+                "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, ...", // temporary 
+                "summary",
+
+                "temporary",    // also temporary
+
+                DateTime.UtcNow,
+                form.ContentType,
+                Math.Round(form.Length / (1024.0 * 1024.0), 2)
+            );
+
+            return document;
+        }
+
+        //  Temporary method, should be in BL
+        private bool checkDocumentValidity(DocumentDTO document)
         {
             if (String.IsNullOrWhiteSpace(document.Name))
                 return false;

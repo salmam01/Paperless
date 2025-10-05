@@ -17,15 +17,20 @@ namespace Paperless.DAL.Entities
         [Required]
         public string? Name { get; set; }
         [Required]
-        public string? Content { get; set; }
+        public string? Content { get; set; } // temporary, should not be stored in db
         [Required]
         public string? Summary { get; set; }
+
+        //  Storage
+        [Required]
+        public string? FilePath { get; set; }
 
         //  Meta data
         [Required]
         public DateTime CreationDate { get; set; }
         [Required]
         public string? Type { get; set; }
+        [Required]
         public double Size { get; set; }
     }
 }

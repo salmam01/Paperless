@@ -3,12 +3,8 @@ export interface DocumentDto {
   name: string;
   content: string;
   summary: string;
+  filePath: string; // temporary
   creationDate: string;
   type: string;
   size: number;
-}
-
-export interface CreateDocumentDto {
-  name: string;
-  content: string;
 }

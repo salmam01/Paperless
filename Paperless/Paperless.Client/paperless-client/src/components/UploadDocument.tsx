@@ -1,17 +1,30 @@
-import type { CreateDocumentDto } from "../dto/documentDto";
+import { useState, type ChangeEvent } from "react";
 
 interface Props {
-    onUploaded?: (document: CreateDocumentDto) => void;
+    loading: boolean
+    onUploaded: (file: File) => void;
 }
 
-export function UploadDocument({ onUploaded }: Props) {
-    const dummyDocument: CreateDocumentDto = {
-        name: `Document ${Math.floor(Math.random() * 100)}`, 
-        content: `Lorem ipsum dolor sit amet.`
-    }; 
+export function UploadDocument( { loading, onUploaded } : Props) {
+    const [file, setFile] = useState<File | null>(null);
+
+    function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+        if (e.target.files && e.target.files.length > 0) {
+            setFile(e.target.files[0]);
+        }
+    }
+
     return(
-        <button onClick={() => onUploaded?.(dummyDocument)}>
-            Upload Document
-        </button>
+        <div>
+            <input type="file" name="document" onChange={handleFileChange}/>
+            <button 
+                onClick={() => {
+                    if (file) onUploaded(file)
+                }}
+                disabled={!file || loading}
+            >
+                {loading ? "Uploading..." : "Upload"}
+            </button>
+        </div>
     );
 }
