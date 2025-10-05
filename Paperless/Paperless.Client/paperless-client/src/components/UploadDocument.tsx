@@ -1,4 +1,4 @@
-import type { CreateDocumentDto } from "../dto/DocumentDto";
+import type { CreateDocumentDto } from "../dto/documentDto";
 
 interface Props {
     onUploaded?: (document: CreateDocumentDto) => void;

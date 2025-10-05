@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { deleteDocument, deleteDocuments, getDocuments, postDocument } from "./services/documentService";
-import { DocumentsGrid } from './components/DocumentsGrid';
-import type { DocumentDto } from './dto/DocumentDto';
-import { UploadDocument } from './components/UploadDocument';
+import type { DocumentDto, CreateDocumentDto } from './dto/documentDto'
+import { getDocuments, getDocument, deleteDocument, deleteDocuments, postDocument } from './services/documentService'
+import { DocumentsGrid } from './components/DocumentsGrid'
+import { DocumentDetails } from './components/DocumentDetails'
+import { UploadDocument } from './components/UploadDocument'
 
 function App() {
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<DocumentDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,11 +20,64 @@ function App() {
   const getDocumentsHandler = async () => {
     try {
       setLoading(true);
-      setDocuments(await getDocuments());
+      const data = await getDocuments();
+      setDocuments(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSelected = async (id: string) => {
+    try {
+      setLoading(true);
+      const doc = await getDocument(id);
+      setSelected(doc);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelect = (id: string) => {
+    setSelectedId(id);
+    fetchSelected(id);
+  };
+
+  const handleBack = () => {
+    setSelectedId(null);
+    setSelected(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteDocument(id);
+      if (selectedId === id) handleBack();
+      getDocumentsHandler();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
+
+  const handleUpload = async (doc: CreateDocumentDto) => {
+    try {
+      await postDocument(doc);
+      await getDocumentsHandler();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      await deleteDocuments();
+      handleBack();
+      await getDocumentsHandler();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     }
   };
 
@@ -39,31 +95,30 @@ function App() {
         {!loading && !error && (
           <div className="documents-section">
             <h2>Documents ({documents.length})</h2>
-
-              <DocumentsGrid 
-                documents={documents}
-                onDelete={async (id) => {
-                  await deleteDocument(id);
-                  setDocuments(prev => prev.filter(d => d.id !== id));
-                }}
-              />
-
+            <div className="documents-toolbar">
+              <UploadDocument onUploaded={handleUpload} />
+              <button onClick={handleDeleteAll}>Delete All</button>
+            </div>
+            <div className="documents-layout">
+              <div className="documents-list">
+                <DocumentsGrid documents={documents} onDelete={handleDelete} onSelect={handleSelect} />
+              </div>
+              {selected && (
+                <aside className="details-panel">
+                  <DocumentDetails document={selected} onBack={handleBack} />
+                </aside>
+              )}
+            </div>
           </div>
         )}
-        <div className="documents-options">
-          <UploadDocument
-            onUploaded={async (document) => {
-              await postDocument(document)
-              await getDocumentsHandler();
-            }}
-          />
+
+          
+        <div className="api-status">
+          <h3>API Status</h3>
+          <p>Backend API is running and accessible</p>
           <button onClick={getDocumentsHandler} disabled={loading}>
             {loading ? 'Refreshing...' : 'Refresh Documents'}
           </button>
-          <button onClick={async() => {
-            await deleteDocuments();
-            setDocuments([])
-          }}>Delete All</button>
         </div>
       </main>
     </div>

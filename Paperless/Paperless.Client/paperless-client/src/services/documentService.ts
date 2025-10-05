@@ -1,4 +1,4 @@
-import type { CreateDocumentDto, DocumentDto } from "../dto/DocumentDto";
+import type { CreateDocumentDto, DocumentDto } from "../dto/documentDto";
 
 const apiUrl = 'http://localhost:8080/api/Document'
 
