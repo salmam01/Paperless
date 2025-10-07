@@ -15,6 +15,21 @@ services:
     networks:
       - paperless-network
 
+  # RabbitMQ with management UI
+  paperless-rabbitmq:
+    image: rabbitmq:3-management
+    container_name: paperless-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paperless-network
+
   # Backend 
   paperless-api:
     build:
@@ -29,6 +44,8 @@ services:
     depends_on:
       paperless-db:
         condition: service_healthy
+      paperless-rabbitmq:
+        condition: service_started
     networks:
       - paperless-network
 
