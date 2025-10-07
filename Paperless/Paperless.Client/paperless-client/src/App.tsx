@@ -68,13 +68,13 @@ function App() {
 
       setLoading(true);
       const formData = new FormData();
-      formData.append("document", file);
+      formData.append("form", file);
 
       await postDocument(formData);
       await fetchDocuments();
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'An error occurred while uploading document.');
     }
     finally {
       setLoading(false);

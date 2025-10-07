@@ -12,7 +12,7 @@ using Paperless.DAL.Data;
 namespace Paperless.DAL.Migrations
 {
     [DbContext(typeof(PaperlessDbContext))]
-    [Migration("20251005170911_InitialCreate")]
+    [Migration("20251007092410_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
