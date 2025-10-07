@@ -76,7 +76,7 @@ public class DocumentRepositoryTests
             Size = 1
         };
         repo.InsertDocument(entity);
-        repo.DeleteDocument(entity.Id);
+        repo.DeleteDocumentAsync(entity.Id);
 
         Assert.Throws<KeyNotFoundException>(() => repo.GetDocumentById(entity.Id));
     }

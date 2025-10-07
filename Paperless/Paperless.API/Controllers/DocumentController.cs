@@ -10,19 +10,26 @@ namespace Paperless.API.Controllers
     //  Ignore BL for now and just query directly to DAL (Sprint 1)
     [ApiController]
     [Route("api/[controller]")]
-    public class DocumentController(IDocumentRepository documentRepository, IMapper mapper) : ControllerBase {
+    public class DocumentController
+        (IDocumentRepository documentRepository, IMapper mapper, ILogger<DocumentController> logger) 
+        : ControllerBase 
+    {
         private readonly IDocumentRepository _documentRepository = documentRepository;
         private readonly IMapper _mapper = mapper;
+        private readonly ILogger<DocumentController> _logger = logger;
 
         [HttpGet(Name = "GetDocument")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<IEnumerable<DocumentDTO>> GetAll()
+        public async Task<ActionResult<IEnumerable<DocumentDTO>>> GetAll()
         {
-            IEnumerable<DocumentDTO> documents = _mapper.Map<IEnumerable<DocumentDTO>>(_documentRepository.GetAllDocuments());
+            IEnumerable<DocumentDTO> documents = await _mapper.Map<IEnumerable<DocumentDTO>>(_documentRepository.GetAllDocuments());
             if(documents == null)
+            {
+                _logger.LogWarning("No documents found.");
                 return NotFound();
-
+            }
+            
             return Ok(documents);
         }
 
@@ -89,7 +96,7 @@ namespace Paperless.API.Controllers
                 if (!Guid.TryParse(id, out Guid guid))
                     return BadRequest("Invalid ID");
 
-                _documentRepository.DeleteDocument(guid);
+                _documentRepository.DeleteDocumentAsync(guid);
                 return Ok();
             }
             catch (Exception ex)

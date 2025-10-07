@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Paperless.DAL.Data;
 using Paperless.DAL.Entities;
 using System;
@@ -19,31 +20,31 @@ namespace Paperless.DAL.Repositories
             _context = context;
         }
 
-        public DocumentEntity? GetDocumentById(Guid id) {
-            DocumentEntity? document = _context.Documents
+        public async Task<IEnumerable<DocumentEntity>> GetAllDocuments()
+        {
+            return await _context.Documents.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<DocumentEntity?> GetDocumentById(Guid id) {
+            DocumentEntity? document = await _context.Documents
                 .AsNoTracking()
-                .FirstOrDefault(d => d.Id == id);
+                .FirstOrDefaultAsync(d => d.Id == id);
 
             return document ?? throw new KeyNotFoundException($"Document {id} not found");
         }
-
-        public IEnumerable<DocumentEntity> GetAllDocuments()
-        {
-            return _context.Documents.AsNoTracking().ToList();;
-        }
         
-        public void InsertDocument(DocumentEntity document)
+        public async Task InsertDocument(DocumentEntity document)
         {
             if (document == null)  
                 throw new ArgumentNullException(nameof(document), "InsertDocument: Document shouldn't be empty!");
 
-            _context.Add(document);
-            Save();
+            await _context.AddAsync(document);
+            await SaveChangesAsync();
         }
 
-        public void UpdateDocument(DocumentEntity document)
+        public async Task UpdateDocument(DocumentEntity document)
         {
-            DocumentEntity? existDocument = _context.Documents.Find(document.Id);
+            DocumentEntity? existDocument = await _context.Documents.FindAsync(document.Id);
             if (existDocument == null) 
                 throw new ArgumentNullException(nameof(existDocument), "UpdateDocument: Document doesnt exist!");
 
@@ -53,22 +54,22 @@ namespace Paperless.DAL.Repositories
             existDocument.Type = document.Type ?? existDocument.Type;
             existDocument.Size = document.Size;
                 
-            Save();
+            await SaveChangesAsync();
         }
 
-        public void DeleteAllDocuments()
+        public async Task DeleteAllDocuments()
         {
-            _context.Documents.ExecuteDelete();
+            await _context.Documents.ExecuteDeleteAsync();
         }
 
-        public void DeleteDocument(Guid id)
+        public async Task DeleteDocumentAsync(Guid id)
         {
-            DocumentEntity? document = _context.Documents.Find(id);
+            DocumentEntity? document = await _context.Documents.FindAsync(id);
             if (document == null) 
                 throw new ArgumentNullException(nameof(document), "DeleteDocument: Document doesn't exist!");
 
             _context.Documents.Remove(document);
-            Save();
+            await _context.SaveChangesAsync();
         }
 
         //  TODO: Full-text search
@@ -77,9 +78,28 @@ namespace Paperless.DAL.Repositories
             throw new NotImplementedException();
         }
 
-        private void Save()
+        private async Task SaveChangesAsync()
         {
-            _context.SaveChanges();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                if (IsDatabaseException(ex))
+                { /*do something*/ }
+
+                else
+                    throw;
+            }
+
+        }
+
+        private bool IsDatabaseException(Exception ex)
+        {
+            return (ex is DbUpdateException ||
+                    ex is PostgresException ||
+                    ex is InvalidOperationException);
         }
     }
 }

@@ -4,14 +4,21 @@ using Paperless.API.DTOs;
 using Paperless.DAL.Data;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
+using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddScoped<PaperlessDbContext>();
-builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
+//  Load configuration from appsettings.json
+IConfiguration config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", false, true)
+    .Build();
 
-//  Automapper: change to DocumentDTO => DocumentEntity later
+//  Logger configuration
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(config)
+    .CreateLogger();
+
+//  Automapper configuration
 var mapperConfig = new MapperConfiguration(
     cfg => {
         cfg.CreateMap<DocumentDTO, DocumentEntity>();
@@ -19,6 +26,15 @@ var mapperConfig = new MapperConfiguration(
     }
 );
 IMapper mapper = mapperConfig.CreateMapper();
+
+// Add services to the container
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.ClearProviders();
+    loggingBuilder.AddSerilog();
+});
+builder.Services.AddScoped<PaperlessDbContext>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddSingleton(mapper);
 
 builder.Services.AddControllers();
@@ -34,9 +50,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 
 WebApplication app = builder.Build();
 

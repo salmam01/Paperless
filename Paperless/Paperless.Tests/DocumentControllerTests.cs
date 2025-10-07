@@ -111,7 +111,7 @@ namespace Paperless.Tests
         public void Delete_Works()
         {
             Guid documentId = Guid.NewGuid();
-            _mockRepository.Setup(repo => repo.DeleteDocument(documentId));
+            _mockRepository.Setup(repo => repo.DeleteDocumentAsync(documentId));
             ActionResult result = _controller.Delete(documentId.ToString());
             Assert.IsType<OkResult>(result);
         }
