@@ -15,7 +15,7 @@ services:
     networks:
       - paperless-network
 
-  # RabbitMQ with management UI
+  # RabbitMQ with management UI 
   paperless-rabbitmq:
     image: rabbitmq:3-management
     container_name: paperless-rabbitmq
