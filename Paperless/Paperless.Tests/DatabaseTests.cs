@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Paperless.DAL.Data;
+using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
 
@@ -30,9 +30,9 @@ public class DocumentRepositoryTests
             Type = "txt",
             Size = 1.23
         };
-        repo.InsertDocument(entity);
+        repo.InsertDocumentAsync(entity);
 
-        DocumentEntity? loaded = repo.GetDocumentById(entity.Id);
+        DocumentEntity? loaded = repo.GetDocumentAsync(entity.Id);
         Assert.Equal("Doc 1", loaded.Name);
     }
 
@@ -51,12 +51,12 @@ public class DocumentRepositoryTests
             Type = "t",
             Size = 1
         };
-        repo.InsertDocument(entity);
+        repo.InsertDocumentAsync(entity);
 
         entity.Name = "Updated";
-        repo.UpdateDocument(entity);
+        repo.UpdateDocumentAsync(entity);
 
-        DocumentEntity? loaded = repo.GetDocumentById(entity.Id);
+        DocumentEntity? loaded = repo.GetDocumentAsync(entity.Id);
         Assert.Equal("Updated", loaded.Name);
     }
 
@@ -75,10 +75,10 @@ public class DocumentRepositoryTests
             Type = "t",
             Size = 1
         };
-        repo.InsertDocument(entity);
+        repo.InsertDocumentAsync(entity);
         repo.DeleteDocumentAsync(entity.Id);
 
-        Assert.Throws<KeyNotFoundException>(() => repo.GetDocumentById(entity.Id));
+        Assert.Throws<KeyNotFoundException>(() => repo.GetDocumentAsync(entity.Id));
     }
 
     [Fact]
@@ -88,10 +88,10 @@ public class DocumentRepositoryTests
         DocumentRepository repo = new DocumentRepository(ctx);
         
         // Insert multiple documents
-        repo.InsertDocument(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc1", Content = "Content1", Summary = "Summary1", CreationDate = DateTime.UtcNow, Type = "txt", Size = 1 });
-        repo.InsertDocument(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc2", Content = "Content2", Summary = "Summary2", CreationDate = DateTime.UtcNow, Type = "pdf", Size = 2 });
+        repo.InsertDocumentAsync(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc1", Content = "Content1", Summary = "Summary1", CreationDate = DateTime.UtcNow, Type = "txt", Size = 1 });
+        repo.InsertDocumentAsync(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc2", Content = "Content2", Summary = "Summary2", CreationDate = DateTime.UtcNow, Type = "pdf", Size = 2 });
 
-        List<DocumentEntity> allDocs = repo.GetAllDocuments().ToList();
+        List<DocumentEntity> allDocs = repo.GetDocumentsAsync().ToList();
         Assert.Equal(2, allDocs.Count);
         Assert.Contains(allDocs, d => d.Name == "Doc1");
         Assert.Contains(allDocs, d => d.Name == "Doc2");

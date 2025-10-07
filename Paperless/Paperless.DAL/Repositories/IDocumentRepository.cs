@@ -9,12 +9,12 @@ namespace Paperless.DAL.Repositories
 {
     public interface IDocumentRepository
     {
-        Task<IEnumerable<DocumentEntity>> GetAllDocuments();
-        Task<DocumentEntity?> GetDocumentById(Guid Id);
+        Task<IEnumerable<DocumentEntity>> GetDocumentsAsync();
+        Task<DocumentEntity?> GetDocumentAsync(Guid Id);
         IEnumerable<DocumentEntity> SearchForDocument(string query);
-        Task InsertDocument(DocumentEntity document);
-        Task UpdateDocument(DocumentEntity document);
-        Task DeleteAllDocuments();
+        Task InsertDocumentAsync(DocumentEntity document);
+        Task UpdateDocumentAsync(DocumentEntity document);
+        Task DeleteDocumentsAsync();
         Task DeleteDocumentAsync(Guid Id);
     }
 }

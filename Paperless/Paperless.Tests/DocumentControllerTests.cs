@@ -47,7 +47,7 @@ namespace Paperless.Tests
                 }
             ];
             
-            _mockRepository.Setup(repo => repo.GetAllDocuments()).Returns(documents);
+            _mockRepository.Setup(repo => repo.GetDocumentsAsync()).Returns(documents);
             ActionResult<IEnumerable<DocumentDTO>> result = _controller.GetAll();
             Assert.IsType<OkObjectResult>(result.Result);
         }
@@ -67,7 +67,7 @@ namespace Paperless.Tests
                 Size = 1.0 
             };
             
-            _mockRepository.Setup(repo => repo.GetDocumentById(documentId)).Returns(document);
+            _mockRepository.Setup(repo => repo.GetDocumentAsync(documentId)).Returns(document);
             IActionResult result = _controller.Get(documentId.ToString());
             Assert.IsType<OkObjectResult>(result);
         }
@@ -119,7 +119,7 @@ namespace Paperless.Tests
         [Fact]
         public void DeleteAll_Works()
         {
-            _mockRepository.Setup(repo => repo.DeleteAllDocuments());
+            _mockRepository.Setup(repo => repo.DeleteDocumentsAsync());
             ActionResult result = _controller.DeleteAll();
             Assert.IsType<OkResult>(result);
         }

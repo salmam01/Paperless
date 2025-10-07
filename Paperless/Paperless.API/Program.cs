@@ -1,7 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Paperless.API.DTOs;
-using Paperless.DAL.Data;
+using Paperless.BL.Models;
+using Paperless.BL.Services;
+using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
 using Serilog;
@@ -21,8 +23,8 @@ Log.Logger = new LoggerConfiguration()
 //  Automapper configuration
 var mapperConfig = new MapperConfiguration(
     cfg => {
-        cfg.CreateMap<DocumentDTO, DocumentEntity>();
-        cfg.CreateMap<DocumentEntity, DocumentDTO>();
+        cfg.CreateMap<DocumentDTO, Document>().ReverseMap();
+        cfg.CreateMap<Document, DocumentEntity>().ReverseMap();
     }
 );
 IMapper mapper = mapperConfig.CreateMapper();
@@ -34,6 +36,7 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddSerilog();
 });
 builder.Services.AddScoped<PaperlessDbContext>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddSingleton(mapper);
 

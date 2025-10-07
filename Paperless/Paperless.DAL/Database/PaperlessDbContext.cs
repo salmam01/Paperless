@@ -6,11 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Paperless.DAL.Data
+namespace Paperless.DAL.Database
 {
     public class PaperlessDbContext : DbContext
     {
-        private readonly string _connectionString = "Host=paperless-db;Port=5432;Database=PaperlessDB;Username=swen3;Password=paperless123";
+        private readonly string _connectionString = "Host=localhost;Port=5432;Database=PaperlessDB;Username=swen3;Password=paperless123";
         public DbSet<DocumentEntity> Documents { get; set; }
 
         public PaperlessDbContext() { }

@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Paperless.DAL.Data;
+using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
+using Paperless.DAL.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,56 +21,116 @@ namespace Paperless.DAL.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<DocumentEntity>> GetAllDocuments()
+        public async Task<IEnumerable<DocumentEntity>> GetDocumentsAsync()
         {
-            return await _context.Documents.AsNoTracking().ToListAsync();
+            try
+            {
+                return await _context.Documents.AsNoTracking().ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                if (IsDatabaseException(ex))
+                    throw new DatabaseException("An Error occurred while retrieving all documents.", ex);
+                else
+                    throw;
+            }
         }
 
-        public async Task<DocumentEntity?> GetDocumentById(Guid id) {
-            DocumentEntity? document = await _context.Documents
-                .AsNoTracking()
-                .FirstOrDefaultAsync(d => d.Id == id);
+        public async Task<DocumentEntity?> GetDocumentAsync(Guid id) {
+            try
+            {
+                DocumentEntity? document = await _context.Documents
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.Id == id);
 
-            return document ?? throw new KeyNotFoundException($"Document {id} not found");
+                return document ?? throw new KeyNotFoundException($"Document {id} not found");
+            }
+            catch (Exception ex)
+            {
+                if (IsDatabaseException(ex))
+                    throw new DatabaseException("An Error occurred while retrieving Document by ID.", ex);
+                else
+                    throw;
+            }
         }
         
-        public async Task InsertDocument(DocumentEntity document)
+        public async Task InsertDocumentAsync(DocumentEntity document)
         {
-            if (document == null)  
-                throw new ArgumentNullException(nameof(document), "InsertDocument: Document shouldn't be empty!");
+            try
+            {
+                if (document == null)
+                    throw new ArgumentNullException(nameof(document), "InsertDocument: Document shouldn't be empty!");
 
-            await _context.AddAsync(document);
-            await SaveChangesAsync();
+                await _context.AddAsync(document);
+                await SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                if (IsDatabaseException(ex))
+                    throw new DatabaseException("An Error occurred while adding Document to Database.", ex);
+                else
+                    throw;
+            }
         }
 
-        public async Task UpdateDocument(DocumentEntity document)
+        public async Task UpdateDocumentAsync(DocumentEntity document)
         {
-            DocumentEntity? existDocument = await _context.Documents.FindAsync(document.Id);
-            if (existDocument == null) 
-                throw new ArgumentNullException(nameof(existDocument), "UpdateDocument: Document doesnt exist!");
+            try
+            {
+                DocumentEntity? existDocument = await _context.Documents.FindAsync(document.Id);
+                if (existDocument == null)
+                    throw new ArgumentNullException(nameof(existDocument), "UpdateDocument: Document doesnt exist!");
 
-            existDocument.Name = document.Name ?? existDocument.Name;
-            existDocument.Content = document.Content ?? existDocument.Content;
-            existDocument.Summary = document.Summary ?? existDocument.Summary;
-            existDocument.Type = document.Type ?? existDocument.Type;
-            existDocument.Size = document.Size;
-                
-            await SaveChangesAsync();
+                existDocument.Name = document.Name ?? existDocument.Name;
+                existDocument.Content = document.Content ?? existDocument.Content;
+                existDocument.Summary = document.Summary ?? existDocument.Summary;
+                existDocument.Type = document.Type ?? existDocument.Type;
+                existDocument.Size = document.Size;
+
+                await SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                if (IsDatabaseException(ex))
+                    throw new DatabaseException("An Error occurred while updating a Document.", ex);
+                else
+                    throw;
+            }
         }
 
-        public async Task DeleteAllDocuments()
+        public async Task DeleteDocumentsAsync()
         {
-            await _context.Documents.ExecuteDeleteAsync();
+            try
+            {
+                await _context.Documents.ExecuteDeleteAsync();
+            }
+            catch (Exception ex)
+            {
+                if (IsDatabaseException(ex))
+                    throw new DatabaseException("An Error occurred while deleting all documents.", ex);
+                else
+                    throw;
+            }
         }
 
         public async Task DeleteDocumentAsync(Guid id)
         {
-            DocumentEntity? document = await _context.Documents.FindAsync(id);
-            if (document == null) 
-                throw new ArgumentNullException(nameof(document), "DeleteDocument: Document doesn't exist!");
+            try
+            {
+                DocumentEntity? document = await _context.Documents.FindAsync(id);
+                if (document == null)
+                    throw new ArgumentNullException(nameof(document), "DeleteDocument: Document doesn't exist!");
 
-            _context.Documents.Remove(document);
-            await _context.SaveChangesAsync();
+                _context.Documents.Remove(document);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                if (IsDatabaseException(ex))
+                    throw new DatabaseException("An Error occurred while deleting a document.", ex);
+                else
+                    throw;
+            }
         }
 
         //  TODO: Full-text search
@@ -80,19 +141,7 @@ namespace Paperless.DAL.Repositories
 
         private async Task SaveChangesAsync()
         {
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                if (IsDatabaseException(ex))
-                { /*do something*/ }
-
-                else
-                    throw;
-            }
-
+            await _context.SaveChangesAsync();
         }
 
         private bool IsDatabaseException(Exception ex)
