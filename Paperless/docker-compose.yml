@@ -35,7 +35,7 @@ services:
   # Frontend
   paperless-frontend:
     build:
-      context: ./paperless-client
+      context: ./Paperless.Frontend
       dockerfile: Frontend.Dockerfile
     container_name: paperless-frontend
     ports:
