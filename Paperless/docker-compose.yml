@@ -19,7 +19,7 @@ services:
   paperless-api:
     build:
       context: .
-      dockerfile: Paperless.API/Dockerfile
+      dockerfile: ./Paperless.API/API.Dockerfile
     container_name: paperless-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
@@ -35,8 +35,8 @@ services:
   # Frontend
   paperless-frontend:
     build:
-      context: ./Paperless.Client/paperless-client
-      dockerfile: Dockerfile
+      context: ./paperless-client
+      dockerfile: Frontend.Dockerfile
     container_name: paperless-frontend
     ports:
       - "80:80"

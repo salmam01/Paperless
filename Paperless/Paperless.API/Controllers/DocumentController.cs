@@ -106,13 +106,13 @@ namespace Paperless.API.Controllers
                 Guid.NewGuid(),
                 form.FileName,
                 "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, ...", // temporary 
-                "summary",
+                "Summary coming soon.",
 
-                "temporary",    // also temporary
+                "FilePath",    // also temporary
 
                 DateTime.UtcNow,
                 form.ContentType,
-                Math.Round(form.Length / (1024.0 * 1024.0), 2)
+                Math.Round(form.Length / Math.Pow(1024.0, 2), 2)
             );
 
             return document;

@@ -28,8 +28,8 @@ export function DocumentDetails({ document, onBack }: Props) {
                         <p>{document.content}</p>
                     </section>
                     <section className="tab-panel" data-for="tab-meta">
-                        <p><strong>Type:</strong> {document.type}</p>
-                        <p><strong>Size:</strong> {document.size} bytes</p>
+                        <p><strong>Type:</strong> {document.type.slice(12)}</p>
+                        <p><strong>Size:</strong> {document.size} mb</p>
                         <p><strong>Created:</strong> {new Date(document.creationDate).toLocaleString()}</p>
                     </section>
                 </div>
