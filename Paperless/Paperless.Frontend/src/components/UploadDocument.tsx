@@ -4,7 +4,7 @@ interface Props {
     loading: boolean
     onUploaded: (file: File) => void;
 }
-//Z: das nochmal durchgehen manche Funktionen kann man auch von den anderen Komponenten nutzen, also hier nicht neu schreiben oderr umgekehrt
+//Kommentar Z: das nochmal durchgehen manche Funktionen kann man auch von den anderen Komponenten nutzen, also hier nicht neu schreiben oderr umgekehrt
 export function UploadDocument( { loading, onUploaded } : Props) {
     const [file, setFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
