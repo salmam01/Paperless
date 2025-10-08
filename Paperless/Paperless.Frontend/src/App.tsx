@@ -4,8 +4,7 @@ import type { DocumentDto } from './dto/documentDto'
 import { getDocuments, getDocument, deleteDocument, deleteDocuments, postDocument } from './services/documentService'
 import { DocumentsGrid } from './components/DocumentsGrid'
 import { DocumentDetails } from './components/DocumentDetails'
-import { UploadDocument } from './components/UploadDocument'
-//import { useDropzone } from 'react-dropzone'  // for drag-and-drop, will be implemented later
+import { UploadPanel } from './components/UploadPanel'
 
 function App() {
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
@@ -13,6 +12,7 @@ function App() {
   const [selectedDocument, setSelectedDocument] = useState<DocumentDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showUploadPanel, setShowUploadPanel] = useState(false);
 
   useEffect(() => {
     fetchDocuments();
@@ -44,12 +44,20 @@ function App() {
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
+    setShowUploadPanel(false);
     fetchDocument(id);
   };
 
   const handleBack = () => {
     setSelectedId(null);
     setSelectedDocument(null);
+    setShowUploadPanel(false);
+  };
+
+  const handleShowUpload = () => {
+    setSelectedId(null);
+    setSelectedDocument(null);
+    setShowUploadPanel(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -72,6 +80,7 @@ function App() {
 
       await postDocument(formData);
       await fetchDocuments();
+      setShowUploadPanel(false);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while uploading document.');
@@ -106,16 +115,21 @@ function App() {
           <div className="documents-section">
             <h2>Documents ({documents.length})</h2>
             <div className="documents-toolbar">
-              <UploadDocument loading={loading} onUploaded={handleUpload}/>
+              <button onClick={handleShowUpload}>Upload</button>
               <button onClick={handleDeleteAll}>Delete All</button>
             </div>
-            <div className="documents-layout">
+            <div className={`documents-layout ${(selectedDocument || showUploadPanel) ? 'with-panel' : ''}`}>
               <div className="documents-list">
                 <DocumentsGrid documents={documents} onDelete={handleDelete} onSelect={handleSelect} />
               </div>
               {selectedDocument && (
                 <aside className="details-panel">
                   <DocumentDetails document={selectedDocument} onBack={handleBack} />
+                </aside>
+              )}
+              {showUploadPanel && (
+                <aside className="details-panel">
+                  <UploadPanel loading={loading} onUploaded={handleUpload} onBack={handleBack} />
                 </aside>
               )}
             </div>
