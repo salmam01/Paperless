@@ -6,10 +6,20 @@ using System.Threading.Tasks;
 
 namespace Paperless.BL.Exceptions
 {
+    public enum ExceptionType
+    {
+        Validation,
+        Internal
+    }
+
     public class ServiceException : Exception
     {
-        public ServiceException (string message, Exception? innerException = null)
+        public ExceptionType Type { get; }
+
+        public ServiceException (string message, ExceptionType exceptionType, Exception? innerException = null)
             : base(message, innerException)
-        { }
+        {
+            Type = exceptionType;
+        }
     }
 }

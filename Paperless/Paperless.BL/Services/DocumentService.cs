@@ -13,13 +13,15 @@ using System.Threading.Tasks;
 
 namespace Paperless.BL.Services
 {
-    public class DocumentService
-        (IDocumentRepository documentrepository, IMapper mapper, ILogger<DocumentRepository> logger) 
-        : IDocumentService
+    public class DocumentService (
+        IDocumentRepository documentrepository, 
+        IMapper mapper, 
+        ILogger<DocumentService> logger
+        ) : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
         private readonly IMapper _mapper = mapper;
-        private readonly ILogger<DocumentRepository> _logger = logger;
+        private readonly ILogger<DocumentService> _logger = logger;
 
         public async Task<IEnumerable<Document>> GetDocumentsAsync()
         {
@@ -33,9 +35,9 @@ namespace Paperless.BL.Services
                 _logger.LogError(
                     ex, 
                     "{method} /document failed in {layer} Layer due to {reason}.",
-                    "GET", "Business", "a database error"
+                    "GET", "DataAccess", "a database error"
                 );
-                throw new ServiceException("Could not retrieve documents.", ex);
+                throw new ServiceException("Could not retrieve documents.", ExceptionType.Internal, ex);
             }
         }
 
@@ -43,10 +45,9 @@ namespace Paperless.BL.Services
         {
             try
             {
-                DocumentEntity? entities = await _documentRepository.GetDocumentAsync(id);
-                Document document = _mapper.Map<Document>(entities);
+                DocumentEntity? entity = await _documentRepository.GetDocumentAsync(id);
+                Document document = _mapper.Map<Document>(entity);
 
-                _logger.LogInformation("GET /document/{Id} retrieved document successfully.", id);
                 return document;
             } 
             catch (DatabaseException ex) 
@@ -54,30 +55,37 @@ namespace Paperless.BL.Services
                 _logger.LogError(
                     ex,
                     "{method} /document/{id} failed in {layer} Layer due to {reason}.",
-                    "GET", id, "Business", "a database error"
+                    "GET", id, "DataAccess", "a database error"
                 );
 
-                throw new ServiceException("Could not retrieve document.", ex);
+                throw new ServiceException("Could not retrieve document.", ExceptionType.Internal, ex);
             }
         }
         public async Task UploadDocumentAsync(Document document)
         {
             try
             {
-                DocumentEntity entities = _mapper.Map<DocumentEntity>(document);
-                await _documentRepository.InsertDocumentAsync(entities);
+                if (!checkDocumentValidity(document))
+                {
+                    _logger.LogWarning(
+                        "{method} /document failed in {layer} Layer due to {reason}.",
+                        "POST", "Business", "empty or invalid file format"
+                    );
+                    throw new ServiceException("Could not upload document.", ExceptionType.Validation);
+                }
 
-                _logger.LogInformation("POST /document uploaded document with ID {Id} successfully.", document.Id);
+                DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
+                await _documentRepository.InsertDocumentAsync(entity);
             }
             catch (DatabaseException ex)
             {
                 _logger.LogError(
                     ex,
                     "{method} /document failed in {layer} Layer due to {reason}.",
-                    "POST", "Business", "a database error"
+                    "POST", "DataAccess", "a database error"
                 );
 
-                throw new ServiceException("Could not retrieve document.", ex);
+                throw new ServiceException("Could not upload document.", ExceptionType.Internal);
             }
         }
 
@@ -101,10 +109,10 @@ namespace Paperless.BL.Services
                 _logger.LogError(
                     ex,
                     "{method} /document failed in {layer} Layer due to {reason}.",
-                    "DELETE", "Business", "a database error"
+                    "DELETE", "DataAccess", "a database error"
                 );
 
-                throw new ServiceException("Could not retrieve document.", ex);
+                throw new ServiceException("Could not delete documents.", ExceptionType.Internal, ex);
             }
         }
         public async Task DeleteDocumentAsync(Guid id)
@@ -118,11 +126,24 @@ namespace Paperless.BL.Services
                 _logger.LogError(
                     ex,
                     "{method} /document/{id} failed in {layer} Layer due to {reason}.",
-                    "DELETE", id, "Business", "a database error"
+                    "DELETE", id, "DataAccess", "a database error"
                 );
 
-                throw new ServiceException("Could not retrieve document.", ex);
+                throw new ServiceException("Could not delete document.", ExceptionType.Internal, ex);
             }
+        }
+
+        private bool checkDocumentValidity(Document document)
+        {
+            if (document.Id == Guid.Empty || 
+                string.IsNullOrWhiteSpace(document.Name) ||
+                string.IsNullOrWhiteSpace(document.Content) ||
+                string.IsNullOrWhiteSpace(document.FilePath) ||
+                string.IsNullOrWhiteSpace(document.Type) ||
+                document.Size <= 0)
+                return false;
+
+            return true;
         }
     }
 }

@@ -1,6 +1,6 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Paperless.API.DTOs;
+using Paperless.API.Dtos;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
 using Paperless.DAL.Database;
@@ -23,7 +23,7 @@ Log.Logger = new LoggerConfiguration()
 //  Automapper configuration
 var mapperConfig = new MapperConfiguration(
     cfg => {
-        cfg.CreateMap<DocumentDTO, Document>().ReverseMap();
+        cfg.CreateMap<DocumentDto, Document>().ReverseMap();
         cfg.CreateMap<Document, DocumentEntity>().ReverseMap();
     }
 );

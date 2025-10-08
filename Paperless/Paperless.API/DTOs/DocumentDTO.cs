@@ -1,6 +1,6 @@
-﻿namespace Paperless.API.DTOs
+﻿namespace Paperless.API.Dtos
 {
-    public class DocumentDTO
+    public class DocumentDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
@@ -11,9 +11,9 @@
         public string Type { get; set; }
         public double Size { get; set; }
 
-        public DocumentDTO() { }
+        public DocumentDto() { }
 
-        public DocumentDTO(Guid id, string name, string content, string summary, string filePath, DateTime creationDate, string type, double size)
+        public DocumentDto(Guid id, string name, string content, string summary, string filePath, DateTime creationDate, string type, double size)
         {
             Id = id;
             Name = name;

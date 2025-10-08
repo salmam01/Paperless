@@ -2,7 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Paperless.API.Controllers;
-using Paperless.API.DTOs;
+using Paperless.API.Dtos;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
 
