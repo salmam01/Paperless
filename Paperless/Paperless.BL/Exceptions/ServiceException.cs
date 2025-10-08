@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Paperless.BL.Exceptions
 {
-    public class BusinessException : Exception
+    public class ServiceException : Exception
     {
-        public BusinessException (string message, Exception? innerException = null)
+        public ServiceException (string message, Exception? innerException = null)
             : base(message, innerException)
         { }
     }
