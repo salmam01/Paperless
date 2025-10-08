@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Paperless.BL.Exceptions;
 using Paperless.BL.Models;
 using Paperless.DAL.Entities;
+using Paperless.DAL.Exceptions;
 using Paperless.DAL.Repositories;
 using System;
 using System.Collections.Generic;
@@ -11,26 +13,31 @@ using System.Threading.Tasks;
 
 namespace Paperless.BL.Services
 {
-    //  TODO: Implement a custom BL exception
-    public class DocumentService
-        (IDocumentRepository documentrepository, IMapper mapper, ILogger<DocumentRepository> logger) 
-        : IDocumentService
+    public class DocumentService (
+        IDocumentRepository documentrepository, 
+        IMapper mapper, 
+        ILogger<DocumentService> logger
+        ) : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
         private readonly IMapper _mapper = mapper;
-        private readonly ILogger<DocumentRepository> _logger = logger;
+        private readonly ILogger<DocumentService> _logger = logger;
 
         public async Task<IEnumerable<Document>> GetDocumentsAsync()
         {
             try
             {
-                var entities = await _documentRepository.GetDocumentsAsync();
+                IEnumerable<DocumentEntity> entities = await _documentRepository.GetDocumentsAsync();
                 IEnumerable<Document> documents = _mapper.Map<IEnumerable<Document>>(entities);
 
                 return documents;
-            } catch (Exception ex) {
-                _logger.LogError(ex, "GET /document failed due to an internal server error.");
-                throw;
+            } catch (DatabaseException ex) {
+                _logger.LogError(
+                    ex, 
+                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "GET", "DataAccess", "a database error"
+                );
+                throw new ServiceException("Could not retrieve documents.", ExceptionType.Internal, ex);
             }
         }
 
@@ -38,30 +45,47 @@ namespace Paperless.BL.Services
         {
             try
             {
-                var entities = await _documentRepository.GetDocumentAsync(id);
-                Document document = _mapper.Map<Document>(entities);
+                DocumentEntity? entity = await _documentRepository.GetDocumentAsync(id);
+                Document document = _mapper.Map<Document>(entity);
 
-                _logger.LogInformation("GET /document/{Id} retrieved document successfully.", id);
                 return document;
             } 
-            catch (Exception ex) 
+            catch (DatabaseException ex) 
             {
-                _logger.LogError(ex, "GET /document/{Id} failed due to an internal server error.", id);
-                throw;
+                _logger.LogError(
+                    ex,
+                    "{method} /document/{id} failed in {layer} Layer due to {reason}.",
+                    "GET", id, "DataAccess", "a database error"
+                );
+
+                throw new ServiceException("Could not retrieve document.", ExceptionType.Internal, ex);
             }
         }
         public async Task UploadDocumentAsync(Document document)
         {
             try
             {
-                var entities = _mapper.Map<DocumentEntity>(document);
-                await _documentRepository.InsertDocumentAsync(entities);
+                if (!checkDocumentValidity(document))
+                {
+                    _logger.LogWarning(
+                        "{method} /document failed in {layer} Layer due to {reason}.",
+                        "POST", "Business", "empty or invalid file format"
+                    );
+                    throw new ServiceException("Could not upload document.", ExceptionType.Validation);
+                }
 
-                _logger.LogInformation("POST /document uploaded document with ID {Id} successfully.", document.Id);
+                DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
+                await _documentRepository.InsertDocumentAsync(entity);
             }
-            catch (Exception ex)
+            catch (DatabaseException ex)
             {
-                throw;
+                _logger.LogError(
+                    ex,
+                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "POST", "DataAccess", "a database error"
+                );
+
+                throw new ServiceException("Could not upload document.", ExceptionType.Internal);
             }
         }
 
@@ -80,9 +104,15 @@ namespace Paperless.BL.Services
             {
                 await _documentRepository.DeleteDocumentsAsync();
             }
-            catch (Exception ex)
+            catch (DatabaseException ex)
             {
-                throw;
+                _logger.LogError(
+                    ex,
+                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "DELETE", "DataAccess", "a database error"
+                );
+
+                throw new ServiceException("Could not delete documents.", ExceptionType.Internal, ex);
             }
         }
         public async Task DeleteDocumentAsync(Guid id)
@@ -91,10 +121,29 @@ namespace Paperless.BL.Services
             {
                 await _documentRepository.DeleteDocumentAsync(id);
             }
-            catch (Exception ex)
+            catch (DatabaseException ex)
             {
-                throw;
+                _logger.LogError(
+                    ex,
+                    "{method} /document/{id} failed in {layer} Layer due to {reason}.",
+                    "DELETE", id, "DataAccess", "a database error"
+                );
+
+                throw new ServiceException("Could not delete document.", ExceptionType.Internal, ex);
             }
+        }
+
+        private bool checkDocumentValidity(Document document)
+        {
+            if (document.Id == Guid.Empty || 
+                string.IsNullOrWhiteSpace(document.Name) ||
+                string.IsNullOrWhiteSpace(document.Content) ||
+                string.IsNullOrWhiteSpace(document.FilePath) ||
+                string.IsNullOrWhiteSpace(document.Type) ||
+                document.Size <= 0)
+                return false;
+
+            return true;
         }
     }
 }
