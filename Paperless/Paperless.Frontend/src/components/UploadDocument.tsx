@@ -1,32 +1,17 @@
+// @ts-ignore
 import { useState, useRef, type ChangeEvent, type DragEvent } from "react";
+import { validateFile, formatFileSize, clearFileInput, ACCEPTED_FILE_TYPES } from "../utils/uploadUtils";
 
 interface Props {
     loading: boolean
     onUploaded: (file: File) => void;
 }
-//Kommentar Z: das nochmal durchgehen manche Funktionen kann man auch von den anderen Komponenten nutzen, also hier nicht neu schreiben oderr umgekehrt
+
 export function UploadDocument( { loading, onUploaded } : Props) {
     const [file, setFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const acceptedFileTypes = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png'];
-    const maxFileSize = 10 * 1024 * 1024; // 10MB
-
-    function validateFile(file: File): string | null {
-        const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-        
-        if (!acceptedFileTypes.includes(fileExtension)) {
-            return `Dateityp ${fileExtension} wird nicht unterstützt. Erlaubte Formate: ${acceptedFileTypes.join(', ')}`;
-        }
-        
-        if (file.size > maxFileSize) {
-            return `Datei ist zu groß. Maximum: ${Math.round(maxFileSize / 1024 / 1024)}MB`;
-        }
-        
-        return null;
-    }
 
     function handleFileSelect(selectedFile: File) {
         const validationError = validateFile(selectedFile);
@@ -70,26 +55,14 @@ export function UploadDocument( { loading, onUploaded } : Props) {
             onUploaded(file);
             setFile(null);
             setError(null);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
+            clearFileInput(fileInputRef);
         }
     }
 
     function handleRemoveFile() {
         setFile(null);
         setError(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    }
-
-    function formatFileSize(bytes: number): string {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        clearFileInput(fileInputRef);
     }
 
     return(
@@ -106,7 +79,7 @@ export function UploadDocument( { loading, onUploaded } : Props) {
                     type="file" 
                     name="document" 
                     onChange={handleFileChange}
-                    accept={acceptedFileTypes.join(',')}
+                    accept={ACCEPTED_FILE_TYPES.join(',')}
                     style={{ display: 'none' }}
                 />
                 
