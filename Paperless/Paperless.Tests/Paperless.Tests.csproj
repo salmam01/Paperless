@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Paperless.API\Paperless.API.csproj" />
+    <ProjectReference Include="..\Paperless.BL\Paperless.BL.csproj" />
     <ProjectReference Include="..\Paperless.DAL\Paperless.DAL.csproj" />
   </ItemGroup>
 

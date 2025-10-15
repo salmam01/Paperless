@@ -5,11 +5,10 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Paperless.API.Controllers;
 using Paperless.API.Dtos;
-using Paperless.API.Messaging;
-using Paperless.BL.Models;
 using Paperless.BL.Services;
+using Paperless.BL.Models;
 using Microsoft.Extensions.Options;
-using Paperless.API.Configurations;
+using Paperless.BL.Configurations;
 
 namespace Paperless.Tests
 {
