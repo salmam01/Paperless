@@ -7,7 +7,6 @@ namespace Paperless.Tests;
 
 public class DocumentRepositoryTests
 {
-    /*
     private static PaperlessDbContext CreateInMemoryDbContext()
     {
         DbContextOptions<PaperlessDbContext> options = new DbContextOptionsBuilder<PaperlessDbContext>()
@@ -17,7 +16,7 @@ public class DocumentRepositoryTests
     }
 
     [Fact]
-    public void Insert_And_Get_By_Id_Works()
+    public async Task Insert_And_Get_By_Id_Works()
     {
         using PaperlessDbContext ctx = CreateInMemoryDbContext();
         DocumentRepository repo = new DocumentRepository(ctx);
@@ -27,18 +26,19 @@ public class DocumentRepositoryTests
             Name = "Doc 1",
             Content = "Hello",
             Summary = "Sum",
+            FilePath = "f",
             CreationDate = DateTime.UtcNow,
             Type = "txt",
             Size = 1.23
         };
-        repo.InsertDocumentAsync(entity);
+        await repo.InsertDocumentAsync(entity);
 
-        DocumentEntity? loaded = repo.GetDocumentAsync(entity.Id);
+        DocumentEntity? loaded = await repo.GetDocumentAsync(entity.Id);
         Assert.Equal("Doc 1", loaded.Name);
     }
 
     [Fact]
-    public void Update_Works()
+    public async Task Update_Works()
     {
         using PaperlessDbContext ctx = CreateInMemoryDbContext();
         DocumentRepository repo = new DocumentRepository(ctx);
@@ -48,21 +48,22 @@ public class DocumentRepositoryTests
             Name = "Doc",
             Content = "C",
             Summary = "S",
+            FilePath = "f",
             CreationDate = DateTime.UtcNow,
             Type = "t",
             Size = 1
         };
-        repo.InsertDocumentAsync(entity);
+        await repo.InsertDocumentAsync(entity);
 
         entity.Name = "Updated";
-        repo.UpdateDocumentAsync(entity);
+        await repo.UpdateDocumentAsync(entity);
 
-        DocumentEntity? loaded = repo.GetDocumentAsync(entity.Id);
+        DocumentEntity? loaded = await repo.GetDocumentAsync(entity.Id);
         Assert.Equal("Updated", loaded.Name);
     }
 
     [Fact]
-    public void Delete_Works()
+    public async Task Delete_Works()
     {
         using PaperlessDbContext ctx = CreateInMemoryDbContext();
         DocumentRepository repo = new DocumentRepository(ctx);
@@ -72,30 +73,29 @@ public class DocumentRepositoryTests
             Name = "Doc",
             Content = "C",
             Summary = "S",
+            FilePath = "f",
             CreationDate = DateTime.UtcNow,
             Type = "t",
             Size = 1
         };
-        repo.InsertDocumentAsync(entity);
-        repo.DeleteDocumentAsync(entity.Id);
+        await repo.InsertDocumentAsync(entity);
+        await repo.DeleteDocumentAsync(entity.Id);
 
-        Assert.Throws<KeyNotFoundException>(() => repo.GetDocumentAsync(entity.Id));
+        await Assert.ThrowsAsync<KeyNotFoundException>(async () => await repo.GetDocumentAsync(entity.Id));
     }
 
     [Fact]
-    public void GetAllDocuments_Works()
+    public async Task GetAllDocuments_Works()
     {
         using PaperlessDbContext ctx = CreateInMemoryDbContext();
         DocumentRepository repo = new DocumentRepository(ctx);
         
-        // Insert multiple documents
-        repo.InsertDocumentAsync(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc1", Content = "Content1", Summary = "Summary1", CreationDate = DateTime.UtcNow, Type = "txt", Size = 1 });
-        repo.InsertDocumentAsync(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc2", Content = "Content2", Summary = "Summary2", CreationDate = DateTime.UtcNow, Type = "pdf", Size = 2 });
+        await repo.InsertDocumentAsync(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc1", Content = "Content1", Summary = "Summary1", FilePath = "f1", CreationDate = DateTime.UtcNow, Type = "txt", Size = 1 });
+        await repo.InsertDocumentAsync(new DocumentEntity { Id = Guid.NewGuid(), Name = "Doc2", Content = "Content2", Summary = "Summary2", FilePath = "f2", CreationDate = DateTime.UtcNow, Type = "pdf", Size = 2 });
 
-        List<DocumentEntity> allDocs = repo.GetDocumentsAsync().ToList();
+        List<DocumentEntity> allDocs = (await repo.GetDocumentsAsync()).ToList();
         Assert.Equal(2, allDocs.Count);
         Assert.Contains(allDocs, d => d.Name == "Doc1");
         Assert.Contains(allDocs, d => d.Name == "Doc2");
     }
-    */
 }

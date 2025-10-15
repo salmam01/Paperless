@@ -1,129 +1,112 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Paperless.API.Controllers;
 using Paperless.API.Dtos;
-using Paperless.DAL.Entities;
-using Paperless.DAL.Repositories;
+using Paperless.API.Messaging;
+using Paperless.BL.Models;
+using Paperless.BL.Services;
+using Microsoft.Extensions.Options;
+using Paperless.API.Configurations;
 
 namespace Paperless.Tests
 {
     public class DocumentControllerTests
     {
-        /*
-        private readonly Mock<IDocumentRepository> _mockRepository;
-        private readonly IMapper _mapper;
-        private readonly DocumentController _controller;
+        private readonly Mock<IDocumentService> _documentService = new();
+        private readonly DocumentPublisher _documentPublisher;
+        private readonly Mock<IMapper> _mapper = new();
+        private readonly Mock<ILogger<DocumentController>> _logger = new();
+
+        private DocumentController CreateController()
+        {
+            DocumentController controller = new DocumentController(_documentService.Object, _documentPublisher, _mapper.Object, _logger.Object);
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            return controller;
+        }
 
         public DocumentControllerTests()
         {
-            _mockRepository = new Mock<IDocumentRepository>();
-            
-            // Setup AutoMapper
-            var mapperConfig = new MapperConfiguration(
-                cfg => {
-                    cfg.CreateMap<DocumentDTO, DocumentEntity>();
-                    cfg.CreateMap<DocumentEntity, DocumentDTO>();
-                }
-            );
-            _mapper = mapperConfig.CreateMapper(); 
-
-            _controller = new DocumentController(_mockRepository.Object, _mapper);
+            RabbitMqConfig cfg = new RabbitMqConfig { Host = "localhost", Port = 5672, User = "guest", Password = "guest", QueueName = "test" };
+            _documentPublisher = new DocumentPublisher(Options.Create(cfg), Mock.Of<ILogger<DocumentPublisher>>());
         }
 
         [Fact]
-        public void GetAll_Works()
+        public async Task GetAll_ReturnsOk()
         {
-            List<DocumentEntity> documents =
-            [
-                new DocumentEntity
-                {
-                    Id = Guid.NewGuid(), Name = "Doc1", Content = "Content1", Summary = "Summary1", CreationDate = DateTime.UtcNow,
-                    Type = "txt", Size = 1.0
-                },
-                new DocumentEntity
-                {
-                    Id = Guid.NewGuid(), Name = "Doc2", Content = "Content2", Summary = "Summary2", CreationDate = DateTime.UtcNow,
-                    Type = "pdf", Size = 2.0
-                }
-            ];
-            
-            _mockRepository.Setup(repo => repo.GetDocumentsAsync()).Returns(documents);
-            ActionResult<IEnumerable<DocumentDTO>> result = _controller.GetAll();
+            IEnumerable<Document> docs = new List<Document>
+            {
+                new Document(Guid.NewGuid(), "Doc1", "C1", "S1", "f", DateTime.UtcNow, "txt", 1.0),
+                new Document(Guid.NewGuid(), "Doc2", "C2", "S2", "f", DateTime.UtcNow, "pdf", 2.0)
+            };
+
+            _documentService.Setup(s => s.GetDocumentsAsync()).ReturnsAsync(docs);
+            _mapper.Setup(m => m.Map<IEnumerable<DocumentDto>>(It.IsAny<IEnumerable<Document>>()))
+                   .Returns(new List<DocumentDto>());
+
+            DocumentController controller = CreateController();
+            ActionResult<IEnumerable<DocumentDto>> result = await controller.GetAll();
+
             Assert.IsType<OkObjectResult>(result.Result);
         }
 
         [Fact]
-        public void Get_ValidId_Works()
+        public async Task Get_WithValidId_ReturnsOk()
         {
-            Guid documentId = Guid.NewGuid();
-            DocumentEntity document = new DocumentEntity 
-            { 
-                Id = documentId, 
-                Name = "Test Doc", 
-                Content = "Test Content", 
-                Summary = "Test Summary", 
-                CreationDate = DateTime.UtcNow, 
-                Type = "txt", 
-                Size = 1.0 
-            };
-            
-            _mockRepository.Setup(repo => repo.GetDocumentAsync(documentId)).Returns(document);
-            IActionResult result = _controller.Get(documentId.ToString());
+            Guid id = Guid.NewGuid();
+            Document doc = new Document(id, "Doc", "C", "S", "f", DateTime.UtcNow, "txt", 1.0);
+
+            _documentService.Setup(s => s.GetDocumentAsync(id)).ReturnsAsync(doc);
+            _mapper.Setup(m => m.Map<DocumentDto>(It.IsAny<Document>()))
+                   .Returns(new DocumentDto { Id = id, Name = "Doc" });
+
+            DocumentController controller = CreateController();
+            ActionResult result = await controller.Get(id.ToString());
+
             Assert.IsType<OkObjectResult>(result);
         }
 
         [Fact]
-        public void Get_InvalidId_ReturnsBadRequest()
+        public async Task Get_WithInvalidId_ReturnsBadRequest()
         {
-            IActionResult result = _controller.Get("invalid-guid");
+            DocumentController controller = CreateController();
+            ActionResult result = await controller.Get("not-a-guid");
             Assert.IsType<BadRequestObjectResult>(result);
         }
-
         
         [Fact]
-        public void Create_Works()
+        public async Task UploadDocument_EmptyFile_ReturnsBadRequest()
         {
-            DocumentDTO documentDto = new DocumentDTO
-            {
-                Name = "New Document",
-                Content = "New Content"
-            };
+            Mock<IFormFile> file = new();
+            file.SetupGet(f => f.Length).Returns(0);
 
-            _mockRepository.Setup(repo => repo.InsertDocument(It.IsAny<DocumentEntity>()));
-            ActionResult<DocumentDTO> result = _controller.UploadDocument(documentDto);
-            Assert.IsType<CreatedAtActionResult>(result.Result);
-        }
-
-        [Fact]
-        public void Create_InvalidDocument_ReturnsBadRequest()
-        {
-            DocumentDTO documentDto = new DocumentDTO
-            {
-                Name = "",
-                Content = "Valid Content"
-            };
-            
-            ActionResult<DocumentDTO> result = _controller.UploadDocument(documentDto);
+            DocumentController controller = CreateController();
+            ActionResult<DocumentDto> result = await controller.UploadDocument(file.Object);
             Assert.IsType<BadRequestObjectResult>(result.Result);
         }
 
         [Fact]
-        public void Delete_Works()
+        public async Task DeleteAll_ReturnsOk()
         {
-            Guid documentId = Guid.NewGuid();
-            _mockRepository.Setup(repo => repo.DeleteDocumentAsync(documentId));
-            ActionResult result = _controller.Delete(documentId.ToString());
+            _documentService.Setup(s => s.DeleteDocumentsAsync()).Returns(Task.CompletedTask);
+            DocumentController controller = CreateController();
+            ActionResult result = await controller.DeleteAll();
             Assert.IsType<OkResult>(result);
         }
 
         [Fact]
-        public void DeleteAll_Works()
+        public async Task Delete_ById_ReturnsOk()
         {
-            _mockRepository.Setup(repo => repo.DeleteDocumentsAsync());
-            ActionResult result = _controller.DeleteAll();
+            Guid id = Guid.NewGuid();
+            _documentService.Setup(s => s.DeleteDocumentAsync(id)).Returns(Task.CompletedTask);
+            DocumentController controller = CreateController();
+            ActionResult result = await controller.Delete(id.ToString());
             Assert.IsType<OkResult>(result);
         }
-        */
     }
 }
