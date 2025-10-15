@@ -1,4 +1,5 @@
-﻿using Paperless.API.Configurations;
+﻿using Microsoft.Extensions.Options;
+using Paperless.API.Configurations;
 using Paperless.API.Dtos;
 using RabbitMQ.Client;
 using System.Text;
@@ -11,18 +12,18 @@ namespace Paperless.API.Messaging
         private readonly ConnectionFactory _connectionFactory;
         private readonly RabbitMqConfig _config;
         private readonly ILogger<DocumentPublisher> _logger;
-
-        public DocumentPublisher(RabbitMqConfig config, ILogger<DocumentPublisher> logger)
+        
+        public DocumentPublisher(IOptions<RabbitMqConfig> config, ILogger<DocumentPublisher> logger)
         {
-            _config = config;
+            _config = config.Value;
             _logger = logger;
 
             _connectionFactory = new ConnectionFactory()
             {
-                HostName = config.Host,
-                Port = config.Port,
-                UserName = config.User,
-                Password = config.Password,
+                HostName = _config.Host,
+                Port = _config.Port,
+                UserName = _config.User,
+                Password = _config.Password,
             };
         }
 

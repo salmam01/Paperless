@@ -11,7 +11,7 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
     const [file, setFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     function handleFileSelect(selectedFile: File) {
         const validationError = validateFile(selectedFile);
