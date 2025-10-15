@@ -9,11 +9,3 @@ namespace Paperless.Services.Configurations
         public string QueueName { get; set; } = string.Empty;
     }
 }
-
-
-
-
-
-
-
-

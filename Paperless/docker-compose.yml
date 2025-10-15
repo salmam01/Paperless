@@ -68,23 +68,23 @@ services:
       - paperless-network
 
 
-  # OCR Worker
-  paperless-worker:
-    image: mcr.microsoft.com/dotnet/sdk:8.0
-    container_name: paperless-worker
-    working_dir: /src
-    volumes:
-      - ./:/src
-    command: dotnet run --project ./Paperless.Services/Paperless.Services.csproj --no-restore --nologo
+  # Paperless Services (contains workers)
+  paperless-services:
+    build:
+      context: ./Paperless.Services/
+      dockerfile: Services.Dockerfile
+    container_name: paperless-services
     depends_on:
       paperless-rabbitmq:
-        condition: service_started
+        condition: service_healthy
     environment:
       - RabbitMQ__Host=paperless-rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__User=guest
       - RabbitMQ__Password=guest
       - RabbitMQ__QueueName=document.uploaded
+    ports:
+    - "8082:8082"
     networks:
       - paperless-network
 
