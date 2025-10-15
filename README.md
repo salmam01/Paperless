@@ -1,9 +1,8 @@
 # Paperless - Instructions
-
 # From the project root, move one folder down
 - cd Paperless
 
-# Make to start Docker Desktop, then build the containers
+# Make sure to start Docker Desktop, then build the containers
 - docker compose build
 
 # Start the containers
