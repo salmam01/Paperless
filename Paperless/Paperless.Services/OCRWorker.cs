@@ -6,14 +6,14 @@ using RabbitMQ.Client.Events;
 
 namespace Paperless.Services
 {
-    public class Worker : BackgroundService
+    public class OCRWorker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<OCRWorker> _logger;
         private readonly RabbitMqConfig _config;
         private IConnection? _connection;
         private IModel? _channel;
 
-        public Worker(ILogger<Worker> logger, IOptions<RabbitMqConfig> config)
+        public OCRWorker(ILogger<OCRWorker> logger, IOptions<RabbitMqConfig> config)
         {
             _logger = logger;
             _config = config.Value;
@@ -44,21 +44,25 @@ namespace Paperless.Services
                 try
                 {
                     string? message = Encoding.UTF8.GetString(ea.Body.ToArray());
-                    _logger.LogInformation("[OCR Worker] Received document message: {Message}", message);
+                    _logger.LogInformation("Received document {message} from Message Queue {QueueName}.", message, _config.QueueName);
 
                     // Simulate processing
                     Task.Delay(500, stoppingToken).Wait(stoppingToken);
 
                     _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+                    _logger.LogInformation("Processed document from Message Queue {QueueName} successfully.", _config.QueueName);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error processing message");
+                    _logger.LogError(
+                        ex,
+                        "{method} /document failed in {layer} Layer due to {reason}.",
+                        "POST", "Services", "an error processing the message"
+                    );
                     _channel.BasicNack(deliveryTag: ea.DeliveryTag, multiple: false, requeue: true);
                 }
             };
             _channel.BasicConsume(queue: _config.QueueName, autoAck: false, consumer: consumer);
-
             return Task.CompletedTask;
         }
 

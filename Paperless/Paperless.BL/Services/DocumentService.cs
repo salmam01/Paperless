@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models;
+using Paperless.BL.Services;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Exceptions;
 using Paperless.DAL.Repositories;
@@ -14,12 +15,14 @@ using System.Threading.Tasks;
 namespace Paperless.BL.Services
 {
     public class DocumentService (
-        IDocumentRepository documentrepository, 
+        IDocumentRepository documentrepository,
+        DocumentPublisher documentPublisher,
         IMapper mapper, 
         ILogger<DocumentService> logger
         ) : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
+        private readonly DocumentPublisher _documentPublisher = documentPublisher;
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<DocumentService> _logger = logger;
 
@@ -61,11 +64,12 @@ namespace Paperless.BL.Services
                 throw new ServiceException("Could not retrieve document.", ExceptionType.Internal, ex);
             }
         }
+
         public async Task UploadDocumentAsync(Document document)
         {
             try
             {
-                if (!checkDocumentValidity(document))
+                if (!CheckDocumentValidity(document))
                 {
                     _logger.LogWarning(
                         "{method} /document failed in {layer} Layer due to {reason}.",
@@ -74,8 +78,13 @@ namespace Paperless.BL.Services
                     throw new ServiceException("Could not upload document.", ExceptionType.Validation);
                 }
 
+                await _documentPublisher.PublishDocumentAsync(document);
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
                 await _documentRepository.InsertDocumentAsync(entity);
+            }
+            catch (RabbitMQException ex)
+            {
+                throw new ServiceException("Could not upload document.", ex.Type);
             }
             catch (DatabaseException ex)
             {
@@ -89,11 +98,13 @@ namespace Paperless.BL.Services
             }
         }
 
+        //  TODO: Implement in later sprints
         public async Task EditDocumentAsync(Document document)
         {
             throw new NotImplementedException();
         }
 
+        //  TODO: Implement in later sprints
         public async Task SearchForDocument(string query)
         {
             throw new NotImplementedException();
@@ -133,7 +144,7 @@ namespace Paperless.BL.Services
             }
         }
 
-        private bool checkDocumentValidity(Document document)
+        private bool CheckDocumentValidity(Document document)
         {
             if (document.Id == Guid.Empty || 
                 string.IsNullOrWhiteSpace(document.Name) ||

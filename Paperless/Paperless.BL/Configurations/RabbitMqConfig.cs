@@ -1,4 +1,4 @@
-﻿namespace Paperless.API.Configurations
+﻿namespace Paperless.BL.Configurations
 {
     public class RabbitMqConfig
     {

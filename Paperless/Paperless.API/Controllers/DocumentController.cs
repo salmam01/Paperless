@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Paperless.API.Dtos;
-using Paperless.API.Messaging;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
@@ -145,8 +144,6 @@ namespace Paperless.API.Controllers
                 DocumentDto documentDto = parseFormData(form);
                 if (documentDto == null)
                     return BadRequest("Empty or invalid document.");
-
-                await _documentPublisher.PublishDocumentAsync(documentDto);
 
                 Document document = _mapper.Map<Document>(documentDto);
                 await _documentService.UploadDocumentAsync(document);

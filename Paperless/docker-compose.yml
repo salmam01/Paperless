@@ -1,4 +1,5 @@
 services:
+  # PostgreSQL Database
   paperless-db:
     image: postgres:latest
     container_name: paperless-db
@@ -15,7 +16,7 @@ services:
     networks:
       - paperless-network
 
-  # RabbitMQ with management UI 
+  # RabbitMQ with Management UI 
   paperless-rabbitmq:
     image: rabbitmq:3-management
     container_name: paperless-rabbitmq
@@ -36,14 +37,6 @@ services:
       context: .
       dockerfile: ./Paperless.API/API.Dockerfile
     container_name: paperless-api
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=paperless-db;Port=5432;Database=PaperlessDB;Username=swen3;Password=paperless123
-      - RabbitMQ__Host=paperless-rabbitmq
-      - RabbitMQ__Port=5672
-      - RabbitMQ__User=guest
-      - RabbitMQ__Password=guest
-      - RabbitMQ__QueueName=document.uploaded
     ports:
       - "8080:8080"
     depends_on:
@@ -54,7 +47,7 @@ services:
     networks:
       - paperless-network
 
-  # Frontend
+  # Frontend with React
   paperless-frontend:
     build:
       context: ./Paperless.Frontend
@@ -68,7 +61,7 @@ services:
       - paperless-network
 
 
-  # Paperless Services (contains workers)
+  # Paperless Services with Workers
   paperless-services:
     build:
       context: ./Paperless.Services/
@@ -77,12 +70,6 @@ services:
     depends_on:
       paperless-rabbitmq:
         condition: service_healthy
-    environment:
-      - RabbitMQ__Host=paperless-rabbitmq
-      - RabbitMQ__Port=5672
-      - RabbitMQ__User=guest
-      - RabbitMQ__Password=guest
-      - RabbitMQ__QueueName=document.uploaded
     ports:
     - "8082:8082"
     networks:

@@ -9,6 +9,7 @@ namespace Paperless.BL.Exceptions
     public enum ExceptionType
     {
         Validation,
+        Messaging,
         Internal
     }
 

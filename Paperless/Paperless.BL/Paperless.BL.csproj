@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Paperless.DAL\Paperless.DAL.csproj" />
+	<PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
   </ItemGroup>
 
   <PropertyGroup>
