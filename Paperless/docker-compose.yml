@@ -39,6 +39,11 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Host=paperless-db;Port=5432;Database=PaperlessDB;Username=swen3;Password=paperless123
+      - RabbitMQ__Host=paperless-rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__User=guest
+      - RabbitMQ__Password=guest
+      - RabbitMQ__QueueName=document.uploaded
     ports:
       - "8080:8080"
     depends_on:
@@ -59,6 +64,26 @@ services:
       - "80:80"
     depends_on:
       - paperless-api
+    networks:
+      - paperless-network
+
+  # OCR Worker
+  paperless-worker:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    container_name: paperless-worker
+    working_dir: /src
+    volumes:
+      - ./:/src
+    command: dotnet run --project ./Paperless.Services/Paperless.Services.csproj --no-restore --nologo
+    depends_on:
+      paperless-rabbitmq:
+        condition: service_started
+    environment:
+      - RabbitMQ__Host=paperless-rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__User=guest
+      - RabbitMQ__Password=guest
+      - RabbitMQ__QueueName=document.uploaded
     networks:
       - paperless-network
 
