@@ -1,31 +1,71 @@
-﻿using RabbitMQ.Client;
+﻿using Paperless.API.Configurations;
+using Paperless.API.Dtos;
+using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 
 namespace Paperless.API.Messaging
 {
     public class DocumentPublisher
     {
-        //  Add to configuration file later
-        private readonly IConnection _connection;
-        private readonly int Port = 5672;
-        private readonly string _queueName = "ocrQueue";
+        private readonly ConnectionFactory _connectionFactory;
+        private readonly RabbitMqConfig _config;
         private readonly ILogger<DocumentPublisher> _logger;
 
-        public DocumentPublisher()
+        public DocumentPublisher(RabbitMqConfig config, ILogger<DocumentPublisher> logger)
         {
-            
+            _config = config;
+            _logger = logger;
+
+            _connectionFactory = new ConnectionFactory()
+            {
+                HostName = config.Host,
+                Port = config.Port,
+                UserName = config.User,
+                Password = config.Password,
+            };
         }
 
-        public void PublishDocument()
+        public async Task PublishDocumentAsync(DocumentDto documentDto)
         {
             try
             {
-                
-            } catch {
+                await using IConnection connection = await _connectionFactory.CreateConnectionAsync();
+                await using var channel = await connection.CreateChannelAsync();
+
+                await channel.QueueDeclareAsync(
+                    queue: _config.QueueName, 
+                    durable: true, 
+                    exclusive: false, 
+                    autoDelete: false
+                );
+
+                var messageToJson = JsonSerializer.Serialize(documentDto);
+                var body = Encoding.UTF8.GetBytes(messageToJson);
+
                 /*
-                using var connection = _connection.CreateConnection();
-                using var channel = connection.CreateChannel();
-                */
+                var properties = channel.Crea
+                properties.Persistent = true;
+
+                channel.BasicPublishAsync(
+                    exchange: "",
+                    routingKey: _config.QueueName,
+                    mandatory: false,
+                    basicProperties: properties,
+                    body: body
+                );*/
+
+                _logger.LogInformation("Published document to RabbitMQ {DocumentId}", documentDto.Id);
+
+            } catch (Exception ex) {
+                _logger.LogError(
+                    ex,
+                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "POST", "Business", "publishing to RabbitMQ failing."
+                );
             }
+            //return Task.CompletedTask;
+            throw new NotImplementedException();
         }
     }
 }

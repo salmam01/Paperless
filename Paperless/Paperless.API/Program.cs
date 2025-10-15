@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Paperless.API.Configurations;
 using Paperless.API.Dtos;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
@@ -20,6 +21,9 @@ Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(config)
     .CreateLogger();
 
+//  RabbitMQ configuration
+RabbitMqConfig rabbitMqConfig = config.GetSection("RabbitMQ").Get<RabbitMqConfig>();
+
 //  Automapper configuration
 var mapperConfig = new MapperConfiguration(
     cfg => {
@@ -35,6 +39,7 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.ClearProviders();
     loggingBuilder.AddSerilog();
 });
+builder.Services.AddSingleton<RabbitMqConfig>();
 builder.Services.AddScoped<PaperlessDbContext>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();

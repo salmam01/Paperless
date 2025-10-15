@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Paperless.API.Dtos;
+using Paperless.API.Messaging;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
@@ -12,12 +13,14 @@ namespace Paperless.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     public class DocumentController (
-        IDocumentService documentService, 
+        IDocumentService documentService,
+        DocumentPublisher documentPublisher,
         IMapper mapper, 
         ILogger<DocumentController> logger
         ) : ControllerBase 
     {
         private readonly IDocumentService _documentService = documentService;
+        private readonly DocumentPublisher _documentPublisher = documentPublisher;
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<DocumentController> _logger = logger;
 
@@ -142,6 +145,8 @@ namespace Paperless.API.Controllers
                 DocumentDto documentDto = parseFormData(form);
                 if (documentDto == null)
                     return BadRequest("Empty or invalid document.");
+
+                await _documentPublisher.PublishDocumentAsync(documentDto);
 
                 Document document = _mapper.Map<Document>(documentDto);
                 await _documentService.UploadDocumentAsync(document);
