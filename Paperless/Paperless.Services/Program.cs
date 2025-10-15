@@ -5,7 +5,7 @@ using Paperless.Services.Configurations;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMQ"));
-builder.Services.AddHostedService<Worker>();
+builder.Services.AddHostedService<OCRWorker>();
 
 var host = builder.Build();
 host.Run();

@@ -1,10 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Paperless.API.Configurations;
 using Paperless.API.Dtos;
-using Paperless.API.Messaging;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
+using Paperless.BL.Configurations;
 using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;

@@ -6,14 +6,14 @@ using RabbitMQ.Client.Events;
 
 namespace Paperless.Services
 {
-    public class Worker : BackgroundService
+    public class OCRWorker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<OCRWorker> _logger;
         private readonly RabbitMqConfig _config;
         private IConnection? _connection;
         private IModel? _channel;
 
-        public Worker(ILogger<Worker> logger, IOptions<RabbitMqConfig> config)
+        public OCRWorker(ILogger<OCRWorker> logger, IOptions<RabbitMqConfig> config)
         {
             _logger = logger;
             _config = config.Value;
