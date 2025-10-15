@@ -30,7 +30,7 @@ namespace Paperless.API.Messaging
         {
             try
             {
-                await using IConnection connection = await _connectionFactory.CreateConnectionAsync();
+                await using var connection = await _connectionFactory.CreateConnectionAsync();
                 await using var channel = await connection.CreateChannelAsync();
 
                 await channel.QueueDeclareAsync(
@@ -43,17 +43,13 @@ namespace Paperless.API.Messaging
                 var messageToJson = JsonSerializer.Serialize(documentDto);
                 var body = Encoding.UTF8.GetBytes(messageToJson);
 
-                /*
-                var properties = channel.Crea
-                properties.Persistent = true;
-
-                channel.BasicPublishAsync(
+                await channel.BasicPublishAsync(
                     exchange: "",
                     routingKey: _config.QueueName,
-                    mandatory: false,
-                    basicProperties: properties,
+                    mandatory: true,
+                    basicProperties: new BasicProperties { Persistent = true },
                     body: body
-                );*/
+                );
 
                 _logger.LogInformation("Published document to RabbitMQ {DocumentId}", documentDto.Id);
 
@@ -63,9 +59,8 @@ namespace Paperless.API.Messaging
                     "{method} /document failed in {layer} Layer due to {reason}.",
                     "POST", "Business", "publishing to RabbitMQ failing."
                 );
+                throw;
             }
-            //return Task.CompletedTask;
-            throw new NotImplementedException();
         }
     }
 }
