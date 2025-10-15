@@ -67,6 +67,7 @@ services:
     networks:
       - paperless-network
 
+
   # OCR Worker
   paperless-worker:
     image: mcr.microsoft.com/dotnet/sdk:8.0
