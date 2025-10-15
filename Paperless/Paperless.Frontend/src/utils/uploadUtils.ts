@@ -25,7 +25,7 @@ export function formatFileSize(bytes: number): string {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-export function clearFileInput(fileInputRef: React.RefObject<HTMLInputElement>) {
+export function clearFileInput(fileInputRef: React.RefObject<HTMLInputElement | null>) {
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
     }
