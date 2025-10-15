@@ -1,21 +1,20 @@
-# Paperless
+# Paperless - Instructions
 
-# From the project root, go into the frontend folder and install node_modules
-- cd Paperless/Paperless.Client/paperless-client
-- npm install
+# From the project root, move one folder down
+- cd Paperless
 
-# Move back to the root folder and build docker containers
-- cd ../..
+# Make to start Docker Desktop, then build the containers
 - docker compose build
+
+# Start the containers
 - docker compose up -d
 
-# One-liner (copy & paste)
-cd Paperless/Paperless.Client/paperless-client
-npm install
-cd ../..
+# Instead (Optional): One-liner
+cd Paperless
 docker compose build
 docker compose up -d
 
 # Now the application should be accessible via localhost
-- frontend: http://localhost:80
-- backend: http://localhost:8080
+- Frontend: http://localhost:80
+- Backend: http://localhost:8080
+- RabbitMQ: http://localhost:15672
