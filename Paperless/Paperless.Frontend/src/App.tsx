@@ -138,8 +138,6 @@ function App() {
 
           
         <div className="api-status">
-          <h3>API Status</h3>
-          <p>Backend API is running and accessible</p>
           <button onClick={fetchDocuments} disabled={loading}>
             {loading ? 'Refreshing...' : 'Refresh Documents'}
           </button>
