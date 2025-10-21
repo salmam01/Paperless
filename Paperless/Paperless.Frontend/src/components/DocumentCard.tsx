@@ -11,8 +11,15 @@ export function DocumentCard({ document, onDelete, onSelect }: Props) {
     
     return (
         <div className={`document-card ${hasActions ? 'has-actions' : ''}`}>
-            <h3>{document.name}</h3>
-            <p className="document-content">{document.content}</p>
+            <div className="document-header">
+                <h3>{document.name}</h3>
+                <span className="document-type">{document.type}</span>
+            </div>
+            <p className="document-content">{document.content}</p><br/>
+            <div className="document-metadata">
+                <span className="document-size">{Math.round(document.size * 100) / 100} MB</span>
+                <span className="document-date">{new Date(document.creationDate).toLocaleDateString('de-DE')}</span>
+                <br/></div><br/>
             {onSelect && (
                 <button
                     className="card-action-button card-action-button--info"

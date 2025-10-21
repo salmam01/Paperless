@@ -5,6 +5,7 @@ using Paperless.API.Dtos;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
+using System.IO;
 
 namespace Paperless.API.Controllers
 {
@@ -129,8 +130,11 @@ namespace Paperless.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<DocumentDto>> UploadDocument(IFormFile form) {
             _logger.LogInformation(
-                "Incoming POST /document from {ip}.",
-                HttpContext.Connection.RemoteIpAddress?.ToString()
+                "Incoming POST /document from {ip}. File: {fileName}, ContentType: {contentType}, Size: {size}",
+                HttpContext.Connection.RemoteIpAddress?.ToString(),
+                form?.FileName,
+                form?.ContentType,
+                form?.Length
             );
 
             if (form == null || form.Length == 0)
@@ -280,6 +284,9 @@ namespace Paperless.API.Controllers
 
         private DocumentDto parseFormData(IFormFile form)
         {
+            string fileType = GetFileTypeFromFileName(form.FileName);
+            _logger.LogInformation("Parsing file: {fileName}, detected type: {fileType}", form.FileName, fileType);
+            
             DocumentDto documentDto = new
             (
                 Guid.NewGuid(),
@@ -290,11 +297,30 @@ namespace Paperless.API.Controllers
                 "FilePath", // temporary
 
                 DateTime.UtcNow,
-                form.ContentType,
+                fileType,
                 Math.Round(form.Length / Math.Pow(1024.0, 2), 2)
             );
 
             return documentDto;
+        }
+
+        private string GetFileTypeFromFileName(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return "Unknown";
+
+            string extension = Path.GetExtension(fileName).ToLowerInvariant();
+            
+            return extension switch
+            {
+                ".pdf" => "PDF",
+                ".doc" => "DOC",
+                ".docx" => "DOCX",
+                ".txt" => "TXT",
+                ".jpg" or ".jpeg" => "JPG",
+                ".png" => "PNG",
+                _ => "Unknown"
+            };
         }
 
         private int GetHttpStatusCode(ExceptionType type)

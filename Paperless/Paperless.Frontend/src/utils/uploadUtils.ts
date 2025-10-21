@@ -1,10 +1,21 @@
-//uploas consts
+// Upload-consts
 export const ACCEPTED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png'];
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // Upload-Utility-Function
 export function validateFile(file: File): string | null {
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    
+    // Debug-Logging : txt files
+    if (fileExtension === '.txt') {
+        console.log('TXT-Datei erkannt:', {
+            fileName: file.name,
+            fileExtension,
+            fileSize: file.size,
+            contentType: file.type,
+            acceptedTypes: ACCEPTED_FILE_TYPES
+        });
+    }
     
     if (!ACCEPTED_FILE_TYPES.includes(fileExtension)) {
         return `Dateityp ${fileExtension} wird nicht unterstützt. Erlaubte Formate: ${ACCEPTED_FILE_TYPES.join(', ')}`;
@@ -15,6 +26,23 @@ export function validateFile(file: File): string | null {
     }
     
     return null;
+}
+
+// filetype
+export function getFileTypeFromFileName(fileName: string): string {
+    if (!fileName) return 'Unknown';
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    switch (extension) {
+        case 'pdf': return 'PDF';
+        case 'doc': return 'DOC';
+        case 'docx': return 'DOCX';
+        case 'txt': return 'TXT';
+        case 'jpg':
+        case 'jpeg': return 'JPG';
+        case 'png': return 'PNG';
+        default: return 'Unknown';
+    }
 }
 
 export function formatFileSize(bytes: number): string {
