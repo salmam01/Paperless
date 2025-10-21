@@ -91,7 +91,7 @@ function App() {
       addNotification(errorMessage, 'error');
     }
   };
-//Später:hier cleanen nicht vergessen, da wierdeholen sich die catch blöcke
+//Später:hier cleanen nicht vergessen, da wiederholen sich die catch blöcke
   const handleUpload = async (file: File) => {
     try {
       if (!file) return;
