@@ -6,7 +6,6 @@ export async function getDocuments(): Promise<DocumentDto[]> {
     const response = await fetch(apiUrl)
 
     if (!response.ok) throw new Error('Failed to fetch documents');
-
     return await response.json();
 }
 
