@@ -14,13 +14,11 @@ namespace Paperless.API.Controllers
     [Route("api/[controller]")]
     public class DocumentController (
         IDocumentService documentService,
-        DocumentPublisher documentPublisher,
         IMapper mapper, 
         ILogger<DocumentController> logger
         ) : ControllerBase 
     {
         private readonly IDocumentService _documentService = documentService;
-        private readonly DocumentPublisher _documentPublisher = documentPublisher;
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<DocumentController> _logger = logger;
 

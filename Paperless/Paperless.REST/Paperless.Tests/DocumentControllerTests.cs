@@ -7,7 +7,6 @@ using Paperless.API.Controllers;
 using Paperless.API.Dtos;
 using Paperless.BL.Services;
 using Paperless.BL.Models;
-using Microsoft.Extensions.Options;
 using Paperless.BL.Configurations;
 
 namespace Paperless.Tests
@@ -15,13 +14,12 @@ namespace Paperless.Tests
     public class DocumentControllerTests
     {
         private readonly Mock<IDocumentService> _documentService = new();
-        private readonly DocumentPublisher _documentPublisher;
         private readonly Mock<IMapper> _mapper = new();
         private readonly Mock<ILogger<DocumentController>> _logger = new();
 
         private DocumentController CreateController()
         {
-            DocumentController controller = new DocumentController(_documentService.Object, _documentPublisher, _mapper.Object, _logger.Object);
+            DocumentController controller = new DocumentController(_documentService.Object, _mapper.Object, _logger.Object);
             controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext()
@@ -32,7 +30,6 @@ namespace Paperless.Tests
         public DocumentControllerTests()
         {
             RabbitMqConfig cfg = new RabbitMqConfig { Host = "localhost", Port = 5672, User = "guest", Password = "guest", QueueName = "test" };
-            _documentPublisher = new DocumentPublisher(Options.Create(cfg), Mock.Of<ILogger<DocumentPublisher>>());
         }
 
         [Fact]
