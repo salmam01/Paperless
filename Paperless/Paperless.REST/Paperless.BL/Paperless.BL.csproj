@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Paperless.DAL\Paperless.DAL.csproj" />
 	<PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
+	<PackageReference Include="Minio" Version="6.0.5" />
   </ItemGroup>
 
   <PropertyGroup>

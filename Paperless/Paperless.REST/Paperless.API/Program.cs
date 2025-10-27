@@ -1,12 +1,13 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Paperless.API.Dtos;
+using Paperless.BL.Configurations;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
-using Paperless.BL.Configurations;
 using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
+using Paperless.Services.Configurations;
 using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -37,6 +38,7 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddSerilog();
 });
 builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMQ"));
+builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("Minio"));
 builder.Services.AddScoped<PaperlessDbContext>();
 
 builder.Services.AddSingleton<DocumentPublisher>();

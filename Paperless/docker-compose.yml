@@ -31,6 +31,19 @@ services:
     networks:
       - paperless-network
 
+  # MinIO for Object Storage
+  paperless-minio:
+    image: minio/minio
+    container_name: paperless-minio
+    ports:
+      - "9000:9000" # MinIO API
+      - "9090:9090" # MinIO Console
+    volumes:
+      - miniodata:/data
+    networks:
+      - paperless-network
+    command: server /data --console-address ":9090"
+
   # Backend 
   paperless-rest:
     build:
@@ -81,3 +94,4 @@ networks:
 
 volumes:
   pgdata:
+  miniodata:

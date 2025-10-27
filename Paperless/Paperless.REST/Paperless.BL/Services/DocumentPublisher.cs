@@ -42,10 +42,12 @@ namespace Paperless.BL.Services
                     exclusive: false, 
                     autoDelete: false
                 );
-
+                
+                /*
                 var messageToJson = JsonSerializer.Serialize(document);
-                var body = Encoding.UTF8.GetBytes(messageToJson);
-
+                */
+                
+                var body = Encoding.UTF8.GetBytes(document.Id.ToString());
                 await channel.BasicPublishAsync(
                     exchange: "",
                     routingKey: _config.QueueName,

@@ -1,23 +1,20 @@
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+# Use the full .NET SDK to both build and run
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS app
 WORKDIR /app
 
-# This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
+# Copy project and restore dependencies
 COPY . .
-RUN dotnet restore "./Paperless.Services.csproj"
-RUN dotnet build "./Paperless.Services.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet restore
 
-# This stage is used to publish the service project to be copied to the final stage
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "Paperless.Services.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Build and publish in one go
+RUN dotnet publish -c Release -o out /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
-EXPOSE 8082
+# Install Tesseract and Ghostscript
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    ghostscript \
+ && rm -rf /var/lib/apt/lists/*
+
+# Set working directory and entrypoint
+WORKDIR /app/out
 ENTRYPOINT ["dotnet", "Paperless.Services.dll"]
