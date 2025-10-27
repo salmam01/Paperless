@@ -1,45 +1,61 @@
-using System.Text;
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Text;
+using System.Threading.Channels;
+using Tesseract;
 
 namespace Paperless.Services.Workers
 {
+    //  OCR - Optional Character Recognition
     public class OCRWorker : BackgroundService
     {
         private readonly ILogger<OCRWorker> _logger;
         private readonly RabbitMqConfig _config;
-        private IConnection? _connection;
-        private IModel? _channel;
+        private readonly ConnectionFactory _connectionFactory;
+        private IChannel _channel;
+        private IConnection _connection;
 
         public OCRWorker(ILogger<OCRWorker> logger, IOptions<RabbitMqConfig> config)
         {
-            _logger = logger;
             _config = config.Value;
+            _logger = logger;
+
+            _connectionFactory = new ConnectionFactory()
+            {
+                HostName = _config.Host,
+                Port = _config.Port,
+                UserName = _config.User,
+                Password = _config.Password,
+            };
+
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            if (_connection == null || _channel == null)
-            {
-                ConnectionFactory factory = new ConnectionFactory
-                {
-                    HostName = _config.Host,
-                    Port = _config.Port,
-                    UserName = _config.User,
-                    Password = _config.Password
-                };
+            /*
+            Tesseract can only convert text from images (turns them into bitmaps) --> ghostscript converts pdfs to images
+            1) worker receives pdf 
+            2) checks file format
+            3) if it's a pdf, call ghostscript
+            4) ghostscript converts pdf to image
+            5) tesseract converts image to text
+            */
+            _connection = await _connectionFactory.CreateConnectionAsync();
+            _channel = await _connection.CreateChannelAsync();
 
-                _connection = factory.CreateConnection();
-                _channel = _connection.CreateModel();
+            await _channel.QueueDeclareAsync(
+                queue: _config.QueueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false
+            );
 
-                _channel.QueueDeclare(queue: _config.QueueName, durable: true, exclusive: false, autoDelete: false);
-                _channel.BasicQos(0, 1, false);
-            }
+            await _channel.BasicQosAsync(0, 1, false);
 
-            EventingBasicConsumer consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (_, ea) =>
+            AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel);
+            consumer.ReceivedAsync += async (_, ea) =>
             {
                 try
                 {
@@ -47,9 +63,9 @@ namespace Paperless.Services.Workers
                     _logger.LogInformation("Received document {message} from Message Queue {QueueName}.", message, _config.QueueName);
 
                     // Simulate processing
-                    Task.Delay(500, stoppingToken).Wait(stoppingToken);
+                    await Task.Delay(500, stoppingToken);
 
-                    _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+                    await _channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
                     _logger.LogInformation("Processed document from Message Queue {QueueName} successfully.", _config.QueueName);
                 }
                 catch (Exception ex)
@@ -59,17 +75,26 @@ namespace Paperless.Services.Workers
                         "{method} /document failed in {layer} Layer due to {reason}.",
                         "POST", "Services", "an error processing the message"
                     );
-                    _channel.BasicNack(deliveryTag: ea.DeliveryTag, multiple: false, requeue: true);
+                    await _channel.BasicNackAsync(deliveryTag: ea.DeliveryTag, multiple: false, requeue: true);
                 }
             };
-            _channel.BasicConsume(queue: _config.QueueName, autoAck: false, consumer: consumer);
-            return Task.CompletedTask;
+
+            await _channel.BasicConsumeAsync(queue: _config.QueueName, autoAck: false, consumer: consumer);
+        }
+
+        public string processImage(string body)
+        {
+            using var engine = new TesseractEngine(@"./tessdata", "eng", EngineMode.Default);
+            using var img = Pix.LoadFromFile("add image"); // TODO: fix
+            using var page = engine.Process(img);
+
+            return page.GetText();
         }
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-            _channel?.Close();
-            _connection?.Close();
+            _channel.CloseAsync();
+            _connection.CloseAsync();
             return base.StopAsync(cancellationToken);
         }
     }
