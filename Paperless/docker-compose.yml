@@ -32,11 +32,11 @@ services:
       - paperless-network
 
   # Backend 
-  paperless-api:
+  paperless-rest:
     build:
-      context: .
-      dockerfile: ./Paperless.API/API.Dockerfile
-    container_name: paperless-api
+      context: ./Paperless.REST
+      dockerfile: REST.Dockerfile
+    container_name: paperless-rest
     ports:
       - "8080:8080"
     depends_on:
@@ -56,7 +56,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - paperless-api
+      - paperless-rest
     networks:
       - paperless-network
 
@@ -64,7 +64,7 @@ services:
   # Paperless Services with Workers
   paperless-services:
     build:
-      context: ./Paperless.Services/
+      context: ./Paperless.Services
       dockerfile: Services.Dockerfile
     container_name: paperless-services
     depends_on:

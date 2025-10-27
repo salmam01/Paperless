@@ -17,7 +17,6 @@ export async function getDocument(id: string): Promise<DocumentDto> {
     return await response.json();
 }
 
-
 export async function postDocument(document: FormData): Promise<DocumentDto> {
     //  FormData is binary, not JSON
     const response = await fetch(apiUrl, {
