@@ -4,7 +4,7 @@ using Paperless.Services.Configurations;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace Paperless.Services
+namespace Paperless.Services.Workers
 {
     public class OCRWorker : BackgroundService
     {

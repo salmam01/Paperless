@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
-using Paperless.Services;
 using Paperless.Services.Configurations;
+using Paperless.Services.Workers;
 using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
