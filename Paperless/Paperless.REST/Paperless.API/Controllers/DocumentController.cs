@@ -143,12 +143,12 @@ namespace Paperless.API.Controllers
 
             try
             {
-                DocumentDto documentDto = parseFormData(form);
+                DocumentDto documentDto = parseFormMetaData(form);
                 if (documentDto == null)
                     return BadRequest("Empty or invalid document.");
 
                 Document document = _mapper.Map<Document>(documentDto);
-                await _documentService.UploadDocumentAsync(document);
+                await _documentService.UploadDocumentAsync(document, form.OpenReadStream());
 
                 _logger.LogInformation("POST /document uploaded document with ID {Id} successfully.", documentDto.Id);
                 return CreatedAtAction(nameof(Get), new { id = documentDto.Id }, documentDto);
@@ -280,7 +280,7 @@ namespace Paperless.API.Controllers
             }
         }
 
-        private DocumentDto parseFormData(IFormFile form)
+        private DocumentDto parseFormMetaData(IFormFile form)
         {
             string fileType = GetFileTypeFromFileName(form.FileName);
             _logger.LogInformation("Parsing file: {fileName}, detected type: {fileType}", form.FileName, fileType);
@@ -289,7 +289,7 @@ namespace Paperless.API.Controllers
             (
                 Guid.NewGuid(),
                 form.FileName,
-                "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, ...", // temporary 
+                string.Empty,
                 "Summary coming soon.", // temporary
 
                 "FilePath", // temporary

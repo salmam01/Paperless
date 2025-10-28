@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models;
-using Paperless.BL.Services;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Exceptions;
 using Paperless.DAL.Repositories;
@@ -17,12 +16,14 @@ namespace Paperless.BL.Services
     public class DocumentService (
         IDocumentRepository documentrepository,
         DocumentPublisher documentPublisher,
+        DocumentStorage documentStorage,
         IMapper mapper, 
         ILogger<DocumentService> logger
         ) : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
         private readonly DocumentPublisher _documentPublisher = documentPublisher;
+        private readonly DocumentStorage _documentStorage = documentStorage;
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<DocumentService> _logger = logger;
 
@@ -65,25 +66,42 @@ namespace Paperless.BL.Services
             }
         }
 
-        public async Task UploadDocumentAsync(Document document)
+        public async Task UploadDocumentAsync(Document document, Stream content)
         {
             try
             {
-                if (!CheckDocumentValidity(document))
+                /*
+                if (!CheckMetaDataValidity(document))
                 {
                     _logger.LogWarning(
                         "{method} /document failed in {layer} Layer due to {reason}.",
                         "POST", "Business", "empty or invalid file format"
                     );
                     throw new ServiceException("Could not upload document.", ExceptionType.Validation);
-                }
+                }*/
 
-                await _documentPublisher.PublishDocumentAsync(document);
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
                 await _documentRepository.InsertDocumentAsync(entity);
+
+                await _documentStorage.UploadDocumentToStorageAsync(document.Id, content);
+                await _documentPublisher.PublishDocumentAsync(document.Id);
+            }
+            catch (MinIOException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "POST", "Business", "a minIO error"
+                );
+                throw new ServiceException("Could not upload document.", ex.Type);
             }
             catch (RabbitMQException ex)
             {
+                _logger.LogError(
+                    ex,
+                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "POST", "Business", "a RabbitMQ error"
+                );
                 throw new ServiceException("Could not upload document.", ex.Type);
             }
             catch (DatabaseException ex)
@@ -144,7 +162,7 @@ namespace Paperless.BL.Services
             }
         }
 
-        private bool CheckDocumentValidity(Document document)
+        private bool CheckMetaDataValidity(Document document)
         {
             if (document.Id == Guid.Empty || 
                 string.IsNullOrWhiteSpace(document.Name) ||

@@ -2,10 +2,8 @@
 using Microsoft.Extensions.Options;
 using Paperless.BL.Configurations;
 using Paperless.BL.Exceptions;
-using Paperless.BL.Models;
 using RabbitMQ.Client;
 using System.Text;
-using System.Text.Json;
 
 namespace Paperless.BL.Services
 {
@@ -29,7 +27,7 @@ namespace Paperless.BL.Services
             };
         }
 
-        public async Task PublishDocumentAsync(Document document)
+        public async Task PublishDocumentAsync(Guid id)
         {
             try
             {
@@ -47,7 +45,7 @@ namespace Paperless.BL.Services
                 var messageToJson = JsonSerializer.Serialize(document);
                 */
                 
-                var body = Encoding.UTF8.GetBytes(document.Id.ToString());
+                var body = Encoding.UTF8.GetBytes(id.ToString());
                 await channel.BasicPublishAsync(
                     exchange: "",
                     routingKey: _config.QueueName,
@@ -56,7 +54,7 @@ namespace Paperless.BL.Services
                     body: body
                 );
 
-                _logger.LogInformation("Published document with ID {DocumentId} to Message Queue {QueueName} successfully.", document.Id, _config.QueueName);
+                _logger.LogInformation("Published document with ID {DocumentId} to Message Queue {QueueName} successfully.", id, _config.QueueName);
 
             } catch (Exception ex) {
                 _logger.LogError(
@@ -64,7 +62,7 @@ namespace Paperless.BL.Services
                     "{method} /document failed in {layer} Layer due to {reason}.",
                     "POST", "Business", "publishing to RabbitMQ failing."
                 );
-                throw new RabbitMQException($"Failed to publish document {document.Id} to Message Queue.", ex);
+                throw new RabbitMQException($"Failed to publish document {id} to Message Queue.", ex);
             }
         }
     }

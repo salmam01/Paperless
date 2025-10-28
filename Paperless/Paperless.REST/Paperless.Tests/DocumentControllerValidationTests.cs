@@ -21,7 +21,7 @@ public class DocumentControllerValidationTests
 
     private DocumentController CreateController()
     {
-        DocumentController controller = new DocumentController(_service.Object, _publisher, _mapper.Object, _logger.Object);
+        DocumentController controller = new DocumentController(_service.Object, _mapper.Object, _logger.Object);
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()

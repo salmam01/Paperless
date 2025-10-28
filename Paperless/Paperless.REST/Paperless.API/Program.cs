@@ -7,6 +7,7 @@ using Paperless.BL.Services;
 using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
+using Paperless.Services;
 using Paperless.Services.Configurations;
 using Serilog;
 
@@ -38,10 +39,12 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddSerilog();
 });
 builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMQ"));
-builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("Minio"));
+builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("MinIO"));
 builder.Services.AddScoped<PaperlessDbContext>();
 
+builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<DocumentPublisher>();
+builder.Services.AddSingleton<DocumentStorage>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddSingleton(mapper);
