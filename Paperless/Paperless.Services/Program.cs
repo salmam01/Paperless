@@ -7,17 +7,18 @@ using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-//  Logger configuration
+//  Serilog configuration
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
+
 builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMQ"));
 builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("Minio"));
 
-builder.Services.AddSingleton<MinIOService>();
+builder.Services.AddSingleton<StorageService>();
 builder.Services.AddHostedService<OCRWorker>();
 
 var host = builder.Build();

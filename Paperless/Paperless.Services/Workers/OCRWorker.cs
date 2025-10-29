@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Options;
-using Minio;
 using Paperless.Services.Configurations;
 using Paperless.Services.Services;
 using RabbitMQ.Client;
@@ -15,14 +14,14 @@ namespace Paperless.Services.Workers
         private readonly ILogger<OCRWorker> _logger;
         private readonly RabbitMqConfig _rabbitMqConfig;
         private readonly ConnectionFactory _connectionFactory;
+        private readonly StorageService _storageService;
         private IChannel? _channel;
         private IConnection? _connection;
-        private readonly IMinioClient _minIO;
 
-        public OCRWorker(ILogger<OCRWorker> logger, IOptions<RabbitMqConfig> rabbitMqConfig, MinIOService minIOService)
+        public OCRWorker(ILogger<OCRWorker> logger, IOptions<RabbitMqConfig> rabbitMqConfig, StorageService storageService)
         {
             _rabbitMqConfig = rabbitMqConfig.Value;
-            _minIO = minIOService.Client;
+            _storageService = storageService;
             _logger = logger;
 
             _connectionFactory = new ConnectionFactory()
@@ -36,14 +35,7 @@ namespace Paperless.Services.Workers
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            /*
-            Tesseract can only convert text from images (turns them into bitmaps) --> ghostscript converts pdfs to images
-                1) worker receives pdf 
-                2) checks file format
-                3) if it's a pdf, call ghostscript
-                4) ghostscript converts pdf to image
-                5) tesseract converts image to text
-            */
+
             _connection = await _connectionFactory.CreateConnectionAsync();
             _channel = await _connection.CreateChannelAsync();
 
@@ -62,14 +54,23 @@ namespace Paperless.Services.Workers
             {
                 try
                 {
-                    string? message = Encoding.UTF8.GetString(ea.Body.ToArray());
-                    _logger.LogInformation("Received document ID {message} from Message Queue {QueueName}.", message, _rabbitMqConfig.QueueName);
+                    string? id = Encoding.UTF8.GetString(ea.Body.ToArray());
+                    _logger.LogInformation(
+                        "Received document ID {message} from Message Queue {QueueName}.", 
+                        id, 
+                        _rabbitMqConfig.QueueName
+                    );
 
-                    // Simulate processing
-                    await Task.Delay(500, stoppingToken);
+                    Stream document = await _storageService.DownloadDocumentFromStorageAsync(id);
+                    if (document.Length <= 0)
+                        throw new Exception("Document stream is empty.");
+
 
                     await _channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
-                    _logger.LogInformation("Processed document from Message Queue {QueueName} successfully.", _rabbitMqConfig.QueueName);
+                    _logger.LogInformation(
+                        "Processed document from Message Queue {QueueName} successfully.", 
+                        _rabbitMqConfig.QueueName
+                    );
                 }
                 catch (Exception ex)
                 {
@@ -85,7 +86,14 @@ namespace Paperless.Services.Workers
             await _channel.BasicConsumeAsync(queue: _rabbitMqConfig.QueueName, autoAck: false, consumer: consumer);
         }
 
-        public string processImage(string body)
+        //  Use Ghostscript to parse PDF to image
+        private string ProcessPDF(Stream document)
+        {
+            return "";
+        }
+
+        //  Use Tesseract to parse PDF to image
+        private string ProcessImage(string body)
         {
             using var engine = new TesseractEngine(@"./tessdata", "eng", EngineMode.Default);
             using var img = Pix.LoadFromFile("add image"); // TODO: fix

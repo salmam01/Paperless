@@ -44,7 +44,6 @@ builder.Services.AddScoped<PaperlessDbContext>();
 
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<DocumentPublisher>();
-builder.Services.AddSingleton<DocumentStorage>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddSingleton(mapper);

@@ -16,14 +16,14 @@ namespace Paperless.BL.Services
     public class DocumentService (
         IDocumentRepository documentrepository,
         DocumentPublisher documentPublisher,
-        DocumentStorage documentStorage,
+        StorageService storageService,
         IMapper mapper, 
         ILogger<DocumentService> logger
         ) : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
         private readonly DocumentPublisher _documentPublisher = documentPublisher;
-        private readonly DocumentStorage _documentStorage = documentStorage;
+        private readonly StorageService _storageService = storageService;
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<DocumentService> _logger = logger;
 
@@ -83,7 +83,7 @@ namespace Paperless.BL.Services
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
                 await _documentRepository.InsertDocumentAsync(entity);
 
-                await _documentStorage.UploadDocumentToStorageAsync(document.Id, content);
+                await _storageService.UploadDocumentToStorageAsync(document.Id, content);
                 await _documentPublisher.PublishDocumentAsync(document.Id);
             }
             catch (MinIOException ex)
