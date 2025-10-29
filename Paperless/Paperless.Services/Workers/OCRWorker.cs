@@ -3,6 +3,8 @@ using Paperless.Services.Configurations;
 using Paperless.Services.Services;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Diagnostics;
+using System.IO.Abstractions;
 using System.Text;
 using Tesseract;
 
@@ -33,9 +35,9 @@ namespace Paperless.Services.Workers
             };
         }
 
+        //  TODO: Refactor method, split it into multiple parts (MessageQueue, Storage, OCR)
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-
             _connection = await _connectionFactory.CreateConnectionAsync();
             _channel = await _connection.CreateChannelAsync();
 
@@ -54,6 +56,8 @@ namespace Paperless.Services.Workers
             {
                 try
                 {
+                    //  Stream -> Temp file -> Ghostscript -> Upload -> Delete
+
                     string? id = Encoding.UTF8.GetString(ea.Body.ToArray());
                     _logger.LogInformation(
                         "Received document ID {message} from Message Queue {QueueName}.", 
@@ -61,10 +65,26 @@ namespace Paperless.Services.Workers
                         _rabbitMqConfig.QueueName
                     );
 
+                    //  Download file (stream) from minIO
                     Stream document = await _storageService.DownloadDocumentFromStorageAsync(id);
                     if (document.Length <= 0)
                         throw new Exception("Document stream is empty.");
 
+                    //  Create temporary file and read into it
+                    string filePath = Path.GetTempFileName();
+                    string imgPath = Path.ChangeExtension(filePath, ".png");
+                    await CopyContentToFileAsync(document, filePath);
+
+                    //  OCR process
+                    await ConvertPdfToImageAsync(filePath, imgPath);
+                    byte[] imageBytes = await File.ReadAllBytesAsync(imgPath);
+                    string resultText = ConvertImageToText(imgPath);
+
+                    //  TODO: probably upload it back to minIO
+
+                    //  Delete the temporary images stored in Docker
+                    File.Delete(imgPath);
+                    File.Delete(filePath);
 
                     await _channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
                     _logger.LogInformation(
@@ -79,24 +99,50 @@ namespace Paperless.Services.Workers
                         "{method} /document failed in {layer} Layer due to {reason}.",
                         "POST", "Services", "an error processing the message"
                     );
-                    await _channel.BasicNackAsync(deliveryTag: ea.DeliveryTag, multiple: false, requeue: true);
+                    await _channel.BasicNackAsync(deliveryTag: ea.DeliveryTag, multiple: false, requeue: true); //  TODO: add requeue logic !!
                 }
             };
 
             await _channel.BasicConsumeAsync(queue: _rabbitMqConfig.QueueName, autoAck: false, consumer: consumer);
         }
 
-        //  Use Ghostscript to parse PDF to image
-        private string ProcessPDF(Stream document)
+        private async Task CopyContentToFileAsync(Stream document, string filePath)
         {
-            return "";
+            using (var filestream = File.Create(filePath))
+            {
+                await document.CopyToAsync(filestream);
+            }
+            document.Close();
         }
 
-        //  Use Tesseract to parse PDF to image
-        private string ProcessImage(string body)
+        //  Use Ghostscript to parse PDF to image
+        private async Task ConvertPdfToImageAsync(string filePath, string imagePath)
+        {
+            Process process = new()
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "gs",
+                    Arguments = $"-dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -r300 -o \"{imagePath}\" \"{filePath}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardInput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+                throw new Exception("Converting PDF to image process failed.");
+        }
+
+        //  TODO: Use Tesseract to parse PDF to image
+        private string ConvertImageToText(string imagePath)
         {
             using var engine = new TesseractEngine(@"./tessdata", "eng", EngineMode.Default);
-            using var img = Pix.LoadFromFile("add image"); // TODO: fix
+            using var img = Pix.LoadFromFile(imagePath);
             using var page = engine.Process(img);
 
             return page.GetText();
