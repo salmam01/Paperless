@@ -17,8 +17,10 @@ builder.Logging.AddSerilog();
 
 builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMQ"));
 builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("Minio"));
+builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("OCR"));
 
 builder.Services.AddSingleton<StorageService>();
+builder.Services.AddSingleton<OCRService>();
 builder.Services.AddHostedService<OCRWorker>();
 
 var host = builder.Build();

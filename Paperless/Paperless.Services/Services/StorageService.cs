@@ -27,10 +27,10 @@ namespace Paperless.Services.Services
             _logger = logger;
         }
 
-        public async Task<Stream> DownloadDocumentFromStorageAsync(string id)
+        public async Task<MemoryStream> DownloadDocumentFromStorageAsync(string id)
         {
             _logger.LogInformation(
-                "Downloading Document with ID {id} from Storage Bucket {BucketName}",
+                "Downloading Document with ID {id} from Storage Bucket {BucketName}.",
                 id,
                 _bucketName
             );
