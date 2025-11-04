@@ -4,17 +4,14 @@ using Paperless.Services.Models.Ocr;
 using Paperless.Services.Services;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Diagnostics;
-using System.IO.Abstractions;
 using System.Text;
-using Tesseract;
 
 namespace Paperless.Services.Workers
 {
     //  OCR - Optional Character Recognition
-    public class OCRWorker : BackgroundService
+    public class OcrWorker : BackgroundService
     {
-        private readonly ILogger<OCRWorker> _logger;
+        private readonly ILogger<OcrWorker> _logger;
         private readonly RabbitMqConfig _rabbitMqConfig;
         private readonly ConnectionFactory _connectionFactory;
         private readonly StorageService _storageService;
@@ -22,8 +19,8 @@ namespace Paperless.Services.Workers
         private IChannel? _channel;
         private IConnection? _connection;
 
-        public OCRWorker(
-            ILogger<OCRWorker> logger, 
+        public OcrWorker(
+            ILogger<OcrWorker> logger, 
             IOptions<RabbitMqConfig> rabbitMqConfig, 
             StorageService storageService,
             OcrService ocrService

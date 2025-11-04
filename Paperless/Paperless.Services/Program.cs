@@ -21,7 +21,7 @@ builder.Services.Configure<OcrConfig>(builder.Configuration.GetSection("Ocr"));
 
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OcrService>();
-builder.Services.AddHostedService<OCRWorker>();
+builder.Services.AddHostedService<OcrWorker>();
 
 var host = builder.Build();
 host.Run();

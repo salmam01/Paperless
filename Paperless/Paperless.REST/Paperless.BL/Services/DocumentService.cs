@@ -53,7 +53,7 @@ namespace Paperless.BL.Services
                 Document document = _mapper.Map<Document>(entity);
 
                 return document;
-            } 
+            }
             catch (DatabaseException ex) 
             {
                 _logger.LogError(
@@ -131,6 +131,8 @@ namespace Paperless.BL.Services
         {
             try
             {
+                await _storageService.DeleteDocumentsAsync();
+
                 await _documentRepository.DeleteDocumentsAsync();
             }
             catch (DatabaseException ex)
@@ -148,6 +150,8 @@ namespace Paperless.BL.Services
         {
             try
             {
+                await _storageService.DeleteDocumentAsync(id);
+
                 await _documentRepository.DeleteDocumentAsync(id);
             }
             catch (DatabaseException ex)
