@@ -1,15 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Paperless.BL.Exceptions;
+using Paperless.BL.Helpers;
 using Paperless.BL.Models;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Exceptions;
 using Paperless.DAL.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Paperless.BL.Services
 {
@@ -17,6 +14,7 @@ namespace Paperless.BL.Services
         IDocumentRepository documentrepository,
         DocumentPublisher documentPublisher,
         StorageService storageService,
+        Parser parser,
         IMapper mapper, 
         ILogger<DocumentService> logger
         ) : IDocumentService
@@ -24,6 +22,7 @@ namespace Paperless.BL.Services
         private readonly IDocumentRepository _documentRepository = documentrepository;
         private readonly DocumentPublisher _documentPublisher = documentPublisher;
         private readonly StorageService _storageService = storageService;
+        private readonly Parser _parser = parser;
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<DocumentService> _logger = logger;
 
@@ -80,11 +79,21 @@ namespace Paperless.BL.Services
                     throw new ServiceException("Could not upload document.", ExceptionType.Validation);
                 }*/
 
+                AdjustFileType(document);
+
+                if (document.Type != "PDF" && document.Type != "JPG" && document.Type != "PNG")
+                {
+                    _parser.ParseDocument(document, content);
+                    await _storageService.UploadDocumentToStorageAsync(document.Id, document.Type, content);
+                }
+                else
+                {
+                    await _storageService.UploadDocumentToStorageAsync(document.Id, document.Type, content);
+                    await _documentPublisher.PublishDocumentAsync(document.Id);
+                }
+
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
                 await _documentRepository.InsertDocumentAsync(entity);
-
-                await _storageService.UploadDocumentToStorageAsync(document.Id, content);
-                await _documentPublisher.PublishDocumentAsync(document.Id);
             }
             catch (MinIOException ex)
             {
@@ -177,6 +186,28 @@ namespace Paperless.BL.Services
                 return false;
 
             return true;
+        }
+
+        private void AdjustFileType(Document document)
+        {
+            if (string.IsNullOrEmpty(document.Type)) {
+
+                document.Type = "Unknown";
+                return;
+            }
+
+            string extension = document.Type;
+
+            document.Type = extension switch
+            {
+                ".pdf" => "PDF",
+                ".doc" => "DOC",
+                ".docx" => "DOCX",
+                ".txt" => "TXT",
+                ".jpg" or ".jpeg" => "JPG",
+                ".png" => "PNG",
+                _ => "Unknown"
+            };
         }
     }
 }

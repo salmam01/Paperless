@@ -1,15 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Paperless.API.Dtos;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
-using System.IO;
 
 namespace Paperless.API.Controllers
 {
-    //  Ignore BL for now and just query directly to DAL (Sprint 1)
     [ApiController]
     [Route("api/[controller]")]
     public class DocumentController (
@@ -282,43 +279,24 @@ namespace Paperless.API.Controllers
 
         private DocumentDto parseFormMetaData(IFormFile form)
         {
-            string fileType = GetFileTypeFromFileName(form.FileName);
-            _logger.LogInformation("Parsing file: {fileName}, detected type: {fileType}", form.FileName, fileType);
+            _logger.LogInformation("Parsing file: {fileName}.", form.FileName);
             
+            Guid id = Guid.NewGuid();
+            string fileType = Path.GetExtension(form.FileName).ToLowerInvariant();
+
             DocumentDto documentDto = new
             (
-                Guid.NewGuid(),
+                id,
                 form.FileName,
                 string.Empty,
                 "Summary coming soon.", // temporary
-
-                "FilePath", // temporary
-
+                $"{id}.{form.FileName}",
                 DateTime.UtcNow,
                 fileType,
                 Math.Round(form.Length / Math.Pow(1024.0, 2), 2)
             );
 
             return documentDto;
-        }
-
-        private string GetFileTypeFromFileName(string fileName)
-        {
-            if (string.IsNullOrEmpty(fileName))
-                return "Unknown";
-
-            string extension = Path.GetExtension(fileName).ToLowerInvariant();
-            
-            return extension switch
-            {
-                ".pdf" => "PDF",
-                ".doc" => "DOC",
-                ".docx" => "DOCX",
-                ".txt" => "TXT",
-                ".jpg" or ".jpeg" => "JPG",
-                ".png" => "PNG",
-                _ => "Unknown"
-            };
         }
 
         private int GetHttpStatusCode(ExceptionType type)

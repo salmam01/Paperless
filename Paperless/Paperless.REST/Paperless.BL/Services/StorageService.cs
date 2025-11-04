@@ -30,19 +30,21 @@ namespace Paperless.BL.Services
             _logger = logger;
         }
 
-        public async Task UploadDocumentToStorageAsync(Guid id, Stream content)
+        public async Task UploadDocumentToStorageAsync(Guid id, string fileType, Stream content)
         {
             try
             {
                 await CreateBucketIfNotExistsAsync(_bucketName);
 
+                string ft = fileType.ToLowerInvariant();
+
                 await _minIO.PutObjectAsync(
                     new PutObjectArgs()
                         .WithBucket(_bucketName)
-                        .WithObject($"{id}.pdf")
+                        .WithObject($"{id}.{ft}")
                         .WithStreamData(content)
                         .WithObjectSize(content.Length)
-                        .WithContentType("application/pdf") 
+                        .WithContentType($"application/{ft}") 
                 );
 
                 _logger.LogInformation(
