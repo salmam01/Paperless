@@ -81,15 +81,15 @@ namespace Paperless.BL.Services
 
                 AdjustFileType(document);
 
-                if (document.Type != "PDF" && document.Type != "JPG" && document.Type != "PNG")
-                {
-                    _parser.ParseDocument(document, content);
-                    await _storageService.UploadDocumentToStorageAsync(document.Id, document.Type, content);
-                }
-                else
+                if (document.Type == "PDF")
                 {
                     await _storageService.UploadDocumentToStorageAsync(document.Id, document.Type, content);
                     await _documentPublisher.PublishDocumentAsync(document.Id);
+                }
+                else
+                {
+                    _parser.ParseDocument(document, content);
+                    await _storageService.UploadDocumentToStorageAsync(document.Id, document.Type, content);
                 }
 
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
@@ -204,8 +204,6 @@ namespace Paperless.BL.Services
                 ".doc" => "DOC",
                 ".docx" => "DOCX",
                 ".txt" => "TXT",
-                ".jpg" or ".jpeg" => "JPG",
-                ".png" => "PNG",
                 _ => "Unknown"
             };
         }
