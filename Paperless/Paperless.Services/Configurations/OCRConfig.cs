@@ -6,30 +6,28 @@ using System.Threading.Tasks;
 
 namespace Paperless.Services.Configurations
 {
-    public class OCRConfig
+    public class OcrConfig
     {
-        //  Language codes used by Tesseract (e.g. "deu", "eng", "deu+eng").
         public string DefaultLanguage { get; set; } = "deu+eng";
 
-        //  OCR engine mode, mapped to Tesseract.EngineMode.
+        //  Engine mode
         public string DefaultOem { get; set; } = "LstmOnly";
 
-        //  Page segmentation mode, mapped to Tesseract.PageSegMode.
+        //  Page segmentation mode
         public string DefaultPsm { get; set; } = "Auto";
 
-        //  Rasterization DPI for PDF pages (300–400 is typical).
+        //  Rasterization DPI for PDF pages
         public int DefaultDpi { get; set; } = 300;
 
-        //  Enables deskewing of scanned pages.
+        //  Deskewing means correcting a tilt or a slant
         public bool UseDeskew { get; set; } = true;
 
-        //  Enables adaptive thresholding for uneven lighting.
+        //  Adaptive thresholding to fix uneven lighting
         public bool UseAdaptiveThreshold { get; set; } = true;
 
-        //  Applies light sharpening to improve edge contrast.
+        //  Light sharpening for improving edge contrast
         public bool UseSharpen { get; set; } = true;
 
-        //  Maximum number of pages processed per document.
         public int MaxPages { get; set; } = 50;
     }
 }

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Paperless.Services.Models.OCR
+namespace Paperless.Services.Models.Ocr
 {
-    public record OCRPageResult
+    public record OcrPage
     (
         int PageIndex,
         string Text,

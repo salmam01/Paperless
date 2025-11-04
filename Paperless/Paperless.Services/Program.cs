@@ -15,12 +15,12 @@ Log.Logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
-builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMQ"));
-builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("Minio"));
-builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("OCR"));
+builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMq"));
+builder.Services.Configure<MinIoConfig>(builder.Configuration.GetSection("MinIo"));
+builder.Services.Configure<OcrConfig>(builder.Configuration.GetSection("Ocr"));
 
 builder.Services.AddSingleton<StorageService>();
-builder.Services.AddSingleton<OCRService>();
+builder.Services.AddSingleton<OcrService>();
 builder.Services.AddHostedService<OCRWorker>();
 
 var host = builder.Build();

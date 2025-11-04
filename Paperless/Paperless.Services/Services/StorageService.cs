@@ -16,7 +16,7 @@ namespace Paperless.Services.Services
         private readonly IMinioClient _minIO;
         private readonly string _bucketName;
         private readonly ILogger<StorageService> _logger;
-        public StorageService(IOptions<MinIOConfig> config, ILogger<StorageService> logger) 
+        public StorageService(IOptions<MinIoConfig> config, ILogger<StorageService> logger) 
         {
             _minIO = new MinioClient()
                 .WithEndpoint(config.Value.Endpoint)

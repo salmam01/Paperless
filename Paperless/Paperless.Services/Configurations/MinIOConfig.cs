@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Paperless.Services.Configurations
 {
-    public class MinIOConfig
+    public class MinIoConfig
     {
         public string Endpoint { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;

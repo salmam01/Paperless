@@ -1,73 +1,76 @@
 ﻿using ImageMagick;
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.OCR;
+using Paperless.Services.Models.Ocr;
 using System.Text;
 using Tesseract;
 
 
 namespace Paperless.Services.Services
 {
-    public class OCRService
+    public class OcrService
     {
-        private readonly OCRConfig _config;
-        private readonly ILogger<OCRService> _logger;
+        private readonly OcrConfig _config;
+        private readonly ILogger<OcrService> _logger;
 
-        public OCRService(IOptions<OCRConfig> config, ILogger<OCRService> logger)
+        public OcrService(IOptions<OcrConfig> config, ILogger<OcrService> logger)
         {
             _config = config.Value;
             _logger = logger;
         }
 
         //  Use Tesseract to parse PDF to image
-        public OCRResult ProcessPdf(MemoryStream documentContent)
+        public OcrResult ProcessPdf(MemoryStream documentContent)
         {
             _logger.LogInformation(
                 "Converting temporary image to human readable text..."
             );
 
-            PdfImageResult result = ConvertPdfToImage(documentContent);
+            PdfImage imageResult = ConvertPdfToImage(documentContent);
 
-            using TesseractEngine engine = new("/app/tessdata", _config.DefaultLanguage, EngineMode.Default)
+            var engineConfig = Enum.Parse<EngineMode>(_config.DefaultOem);
+
+            using TesseractEngine engine = new("/app/tessdata", _config.DefaultLanguage, Enum.Parse<EngineMode>(_config.DefaultOem, true))
             {
                 DefaultPageSegMode = Enum.Parse<PageSegMode>(_config.DefaultPsm, true)
             };
 
-            List<OCRPageResult> pages = [];
+            //  Each page of the original file is converted seperately
+            List<OcrPage> pages = [];
 
-            for (int i = 0; i < result.Images.Count; i++)
+            for (int i = 0; i < imageResult.Images.Count; i++)
             {
-                using MagickImage image = result.Images[i];
+                using MagickImage image = imageResult.Images[i];
                 using MemoryStream imageStream = new MemoryStream();
                 image.Write(imageStream, MagickFormat.Png);
-                using var pix = Pix.LoadFromMemory(imageStream.ToArray());
+                using Pix pix = Pix.LoadFromMemory(imageStream.ToArray());
 
-                using var page = engine.Process(pix);
+                using Page page = engine.Process(pix);
                 string text = page.GetText();
                 float mean = page.GetMeanConfidence();
 
-                pages.Add(new OCRPageResult(i + 1, text, mean));
+                pages.Add(new OcrPage(i + 1, text, mean));
 
                 _logger.LogInformation(
                     "Processed Page {pageIndex} with confidence {Confidence:P1}",
-                    i + 1,
-                    mean
+                    pages[i].PageIndex,
+                    pages[i].MeanConfidence
                 );
             }
 
-            StringBuilder pdfContent = new();
-            foreach(OCRPageResult page in pages)
+            StringBuilder fileContent = new();
+            foreach(OcrPage page in pages)
             {
-                pdfContent.AppendLine($"---> Page: {page.PageIndex} (Confidence: {page.MeanConfidence:P0}) <---");
-                pdfContent.AppendLine(page.Text);
-                pdfContent.AppendLine();
+                fileContent.AppendLine($"---> Page: {page.PageIndex} (Confidence: {page.MeanConfidence:P1}) <---");
+                fileContent.AppendLine(page.Text);
+                fileContent.AppendLine();
             }
 
-            return new OCRResult(pages, pdfContent.ToString());
+            return new OcrResult(pages, fileContent.ToString());
         }
 
         //  Use Magic.NET which uses Ghostscript to parse PDF to image
-        public PdfImageResult ConvertPdfToImage(MemoryStream documentContent)
+        public PdfImage ConvertPdfToImage(MemoryStream documentContent)
         {
             _logger.LogInformation(
                 "Converting temporary PDF to a temporary image..."
@@ -134,7 +137,7 @@ namespace Paperless.Services.Services
                 throw;
             }
 
-            return new PdfImageResult(images, thumbnails, fullImages);
+            return new PdfImage(images, thumbnails, fullImages);
         }
     }
 }

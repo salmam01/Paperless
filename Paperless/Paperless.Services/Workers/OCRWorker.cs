@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.OCR;
+using Paperless.Services.Models.Ocr;
 using Paperless.Services.Services;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -18,7 +18,7 @@ namespace Paperless.Services.Workers
         private readonly RabbitMqConfig _rabbitMqConfig;
         private readonly ConnectionFactory _connectionFactory;
         private readonly StorageService _storageService;
-        private readonly OCRService _ocrService;
+        private readonly OcrService _ocrService;
         private IChannel? _channel;
         private IConnection? _connection;
 
@@ -26,7 +26,7 @@ namespace Paperless.Services.Workers
             ILogger<OCRWorker> logger, 
             IOptions<RabbitMqConfig> rabbitMqConfig, 
             StorageService storageService,
-            OCRService ocrService
+            OcrService ocrService
         ) {
             _rabbitMqConfig = rabbitMqConfig.Value;
             _storageService = storageService;
@@ -77,7 +77,7 @@ namespace Paperless.Services.Workers
                     if (documentContent.Length <= 0)
                         throw new Exception("Document stream is empty.");
                     
-                    OCRResult result = _ocrService.ProcessPdf(documentContent);
+                    OcrResult result = _ocrService.ProcessPdf(documentContent);
 
                     await _channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
                     _logger.LogInformation(

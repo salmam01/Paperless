@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Paperless.Services.Models.OCR
+namespace Paperless.Services.Models.Ocr
 {
-    public record OCRResult
+    public record OcrResult
     (
-        List<OCRPageResult> Pages,
+        List<OcrPage> Pages,
         string PdfContent
     );
 }
