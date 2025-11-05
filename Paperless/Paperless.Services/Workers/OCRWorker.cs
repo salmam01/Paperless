@@ -85,12 +85,85 @@ namespace Paperless.Services.Workers
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(
-                        ex,
-                        "{method} /document failed in {layer} Layer due to {reason}.",
-                        "POST", "Services", "an error processing the message"
-                    );
-                    await _channel.BasicNackAsync(deliveryTag: ea.DeliveryTag, multiple: false, requeue: false); //  TODO: add requeue logic !!
+                    string? id = Encoding.UTF8.GetString(ea.Body.ToArray());
+                    
+                    // Retry-Logik: Retry-Counter aus Headers lesen
+                    int retryCount = 0;
+                    if (ea.BasicProperties.Headers != null && 
+                        ea.BasicProperties.Headers.TryGetValue("x-retry-count", out var retryCountObj))
+                    {
+                        try
+                        {
+                            retryCount = Convert.ToInt32(retryCountObj);
+                        }
+                        catch
+                        {
+                            retryCount = 0;
+                        }
+                    }
+
+                    retryCount++;
+                    
+                    if (retryCount <= _rabbitMqConfig.MaxRetries)
+                    {
+                        _logger.LogWarning(
+                            ex,
+                            "Retry attempt {RetryCount}/{MaxRetries} for document ID {DocumentId} from Message Queue {QueueName}. Error: {ErrorMessage}",
+                            retryCount,
+                            _rabbitMqConfig.MaxRetries,
+                            id,
+                            _rabbitMqConfig.QueueName,
+                            ex.Message
+                        );
+                        
+                        // Neue Properties mit aktualisiertem Retry-Counter erstellen
+                        var newProperties = new BasicProperties
+                        {
+                            Persistent = true,
+                            Headers = new Dictionary<string, object>()
+                        };
+                        
+                        // Bestehende Headers kopieren (falls vorhanden)
+                        if (ea.BasicProperties.Headers != null)
+                        {
+                            foreach (var header in ea.BasicProperties.Headers)
+                            {
+                                if (header.Key != "x-retry-count")
+                                {
+                                    newProperties.Headers[header.Key] = header.Value;
+                                }
+                            }
+                        }
+                        
+                        // Retry-Counter setzen
+                        newProperties.Headers["x-retry-count"] = retryCount;
+                        
+                        // Nachricht mit aktualisiertem Counter zurück in Queue schicken
+                        await _channel.BasicPublishAsync(
+                            exchange: "",
+                            routingKey: _rabbitMqConfig.QueueName,
+                            mandatory: true,
+                            basicProperties: newProperties,
+                            body: ea.Body.ToArray()
+                        );
+                        
+                        // Original-Nachricht bestätigen (damit sie nicht mehrfach verarbeitet wird)
+                        await _channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            ex,
+                            "Max retries ({MaxRetries}) exceeded for document ID {DocumentId} from Message Queue {QueueName}. Message will be permanently rejected. Error: {ErrorMessage}",
+                            _rabbitMqConfig.MaxRetries,
+                            id,
+                            _rabbitMqConfig.QueueName,
+                            ex.Message
+                        );
+                        
+                        // Maximaler Retry-Count erreicht - Nachricht endgültig ablehnen
+                        await _channel.BasicNackAsync(deliveryTag: ea.DeliveryTag, multiple: false, requeue: false);
+                    }
                 }
             };
 

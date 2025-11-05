@@ -31,8 +31,8 @@ namespace Paperless.BL.Services
         {
             try
             {
-                await using var connection = await _connectionFactory.CreateConnectionAsync();
-                await using var channel = await connection.CreateChannelAsync();
+                await using IConnection connection = await _connectionFactory.CreateConnectionAsync();
+                await using IChannel channel = await connection.CreateChannelAsync();
 
                 await channel.QueueDeclareAsync(
                     queue: _config.QueueName, 
@@ -45,12 +45,21 @@ namespace Paperless.BL.Services
                 var messageToJson = JsonSerializer.Serialize(document);
                 */
                 
-                var body = Encoding.UTF8.GetBytes(id.ToString());
+                byte[] body = Encoding.UTF8.GetBytes(id.ToString());
+                BasicProperties properties = new BasicProperties 
+                { 
+                    Persistent = true,
+                    Headers = new Dictionary<string, object>
+                    {
+                        { "x-retry-count", 0 }
+                    }
+                };
+                
                 await channel.BasicPublishAsync(
                     exchange: "",
                     routingKey: _config.QueueName,
                     mandatory: true,
-                    basicProperties: new BasicProperties { Persistent = true },
+                    basicProperties: properties,
                     body: body
                 );
 

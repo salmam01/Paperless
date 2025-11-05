@@ -11,6 +11,7 @@
     <ProjectReference Include="..\Paperless.DAL\Paperless.DAL.csproj" />
 	<PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
 	<PackageReference Include="Minio" Version="6.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.9" />
   </ItemGroup>
 
   <PropertyGroup>

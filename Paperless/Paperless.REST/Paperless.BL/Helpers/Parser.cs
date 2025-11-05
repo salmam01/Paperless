@@ -48,15 +48,6 @@ namespace Paperless.BL.Helpers
         {
             switch (document.Type)
             {
-                case "DOC":
-                    //  TODO
-                    _logger.LogWarning(
-                        "Cannot parse document with ID {id} due to unsupported document type: {fileType}.",
-                        document.Id,
-                        document.Type
-                    );
-                    throw new ServiceException("An error occurred while parsing document.", ExceptionType.Parsing);
-
                 case "DOCX":
                     ParseDocx(document, contentMs);
                     break;
