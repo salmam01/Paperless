@@ -159,8 +159,10 @@ namespace Paperless.BL.Services
         {
             try
             {
-                await _storageService.DeleteDocumentAsync(id);
+                DocumentEntity? entity = await _documentRepository.GetDocumentAsync(id);
+                Document document = _mapper.Map<Document>(entity);
 
+                await _storageService.DeleteDocumentAsync(id, document.Type);
                 await _documentRepository.DeleteDocumentAsync(id);
             }
             catch (DatabaseException ex)

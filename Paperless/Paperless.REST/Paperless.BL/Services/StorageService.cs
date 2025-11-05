@@ -63,16 +63,18 @@ namespace Paperless.BL.Services
             }
         }
 
-        public async Task DeleteDocumentAsync(Guid id)
+        public async Task DeleteDocumentAsync(Guid id, string fileType)
         {
             try
             {
                 await CreateBucketIfNotExistsAsync(_bucketName);
 
+                string ft = fileType.ToLowerInvariant();
+
                 await _minIO.RemoveObjectAsync(
                     new RemoveObjectArgs()
                         .WithBucket(_bucketName)
-                        .WithObject($"{id}.pdf")
+                        .WithObject($"{id}.{ft}")
                 );
 
                 _logger.LogInformation(
