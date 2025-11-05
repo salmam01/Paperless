@@ -1,5 +1,5 @@
 // Upload-consts
-export const ACCEPTED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png'];
+export const ACCEPTED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.txt'];
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // Upload-Utility-Function
@@ -38,9 +38,6 @@ export function getFileTypeFromFileName(fileName: string): string {
         case 'doc': return 'DOC';
         case 'docx': return 'DOCX';
         case 'txt': return 'TXT';
-        case 'jpg':
-        case 'jpeg': return 'JPG';
-        case 'png': return 'PNG';
         default: return 'Unknown';
     }
 }
