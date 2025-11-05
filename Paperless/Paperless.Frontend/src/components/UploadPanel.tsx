@@ -101,7 +101,7 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
                             <h3>Datei hierher ziehen</h3>
                             <p>oder klicken Sie zum Auswählen</p>
                             <div className="upload-formats">
-                                <small>Unterstützte Formate: PDF, DOC, DOCX, TXT </small>
+                                <small>Unterstützte Formate: PDF, DOCX, TXT</small>
                                 <small style={{ display: 'block', marginTop: '8px' }}>Maximale Größe: 10 MB</small>
                             </div>
                         </div>

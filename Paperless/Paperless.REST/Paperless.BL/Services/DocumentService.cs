@@ -201,7 +201,6 @@ namespace Paperless.BL.Services
             document.Type = extension switch
             {
                 ".pdf" => "PDF",
-                ".doc" => "DOC",
                 ".docx" => "DOCX",
                 ".txt" => "TXT",
                 _ => "Unknown"
