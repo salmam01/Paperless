@@ -39,28 +39,31 @@ namespace Paperless.Services.Services
 
             for (int i = 0; i < imageResult.Count; i++)
             {
+                //  Convert each preprocessed Magick image to a PNG stream
                 using MagickImage image = imageResult[i];
                 using MemoryStream imageStream = new MemoryStream();
                 image.Write(imageStream, MagickFormat.Png);
+                //  Convert the stream to a Pix image (tesseract internal image format)
                 using Pix pix = Pix.LoadFromMemory(imageStream.ToArray());
 
+                //  The engine recognizes the letters based on the trained language data
                 using Page page = engine.Process(pix);
                 string text = page.GetText();
+                //  Tesseracts average certainty for all recognized characters in that page
                 float mean = page.GetMeanConfidence();
 
                 pages.Add(new OcrPage(i + 1, text, mean));
 
                 _logger.LogInformation(
-                    "Processed Page {pageIndex} with confidence {Confidence:P1}",
+                    "====== Page {pageIndex} : Confidence {Confidence:P1} ======",
                     pages[i].PageIndex,
                     pages[i].MeanConfidence
                 );
             }
 
             StringBuilder fileContent = new();
-            foreach(OcrPage page in pages)
+            foreach (OcrPage page in pages)
             {
-                fileContent.AppendLine($"---> Page: {page.PageIndex} (Confidence: {page.MeanConfidence:P1}) <---");
                 fileContent.AppendLine(page.Text);
                 fileContent.AppendLine();
             }
