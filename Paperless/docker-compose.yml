@@ -9,8 +9,8 @@ services:
       POSTGRES_DB: PaperlessDB
     ports:
       - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    volumes: #vll muss du das doch so lassen, ich hatte mit data Fehlermeldungen.: - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U swen3 -d PaperlessDB"]
     networks:
@@ -76,9 +76,11 @@ services:
 
   # Paperless Services with Workers
   paperless-services:
-    build:
-      context: ./Paperless.Services
-      dockerfile: Services.Dockerfile
+    build: # wie oben, vll muss du alte version verwenden, sollte eigentlich hier egal sein, aber sicherheitshalber
+      #      context: ./Paperless.Services
+      #      dockerfile: Services.Dockerfile
+      context: .
+      dockerfile: ./Paperless.Services/Services.Dockerfile
     container_name: paperless-services
     depends_on:
       paperless-rabbitmq:
