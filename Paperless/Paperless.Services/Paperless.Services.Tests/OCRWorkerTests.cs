@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,11 +18,13 @@ namespace Paperless.Services.Tests
         private readonly StorageService _storageService;
         private readonly OcrService _ocrService;
         private readonly RabbitMqConfig _testRabbitMqConfig;
+        private readonly Mock<IServiceProvider> _serviceProviderMock;
 
         public OCRWorkerTests()
         {
             _loggerMock = new Mock<ILogger<OcrWorker>>();
             _rabbitMqConfigMock = new Mock<IOptions<RabbitMqConfig>>();
+            _serviceProviderMock = new Mock<IServiceProvider>();
 
             // real instances with mocked dependencies
             Mock<IOptions<MinIoConfig>> minIoConfigMock = new Mock<IOptions<Configurations.MinIoConfig>>();
@@ -56,6 +59,12 @@ namespace Paperless.Services.Tests
             };
 
             _rabbitMqConfigMock.Setup(x => x.Value).Returns(_testRabbitMqConfig);
+
+            // Setup ServiceProvider mock
+            var serviceScopeMock = new Mock<IServiceScope>();
+            var serviceScopeFactoryMock = new Mock<IServiceScopeFactory>();
+            serviceScopeFactoryMock.Setup(x => x.CreateScope()).Returns(serviceScopeMock.Object);
+            _serviceProviderMock.Setup(x => x.GetService(typeof(IServiceScopeFactory))).Returns(serviceScopeFactoryMock.Object);
         }
 
         [Fact]
@@ -65,7 +74,8 @@ namespace Paperless.Services.Tests
                 _loggerMock.Object,
                 _rabbitMqConfigMock.Object,
                 _storageService,
-                _ocrService
+                _ocrService,
+                _serviceProviderMock.Object
             );
 
             Assert.NotNull(worker);
@@ -97,7 +107,8 @@ namespace Paperless.Services.Tests
                 _loggerMock.Object,
                 _rabbitMqConfigMock.Object,
                 _storageService,
-                _ocrService
+                _ocrService,
+                _serviceProviderMock.Object
             );
             // shouldn't crash
             Assert.NotNull(worker);
@@ -110,7 +121,8 @@ namespace Paperless.Services.Tests
                 _loggerMock.Object,
                 _rabbitMqConfigMock.Object,
                 _storageService,
-                _ocrService
+                _ocrService,
+                _serviceProviderMock.Object
             );
 
             Assert.NotNull(worker);
@@ -124,7 +136,8 @@ namespace Paperless.Services.Tests
                 _loggerMock.Object,
                 _rabbitMqConfigMock.Object,
                 _storageService,
-                _ocrService
+                _ocrService,
+                _serviceProviderMock.Object
             );
 
             // worker should be createable
@@ -138,7 +151,8 @@ namespace Paperless.Services.Tests
                 _loggerMock.Object,
                 _rabbitMqConfigMock.Object,
                 _storageService,
-                _ocrService
+                _ocrService,
+                _serviceProviderMock.Object
             );
 
             Assert.NotNull(worker);
@@ -299,7 +313,8 @@ namespace Paperless.Services.Tests
                 _loggerMock.Object,
                 _rabbitMqConfigMock.Object,
                 _storageService,
-                _ocrService
+                _ocrService,
+                _serviceProviderMock.Object
             );
             
             Assert.NotNull(worker);
