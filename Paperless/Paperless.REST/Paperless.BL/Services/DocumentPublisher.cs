@@ -41,10 +41,6 @@ namespace Paperless.BL.Services
                     autoDelete: false
                 );
                 
-                /*
-                var messageToJson = JsonSerializer.Serialize(document);
-                */
-                
                 byte[] body = Encoding.UTF8.GetBytes(id.ToString());
                 BasicProperties properties = new BasicProperties 
                 { 

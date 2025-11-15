@@ -1,3 +1,4 @@
+/*
 using Microsoft.Extensions.Logging;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
@@ -88,5 +89,4 @@ namespace Paperless.Services.Services
         }
     }
 }
-
-
+*/
