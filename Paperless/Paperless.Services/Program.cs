@@ -4,6 +4,7 @@ using Paperless.Services.Configurations;
 using Paperless.Services.Workers;
 using Paperless.Services.Services;
 using Serilog;
+using Paperless.Services.Services.MessageQueue;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -22,7 +23,7 @@ builder.Services.Configure<OcrConfig>(builder.Configuration.GetSection("Ocr"));
 builder.Services.Configure<GenAIConfig>(builder.Configuration.GetSection("GenAI"));
 
 // Services
-builder.Services.AddSingleton<MessageQueueService>();
+builder.Services.AddSingleton<MQListener>();
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OcrService>();
 //builder.Services.AddScoped<DocumentUpdateService>(); 

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.Ocr;
 using Paperless.Services.Services;
+using Paperless.Services.Services.MessageQueue;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
@@ -12,26 +13,22 @@ namespace Paperless.Services.Workers
     public class OcrWorker : BackgroundService
     {
         private readonly ILogger<OcrWorker> _logger;
-        private readonly MessageQueueService _messageQueueService;
+        private readonly MQListener _messageQueueService;
         private readonly StorageService _storageService;
         private readonly OcrService _ocrService;
-        //private readonly IServiceProvider _serviceProvider;
 
         public OcrWorker(
             ILogger<OcrWorker> logger, 
-            MessageQueueService messageQueueService,
+            MQListener messageQueueService,
             StorageService storageService,
             OcrService ocrService
-            //IServiceProvider serviceProvider
         ) {
             _messageQueueService = messageQueueService;
             _storageService = storageService;
             _ocrService = ocrService;
-            //_serviceProvider = serviceProvider;
             _logger = logger;
         }
 
-        //  TODO: Refactor method, split it into multiple parts (MessageQueue: done, Storage: done, OCR: done, GenAI: x)
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             //  Stream -> Temp file -> Ghostscript -> Upload -> Delete
@@ -52,6 +49,9 @@ namespace Paperless.Services.Workers
                 "Processed document from Message Queue successfully.\n*** Result ***\n{content}",
                 result.PdfContent
             );
+
+            //await _messageQueueService.PublishToResultQueue(result.PdfContent);
+
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

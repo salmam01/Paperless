@@ -2,23 +2,27 @@
 using Paperless.Services.Configurations;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Data.Common;
 using System.Text;
 
-namespace Paperless.Services.Services
+namespace Paperless.Services.Services.MessageQueue
 {
-    public class MessageQueueService {
-        private readonly ILogger<MessageQueueService> _logger;
+    public class MQListener {
+        private readonly ILogger<MQListener> _logger;
         private readonly RabbitMqConfig _config;
         private readonly ConnectionFactory _connectionFactory;
         private IChannel? _channel;
         private IConnection? _connection;
+        private readonly string _queueName;
 
-        public MessageQueueService(
-            ILogger<MessageQueueService> logger,
-            IOptions<RabbitMqConfig> config)
-        {
-            _config = config.Value;
+        public MQListener(
+            ILogger<MQListener> logger,
+            IOptions<RabbitMqConfig> config,
+            string queueName
+        ) {
             _logger = logger;
+            _config = config.Value;
+            _queueName = GetQueueName();
 
             _connectionFactory = new ConnectionFactory()
             {
@@ -33,18 +37,18 @@ namespace Paperless.Services.Services
             Func<string, BasicDeliverEventArgs, Task> onMessageReceived,
             CancellationToken stoppingToken
         ) {
-            _connection = await _connectionFactory.CreateConnectionAsync();
-            _channel = await _connection.CreateChannelAsync();
+            _connection = await GetConnectionAsync();
+            _channel = await GetChannelAsync();
 
             await _channel.QueueDeclareAsync(
-                queue: _config.QueueName,
+                queue: _config.OcrQueue,
                 durable: true,
                 exclusive: false,
                 autoDelete: false
             );
 
             await _channel.BasicQosAsync(0, 1, false);
-            _logger.LogInformation("OCR Worker is running and listening for messages in {QueueName}.", _config.QueueName);
+            _logger.LogInformation("OCR Worker is running and listening for messages.");
 
             AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += async (_, ea) =>
@@ -59,30 +63,32 @@ namespace Paperless.Services.Services
                     await StopListeningAsync();
                 }
 
-                string? id = Encoding.UTF8.GetString(ea.Body.ToArray());
-                _logger.LogInformation(
-                    "Received document ID {message} from Message Queue {QueueName}.",
-                    id,
-                    _config.QueueName
-                );
-
-                int retryCount = 0;
-                if (ea.BasicProperties.Headers != null &&
-                    ea.BasicProperties.Headers.TryGetValue("x-retry-count", out var retryCountObj)
-                ) {
-                    try
-                    {
-                        retryCount = Convert.ToInt32(retryCountObj);
-                    }
-                    catch
-                    {
-                        retryCount = 0;
-                    }
-                }
+                //  Get Retry-Counter
+                int retryCount = GetRetryCount(ea);
 
                 try
                 {
-                    await onMessageReceived(id, ea);
+                    if (_queueName == "ocr.worker")
+                    {
+                        string? id = Encoding.UTF8.GetString(ea.Body.ToArray());
+
+                        _logger.LogInformation(
+                            "Received document ID {message} from Message Queue {QueueName}.",
+                            id,
+                            _config.OcrQueue
+                        );
+
+                        await onMessageReceived(id, ea);
+                    }
+                    else
+                    {
+                        _logger.LogInformation(
+                            //  TODO
+                            "Received  from Message Queue {QueueName}.",
+                            _config.SummaryQueue
+                        );
+                    }
+
                     await _channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
                 }
                 catch (Exception ex)
@@ -97,11 +103,11 @@ namespace Paperless.Services.Services
                             retryCount,
                             _config.MaxRetries,
                             id,
-                            _config.QueueName,
+                            queueName,
                             ex.Message
                         );
 
-                        await Retry(ea, retryCount);
+                        await Retry(channel, ea, retryCount);
                     }
                     else
                     {
@@ -110,7 +116,7 @@ namespace Paperless.Services.Services
                             "Max retries ({MaxRetries}) exceeded for document ID {DocumentId} from Message Queue {QueueName}. Message will be permanently rejected. Error: {ErrorMessage}",
                             _config.MaxRetries,
                             id,
-                            _config.QueueName,
+                            _config.,
                             ex.Message
                         );
 
@@ -125,13 +131,51 @@ namespace Paperless.Services.Services
             };
 
             await _channel.BasicConsumeAsync(
-                queue: _config.QueueName, 
+                queue: queueName, 
                 autoAck: false, 
                 consumer: consumer
             );
         }
 
-        public async Task Retry(BasicDeliverEventArgs ea, int retryCount)
+        private async Task<IConnection> GetConnectionAsync()
+        {
+            if (_connection == null || !_connection.IsOpen)
+                _connection = await _connectionFactory.CreateConnectionAsync();
+            return _connection;
+        }
+
+        private async Task<IChannel> GetChannelAsync()
+        {
+            if (_channel == null || !_channel.IsOpen)
+                _channel = await _connection.CreateChannelAsync();
+            return _channel;
+        }
+
+        private string GetQueueName()
+        {
+            if (_queueType == QueueType.Ocr) return _config.OcrQueue;
+            return _config.SummaryQueue;
+        }
+
+        private int GetRetryCount(BasicDeliverEventArgs ea)
+        {
+            if (ea.BasicProperties.Headers != null &&
+                ea.BasicProperties.Headers.TryGetValue("x-retry-count", out var retryCountObj)
+            ) {
+                try
+                {
+                    return Convert.ToInt32(retryCountObj);
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
+
+            return 0;
+        }
+
+        public async Task Retry(IChannel channel, BasicDeliverEventArgs ea, int retryCount)
         {
             BasicProperties newProperties = new BasicProperties
             {
@@ -151,16 +195,16 @@ namespace Paperless.Services.Services
             }
 
             newProperties.Headers["x-retry-count"] = retryCount;
-            await _channel.BasicPublishAsync(
+            await channel.BasicPublishAsync(
                 exchange: "",
-                routingKey: _config.QueueName,
+                routingKey: queueName,
                 mandatory: true,
                 basicProperties: newProperties,
                 body: ea.Body.ToArray()
             );
 
             // Original-Nachricht bestätigen (-->damit sie nicht mehrfach verarbeitet wird)
-            await _channel.BasicAckAsync(
+            await channel.BasicAckAsync(
                 deliveryTag: ea.DeliveryTag,
                 multiple: false
             );

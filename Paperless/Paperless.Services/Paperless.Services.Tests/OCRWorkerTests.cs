@@ -55,7 +55,7 @@ namespace Paperless.Services.Tests
                 Port = 5672,
                 User = "guest",
                 Password = "guest",
-                QueueName = "document.uploaded"
+                OcrQueue = "document.uploaded"
             };
 
             _rabbitMqConfigMock.Setup(x => x.Value).Returns(_testRabbitMqConfig);
@@ -90,14 +90,14 @@ namespace Paperless.Services.Tests
                 Port = 5672,
                 User = "test-user",
                 Password = "test-password",
-                QueueName = "test-queue"
+                OcrQueue = "test-queue"
             };
 
             Assert.Equal("test-host", config.Host);
             Assert.Equal(5672, config.Port);
             Assert.Equal("test-user", config.User);
             Assert.Equal("test-password", config.Password);
-            Assert.Equal("test-queue", config.QueueName);
+            Assert.Equal("test-queue", config.OcrQueue);
         }
 
         [Fact]
@@ -126,7 +126,7 @@ namespace Paperless.Services.Tests
             );
 
             Assert.NotNull(worker);
-            Assert.Equal("document.uploaded", _testRabbitMqConfig.QueueName);
+            Assert.Equal("document.uploaded", _testRabbitMqConfig.OcrQueue);
         }
 
         [Fact]
@@ -169,7 +169,7 @@ namespace Paperless.Services.Tests
                 Port = 5672,
                 User = "guest",
                 Password = "guest",
-                QueueName = "test-queue",
+                OcrQueue = "test-queue",
                 MaxRetries = 3
             };
             _rabbitMqConfigMock.Setup(x => x.Value).Returns(testConfig);
@@ -304,7 +304,7 @@ namespace Paperless.Services.Tests
                 Port = 5672,
                 User = "guest",
                 Password = "guest",
-                QueueName = "test-queue",
+                OcrQueue = "test-queue",
                 MaxRetries = 3
             };
             _rabbitMqConfigMock.Setup(x => x.Value).Returns(testConfig);
