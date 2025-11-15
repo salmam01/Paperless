@@ -35,21 +35,17 @@ namespace Paperless.BL.Services
                 await using IChannel channel = await connection.CreateChannelAsync();
 
                 await channel.QueueDeclareAsync(
-                    queue: _config.QueueName, 
+                    queue: _config.OcrQueue, 
                     durable: true, 
                     exclusive: false, 
                     autoDelete: false
                 );
                 
-                /*
-                var messageToJson = JsonSerializer.Serialize(document);
-                */
-                
                 byte[] body = Encoding.UTF8.GetBytes(id.ToString());
                 BasicProperties properties = new BasicProperties 
                 { 
                     Persistent = true,
-                    Headers = new Dictionary<string, object>
+                    Headers = new Dictionary<string, object?>
                     {
                         { "x-retry-count", 0 }
                     }
@@ -57,13 +53,17 @@ namespace Paperless.BL.Services
                 
                 await channel.BasicPublishAsync(
                     exchange: "",
-                    routingKey: _config.QueueName,
+                    routingKey: _config.OcrQueue,
                     mandatory: true,
                     basicProperties: properties,
                     body: body
                 );
 
-                _logger.LogInformation("Published document with ID {DocumentId} to Message Queue {QueueName} successfully.", id, _config.QueueName);
+                _logger.LogInformation(
+                    "Published document with ID {DocumentId} to Message Queue {QueueName} successfully.", 
+                    id, 
+                    _config.OcrQueue
+                );
 
             } catch (Exception ex) {
                 _logger.LogError(
