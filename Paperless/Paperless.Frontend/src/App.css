@@ -74,6 +74,9 @@
   cursor: pointer;
   font-size: 0.95rem;
   transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .documents-toolbar button:hover:not(:disabled) {
@@ -92,6 +95,28 @@
   flex-direction: column;
   gap: 12px;
   min-width: 300px;
+}
+
+/* Upload Section (full width, above documents) */
+.upload-section {
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.upload-section .upload-panel {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  padding: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.upload-section .upload-panel-content {
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Upload Panel ( for right side) */
@@ -120,6 +145,9 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .upload-dropzone:hover {
@@ -287,6 +315,12 @@
   display: flex;
   justify-content: center;
   margin-top: 10px;
+  width: 100%;
+}
+
+.upload-section .upload-actions-panel {
+  max-width: 800px;
+  margin: 10px auto 0;
 }
 
 .upload-btn-panel {
@@ -319,13 +353,6 @@
   box-shadow: none;
 }
 
-.documents-grid {
-  display: grid;
-  width: 100%;
-  gap: 2rem;
-  margin-bottom: 2rem;
-  box-sizing: border-box;
-}
 
 .document-card {
   background: rgba(255, 255, 255, 0.1);
@@ -339,6 +366,8 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
+  max-width: 450px;
 }
 
 .document-card.has-actions {
@@ -389,6 +418,7 @@
   flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
@@ -403,15 +433,24 @@
   opacity: 0.8;
 }
 
+.document-metadata-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.document-metadata-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .document-size {
   color: rgba(255, 255, 255, 0.7);
 }
 
 .document-date {
   color: rgba(255, 255, 255, 0.7);
-    /*margin: 0;
-  font-size: 0.9rem;
-  opacity: 0.7;*/
   font-style: italic;
 }
 
@@ -472,18 +511,26 @@
 
 .documents-list {
   min-width: 0;
+  width: 100%;
+  overflow: visible;
   transition: all 0.3s ease;
 }
 
-/* Default: 6 columns; when no panel */
+/* Default: grid configuration */
 .documents-grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  width: 100%;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  box-sizing: border-box;
   transition: all 0.3s ease;
 }
 
 /* panel is open: reduce columns to make room */
 .documents-layout.with-panel .documents-grid {
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  max-width: 100%;
 }
 
 .details-panel {
@@ -558,15 +605,17 @@
 
 /* Card action buttons */
 .card-action-button {
-  position: absolute;
-  bottom: 12px;
-  background: rgba(255, 255, 255, 0.1); /*transparent*/
-  border: 1px solid rgba(255, 255, 255, 0.2); /*none*/
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
-  padding: 8px; /*0*/
+  padding: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .card-action-button:hover {
@@ -574,16 +623,8 @@
   transform: translateY(-1px);
 }
 
-.card-action-button--info {
-  left: 12px; /*8px*/
-}
-
 .card-action-button--info:hover {
   background: rgba(59, 130, 246, 0.3);
-}
-
-.card-action-button--delete {
-  right: 12px; /*8px*/
 }
 
 .card-action-button--delete:hover {

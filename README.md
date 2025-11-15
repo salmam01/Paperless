@@ -1,4 +1,11 @@
-# Paperless - Instructions
+# Summary
+Website for uploading documents, automatic text recognition (OCR) and AI-based summarization.
+
+# Tools
+To be able to run this application, you need:
+- Docker
+
+# Build Instructions
 # From the project root, move one folder down
 - cd Paperless
 
@@ -17,3 +24,4 @@ docker compose up -d
 - Frontend: http://localhost:80
 - Backend: http://localhost:8080
 - RabbitMQ: http://localhost:15672
+- MinIO: http://localhost:9090

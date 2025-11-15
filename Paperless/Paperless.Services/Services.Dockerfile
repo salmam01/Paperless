@@ -24,20 +24,27 @@ EXPOSE 8082
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Paperless.Services.csproj", "."]
-RUN dotnet restore "./Paperless.Services.csproj"
-COPY . .
-WORKDIR "/src/."
-RUN dotnet build "./Paperless.Services.csproj" -c $BUILD_CONFIGURATION -o /app/build
+# Copy DAL project first (dependency)
+COPY ["Paperless.REST/Paperless.DAL/Paperless.DAL.csproj", "Paperless.REST/Paperless.DAL/"]
+# Copy Services project
+COPY ["Paperless.Services/Paperless.Services.csproj", "Paperless.Services/"]
+# Restore dependencies
+RUN dotnet restore "Paperless.Services/Paperless.Services.csproj"
+# Copy all source files
+COPY Paperless.REST/Paperless.DAL/ Paperless.REST/Paperless.DAL/
+COPY Paperless.Services/ Paperless.Services/
+WORKDIR "/src/Paperless.Services"
+RUN dotnet build "Paperless.Services.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Paperless.Services.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+WORKDIR "/src/Paperless.Services"
+RUN dotnet publish "Paperless.Services.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY tessdata /app/tessdata
+COPY Paperless.Services/tessdata /app/tessdata
 ENTRYPOINT ["dotnet", "Paperless.Services.dll"]

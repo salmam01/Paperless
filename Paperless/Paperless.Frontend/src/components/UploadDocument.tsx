@@ -95,7 +95,8 @@ export function UploadDocument( { loading, onUploaded } : Props) {
                         <h3>Datei hochladen</h3>
                         <p>Ziehen Sie eine Datei hierher oder klicken Sie zum Auswählen</p>
                         <div className="upload-formats">
-                            <small>Unterstützte Formate: PDF, DOC, DOCX, TXT, JPG, PNG</small>
+                            <small>Unterstützte Formate: PDF, DOCX, TXT</small>
+                            <small style={{ display: 'block', marginTop: '8px' }}>Maximale Größe: 10 MB</small>
                         </div>
                     </div>
                 ) : (

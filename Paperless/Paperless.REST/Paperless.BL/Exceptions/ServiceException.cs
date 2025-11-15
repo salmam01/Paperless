@@ -11,6 +11,7 @@ namespace Paperless.BL.Exceptions
         Validation,
         Messaging,
         Storage,
+        Parsing,
         Internal
     }
 
