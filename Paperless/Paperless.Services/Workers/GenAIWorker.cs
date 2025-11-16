@@ -68,9 +68,10 @@ namespace Paperless.Services.Workers
                 };
 
                 _logger.LogInformation(
-                    "Successfully generated & saved summary for document {DocumentId}. Summary length: {SummaryLength}",
+                    "Successfully generated & saved summary for document {DocumentId}. Summary length: {SummaryLength}\n*** Summary ***\n{Summary}",
                     id,
-                    summary.Length
+                    summary.Length,
+                    summary
                 );
 
                 await _workerResultsService.PostWorkerResultsAsync(workerResultDto);

@@ -76,9 +76,7 @@ services:
 
   # Paperless Services with Workers
   paperless-services:
-    build: # wie oben, vll muss du alte version verwenden, sollte eigentlich hier egal sein, aber sicherheitshalber
-      #      context: ./Paperless.Services
-      #      dockerfile: Services.Dockerfile
+    build:
       context: .
       dockerfile: ./Paperless.Services/Services.Dockerfile
     container_name: paperless-services
