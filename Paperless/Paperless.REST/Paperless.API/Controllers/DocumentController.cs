@@ -189,13 +189,17 @@ namespace Paperless.API.Controllers
         public async Task<ActionResult> UploadServicesResult([FromRoute] string id, [FromBody] WorkerResultDto result)
         {
             _logger.LogInformation(
-                "Incoming POST /document from {ip}.",
-                HttpContext.Connection.RemoteIpAddress?.ToString()
+                "Incoming POST /document/{id} from {ip}. Document ID: {DocumentId}, OCR result length: {OcrLength}, Summary length: {SummaryLength}",
+                id,
+                HttpContext.Connection.RemoteIpAddress?.ToString(),
+                result?.Id ?? "Unknown",
+                result?.OcrResult?.Length ?? 0,
+                result?.SummaryResult?.Length ?? 0
             );
 
             if (result == null || result.Id != id)
             {
-                _logger.LogWarning("Invalid payload for document {DocumentId}", id);
+                _logger.LogWarning("Invalid payload for document {DocumentId}. Expected ID: {ExpectedId}, Received ID: {ReceivedId}", id, id, result?.Id ?? "null");
                 return BadRequest("Invalid payload");
             }
             try
@@ -206,6 +210,7 @@ namespace Paperless.API.Controllers
                     result.SummaryResult
                 );
 
+                _logger.LogInformation("POST /document/{id} updated document successfully.", id);
                 return Created();
             }
             catch (ServiceException ex)

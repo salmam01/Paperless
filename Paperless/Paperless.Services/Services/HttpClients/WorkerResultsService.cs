@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.Dtos;
 using System;
@@ -28,6 +29,13 @@ namespace Paperless.Services.Services.HttpClients
 
         public async Task PostWorkerResultsAsync(WorkerResultDto workerResult)
         {
+            _logger.LogInformation(
+                "Worker results sentto REST server. Document ID: {DocumentId}, OCR result length: {OcrLength}, Summary length: {SummaryLength}",
+                workerResult.Id,
+                workerResult.OcrResult?.Length ?? 0,
+                workerResult.SummaryResult?.Length ?? 0
+            );
+
             using StringContent content = new(
                 JsonSerializer.Serialize(workerResult),
                 Encoding.UTF8,

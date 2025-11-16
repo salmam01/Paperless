@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
 using Paperless.Services.Configurations;
@@ -24,7 +25,7 @@ namespace Paperless.Services.Services
         public async Task<MemoryStream> DownloadDocumentFromStorageAsync(string id)
         {
             _logger.LogInformation(
-                "Downloading Document with ID {id} from Storage Bucket {BucketName}.",
+                "Downloading document from storage. Document ID: {DocumentId}, Bucket: {BucketName}.",
                 id,
                 _bucketName
             );
@@ -49,8 +50,9 @@ namespace Paperless.Services.Services
             stream.Position = 0;
 
             _logger.LogInformation(
-                "Document with ID {id} downloaded from Storage successfully.",
-                id
+                "Document downloaded from storage successfully. Document ID: {DocumentId}, Stream size: {StreamSize} bytes.",
+                id,
+                stream.Length
             );
             return stream;
         }

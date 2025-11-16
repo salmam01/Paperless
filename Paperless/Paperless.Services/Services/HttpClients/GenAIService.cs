@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using System.Net.Http.Json;
@@ -24,6 +25,11 @@ namespace Paperless.Services.Services.HttpClients
 
         public async Task<string> GenerateSummaryAsync(string documentContent)
         {
+            _logger.LogInformation(
+                "Generating summary using Google Gemini API. Document content length: {ContentLength} characters.",
+                documentContent?.Length ?? 0
+            );
+
             if (string.IsNullOrWhiteSpace(documentContent))
             {
                 throw new ArgumentException("Document content cann't be empty.", nameof(documentContent));
@@ -58,7 +64,11 @@ namespace Paperless.Services.Services.HttpClients
 
             try
             {
-                _logger.LogInformation("Sending request to Google Gemini API for summary generation.");
+                _logger.LogInformation(
+                    "Sending request to Google Gemini API for summary generation. Model: {ModelName}, URL: {ApiUrl}",
+                    _config.ModelName,
+                    url
+                );
 
                 using HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, requestBody);
                 response.EnsureSuccessStatusCode();

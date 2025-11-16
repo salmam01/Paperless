@@ -33,10 +33,16 @@ namespace Paperless.Services.Workers
 
         private async Task HandleMessageAsync(string message, BasicDeliverEventArgs ea)
         {
+            _logger.LogInformation(
+                "Processing message from queue. Message length: {MessageLength} characters.",
+                message?.Length ?? 0
+            );
+
             try
             {
                 if (string.IsNullOrEmpty(message))
                 {
+                    _logger.LogWarning("Received empty message from queue. Skipping processing.");
                     return;
                 }
 
@@ -46,7 +52,8 @@ namespace Paperless.Services.Workers
                 if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("OcrResult"))
                 {
                     _logger.LogWarning(
-                        "Document has no content. Skipping summary generation."
+                        "Document has no content. Skipping summary generation. Message: {Message}",
+                        message
                     );
                     return;
                 }
@@ -54,8 +61,9 @@ namespace Paperless.Services.Workers
                 string ocrResult = jsonObject["OcrResult"];
 
                 _logger.LogInformation(
-                    "Document {DocumentId} content retrieved.",
-                    id
+                    "Document {DocumentId} content retrieved. OCR result length: {OcrLength} characters.",
+                    id,
+                    ocrResult?.Length ?? 0
                 );
                 
                 string summary = await _genAIService.GenerateSummaryAsync(ocrResult);

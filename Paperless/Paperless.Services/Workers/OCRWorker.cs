@@ -40,6 +40,11 @@ namespace Paperless.Services.Workers
 
         private async Task HandleMessageAsync(string id, BasicDeliverEventArgs ea)
         {
+            _logger.LogInformation(
+                "Processing OCR request for document ID: {DocumentId}.",
+                id
+            );
+
             //  Download file (stream) from minIO
             MemoryStream documentContent = await _storageService.DownloadDocumentFromStorageAsync(id);
             if (documentContent.Length <= 0)
@@ -49,8 +54,10 @@ namespace Paperless.Services.Workers
             OcrResult result = _ocrService.ProcessPdf(documentContent);
 
             _logger.LogInformation(
-                "Processed document from Message Queue successfully.\n*** Result ***\n{content}",
-                result.PdfContent
+                "OCR processing completed successfully. Document ID: {DocumentId}, Pages processed: {PageCount}, Content length: {ContentLength} characters.",
+                id,
+                result.Pages.Count,
+                result.PdfContent?.Length ?? 0
             );
 
             //  Send OCR Result to GenAIWorker through RabbitMQ

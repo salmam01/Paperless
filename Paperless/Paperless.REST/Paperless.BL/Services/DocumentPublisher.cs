@@ -29,6 +29,12 @@ namespace Paperless.BL.Services
 
         public async Task PublishDocumentAsync(Guid id)
         {
+            _logger.LogInformation(
+                "Publishing document to Message Queue. Document ID: {DocumentId}, Queue: {QueueName}.",
+                id,
+                _config.QueueName
+            );
+
             try
             {
                 await using IConnection connection = await _connectionFactory.CreateConnectionAsync();

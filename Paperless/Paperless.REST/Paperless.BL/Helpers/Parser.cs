@@ -18,11 +18,18 @@ namespace Paperless.BL.Helpers
 
         public void ParseDocument(Models.Document document, Stream content)
         {
+            _logger.LogInformation(
+                "Parsing document. ID: {DocumentId}, Type: {DocumentType}, Content size: {ContentSize} bytes.",
+                document?.Id ?? Guid.Empty,
+                document?.Type ?? "Unknown",
+                content?.Length ?? 0
+            );
+
             try
             {
                 if (content == null || document == null)
                 {
-                    _logger.LogWarning("Cannot parse empty stream.");
+                    _logger.LogWarning("Cannot parse empty stream. Document ID: {DocumentId}.", document?.Id ?? Guid.Empty);
                     return;
                 }
 

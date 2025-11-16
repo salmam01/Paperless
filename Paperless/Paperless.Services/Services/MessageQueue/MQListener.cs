@@ -34,6 +34,13 @@ namespace Paperless.Services.Services.MessageQueue
             Func<string, BasicDeliverEventArgs, Task> onMessageReceived,
             CancellationToken stoppingToken
         ) {
+            _logger.LogInformation(
+                "Starting Message Queue listener. Queue: {QueueName}, Host: {Host}, Port: {Port}",
+                _config.QueueName,
+                _config.Host,
+                _config.Port
+            );
+
             if (_connection == null || !_connection.IsOpen)
                 _connection = await _connectionFactory.CreateConnectionAsync();
             if (_channel == null || !_channel.IsOpen)
@@ -48,7 +55,7 @@ namespace Paperless.Services.Services.MessageQueue
 
             await _channel.BasicQosAsync(0, 1, false);
             _logger.LogInformation(
-                "RabbitMQ Queue {queueName} is running and listening for messages.",
+                "RabbitMQ Queue {QueueName} is running and listening for messages.",
                 _config.QueueName
             );
 
@@ -74,9 +81,10 @@ namespace Paperless.Services.Services.MessageQueue
                     body = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                     _logger.LogInformation(
-                        "Received message {message} from Message Queue {QueueName}.",
-                        body,
-                        _config.QueueName
+                        "Received message from Message Queue {QueueName}. Message length: {MessageLength} characters, Delivery tag: {DeliveryTag}",
+                        _config.QueueName,
+                        body?.Length ?? 0,
+                        ea.DeliveryTag
                     );
 
                     await onMessageReceived(body, ea);

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using RabbitMQ.Client;
 using System;
@@ -34,6 +35,13 @@ namespace Paperless.Services.Services.MessageQueue
 
         public async Task PublishOcrResult(string documentId, string ocrResult)
         {
+            _logger.LogInformation(
+                "Publishing OCR result to queue. Document ID: {DocumentId}, Queue: {QueueName}, OCR result length: {OcrLength} characters.",
+                documentId,
+                _config.QueueName,
+                ocrResult?.Length ?? 0
+            );
+
             try
             {
                 await using IConnection connection = await _connectionFactory.CreateConnectionAsync();
