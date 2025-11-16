@@ -1,4 +1,3 @@
-/*
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -45,7 +44,7 @@ namespace Paperless.Services.Tests
             OcrService service = new OcrService(_ocrConfigMock.Object, _ocrLoggerMock.Object);
             MemoryStream emptyStream = new MemoryStream();
 
-            // will fail but that's fine - just want to see if it tries
+            // will fail but that's fine - want to see if it tries
             Assert.ThrowsAny<Exception>(() => service.ConvertPdfToImage(emptyStream));
             
             // check if it logged
@@ -53,7 +52,7 @@ namespace Paperless.Services.Tests
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting temporary PDF")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting PDF Stream to an image")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
@@ -73,7 +72,7 @@ namespace Paperless.Services.Tests
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting temporary image")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Extracting text from image")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
@@ -94,8 +93,8 @@ namespace Paperless.Services.Tests
                     LogLevel.Information,
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) => 
-                        v.ToString()!.Contains("Converting temporary PDF") || 
-                        v.ToString()!.Contains("Converting temporary image")),
+                        v.ToString()!.Contains("Extracting text from image") || 
+                        v.ToString()!.Contains("Converting PDF Stream to an image")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.AtLeastOnce);
@@ -146,4 +145,3 @@ namespace Paperless.Services.Tests
         }
     }
 }
-*/
