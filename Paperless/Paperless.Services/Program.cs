@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Minio;
 using Paperless.Services.Configurations;
 using Paperless.Services.Services;
+using Paperless.Services.Services.HttpClients;
 using Paperless.Services.Services.MessageQueue;
 using Paperless.Services.Workers;
 using Serilog;
@@ -18,6 +19,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
 //  Configuration
+builder.Services.Configure<EndpointsConfig>(builder.Configuration.GetSection("Endpoints"));
 builder.Services.Configure<MinIoConfig>(builder.Configuration.GetSection("MinIo"));
 builder.Services.Configure<OcrConfig>(builder.Configuration.GetSection("Ocr"));
 builder.Services.Configure<GenAIConfig>(builder.Configuration.GetSection("GenAI"));
@@ -45,6 +47,10 @@ builder.Services.AddKeyedSingleton("SummaryListener", (sp, key) =>
 
     return new MQListener(logger, Options.Create(config));
 });
+
+//  HttpClients
+builder.Services.AddHttpClient<WorkerResultsService>();
+builder.Services.AddHttpClient<GenAIService>();
 
 //  Workers
 builder.Services.AddHostedService<OcrWorker>();

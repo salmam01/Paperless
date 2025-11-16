@@ -1,4 +1,4 @@
-﻿using Paperless.Services.Services;
+﻿using Paperless.Services.Services.HttpClients;
 using Paperless.Services.Services.MessageQueue;
 using RabbitMQ.Client.Events;
 
