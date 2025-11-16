@@ -25,7 +25,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Paperless.REST\Paperless.DAL\Paperless.DAL.csproj" />
+    <ProjectReference Include="..\Paperless.REST\Paperless.BL\Paperless.BL.csproj" />
   </ItemGroup>
 
   <ItemGroup>
