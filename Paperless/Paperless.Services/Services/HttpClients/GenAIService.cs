@@ -3,7 +3,7 @@ using Paperless.Services.Configurations;
 using System.Net.Http.Json;
 using System.Text.Json;
 
-namespace Paperless.Services.Services
+namespace Paperless.Services.Services.HttpClients
 {
     public class GenAIService
     {
@@ -15,8 +15,7 @@ namespace Paperless.Services.Services
             IOptions<GenAIConfig> config,
             ILogger<GenAIService> logger,
             HttpClient httpClient
-        )
-        {
+        ) {
             _config = config.Value;
             _logger = logger;
             _httpClient = httpClient;

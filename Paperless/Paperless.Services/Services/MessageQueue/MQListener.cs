@@ -47,7 +47,10 @@ namespace Paperless.Services.Services.MessageQueue
             );
 
             await _channel.BasicQosAsync(0, 1, false);
-            _logger.LogInformation("OCR Worker is running and listening for messages.");
+            _logger.LogInformation(
+                "RabbitMQ Queue {queueName} is running and listening for messages.",
+                _config.QueueName
+            );
 
             AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += async (_, ea) =>
@@ -107,7 +110,6 @@ namespace Paperless.Services.Services.MessageQueue
                             ex.Message
                         );
 
-                        // Maximaler Retry-Count erreicht --> Nachricht endgültig ablehnen
                         await _channel.BasicNackAsync(
                             deliveryTag: ea.DeliveryTag, 
                             multiple: false, 
@@ -142,7 +144,7 @@ namespace Paperless.Services.Services.MessageQueue
             return 0;
         }
 
-        public async Task RetryTask(IChannel channel, BasicDeliverEventArgs ea, int retryCount)
+        private async Task RetryTask(IChannel channel, BasicDeliverEventArgs ea, int retryCount)
         {
             BasicProperties newProperties = new BasicProperties
             {
@@ -170,7 +172,6 @@ namespace Paperless.Services.Services.MessageQueue
                 body: ea.Body.ToArray()
             );
 
-            // Original-Nachricht bestätigen (-->damit sie nicht mehrfach verarbeitet wird)
             await channel.BasicAckAsync(
                 deliveryTag: ea.DeliveryTag,
                 multiple: false
