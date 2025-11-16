@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Paperless.API.Dtos;
+using Paperless.API.DTOs;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
@@ -168,7 +169,9 @@ namespace Paperless.API.Controllers
                 _logger.LogError(
                     ex,
                     "{method} /document failed in {layer} Layer due to {reason}.",
-                    "POST", "API", ex.Message
+                    "POST", 
+                    "API", 
+                    ex.Message
                 );
                 return Problem(
                     detail: ex.Message,
@@ -177,7 +180,66 @@ namespace Paperless.API.Controllers
                 );
             }
         }
-        
+
+
+        [HttpPost("{id}/servicesresult")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> UploadServicesResult([FromRoute] string id, [FromBody] WorkerResultDto result)
+        {
+            _logger.LogInformation(
+                "Incoming POST /document from {ip}.",
+                HttpContext.Connection.RemoteIpAddress?.ToString()
+            );
+
+            if (result == null || result.Id != id)
+            {
+                _logger.LogWarning("Invalid payload for document {DocumentId}", id);
+                return BadRequest("Invalid payload");
+            }
+            try
+            {
+                await _documentService.UpdateDocumentAsync(
+                    result.Id,
+                    result.OcrResult,
+                    result.SummaryResult
+                );
+
+                return Created();
+            }
+            catch (ServiceException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /document/{id} failed in {layer} Layer due to {reason}.",
+                    "POST", "Business", GetExceptionMessage(ex.Type),
+                    id
+                );
+                return Problem(
+                    detail: ex.Message,
+                    statusCode: GetHttpStatusCode(ex.Type),
+                    title: GetExceptionMessage(ex.Type)
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /document/{id} failed in {layer} Layer due to {reason}.",
+                    "POST",
+                    id,
+                    "API",
+                    ex.Message
+                );
+                return Problem(
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "Internal Server Error"
+                );
+            }
+        }
+
         [HttpPut(Name = "PutDocument")]
         public void Put()
         {

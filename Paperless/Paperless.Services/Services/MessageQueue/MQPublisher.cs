@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Paperless.Services.Services.MessageQueue
@@ -30,7 +31,8 @@ namespace Paperless.Services.Services.MessageQueue
                 Password = _config.Password,
             };
         }
-        public async Task PublishOcrResult(Guid documentId, string message)
+
+        public async Task PublishOcrResult(string documentId, string ocrResult)
         {
             try
             {
@@ -44,8 +46,14 @@ namespace Paperless.Services.Services.MessageQueue
                     autoDelete: false
                 );
 
-                //  TODO: send id + message
-                byte[] body = Encoding.UTF8.GetBytes(documentId.ToString());
+                string resultToJson = JsonSerializer.Serialize(
+                    new
+                    {
+                        Id = documentId,
+                        OcrResult = ocrResult
+                    }
+                );
+                byte[] body = Encoding.UTF8.GetBytes(resultToJson);
 
                 BasicProperties properties = new BasicProperties
                 {
@@ -74,11 +82,11 @@ namespace Paperless.Services.Services.MessageQueue
             {
                 _logger.LogError(
                     ex,
-                    "Upps! Failed to send document {DocumentId} to GenAI queue. Error: {ErrorMessage}",
+                    "Upps! Failed to send document {DocumentId} to {queueName}. Error: {ErrorMessage}",
                     documentId,
+                    _config.QueueName,
                     ex.Message
                 );
-                // Don't throw - OCR was successful, GenAI can be retried later
             }
         }
     }

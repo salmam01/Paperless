@@ -14,16 +14,19 @@ namespace Paperless.Services.Workers
     {
         private readonly ILogger<OcrWorker> _logger;
         private readonly MQListener _mqListener;
+        private readonly MQPublisher _mqPublisher;
         private readonly StorageService _storageService;
         private readonly OcrService _ocrService;
 
         public OcrWorker(
             ILogger<OcrWorker> logger, 
             [FromKeyedServices("OcrListener")] MQListener mqListener,
+            MQPublisher mqPublisher,
             StorageService storageService,
             OcrService ocrService
         ) {
             _mqListener = mqListener;
+            _mqPublisher = mqPublisher;
             _storageService = storageService;
             _ocrService = ocrService;
             _logger = logger;
@@ -50,11 +53,13 @@ namespace Paperless.Services.Workers
                 result.PdfContent
             );
 
-            //await _messageQueueService.PublishToResultQueue(result.PdfContent);
+            //  Send OCR Result to GenAIWorker through RabbitMQ
+            await _mqPublisher.PublishOcrResult(id, result.PdfContent);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
+            _logger.LogInformation("OCR Worker is stopping...");
             await _mqListener.StopListeningAsync();
             await base.StopAsync(cancellationToken);
         }

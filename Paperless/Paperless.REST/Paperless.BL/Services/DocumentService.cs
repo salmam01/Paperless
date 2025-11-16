@@ -69,16 +69,6 @@ namespace Paperless.BL.Services
         {
             try
             {
-                /*
-                if (!CheckMetaDataValidity(document))
-                {
-                    _logger.LogWarning(
-                        "{method} /document failed in {layer} Layer due to {reason}.",
-                        "POST", "Business", "empty or invalid file format"
-                    );
-                    throw new ServiceException("Could not upload document.", ExceptionType.Validation);
-                }*/
-
                 AdjustFileType(document);
 
                 if (document.Type == "PDF")
@@ -122,6 +112,37 @@ namespace Paperless.BL.Services
                 );
 
                 throw new ServiceException("Could not upload document.", ExceptionType.Internal);
+            }
+        }
+
+        public async Task UpdateDocumentAsync(string id, string content, string summary)
+        {
+            try
+            {
+                if (!Guid.TryParse(id, out Guid documentId))
+                {
+                    _logger.LogError(
+                        "Invalid document ID format received from queue: {DocumentIdString}",
+                        id
+                    );
+                    throw new ServiceException($"Invalid document ID format: {id}", ExceptionType.Validation);
+                }
+
+                await _documentRepository.UpdateDocumentContentAndSummaryAsync(documentId, content, summary);
+                _logger.LogInformation(
+                    "Document {DocumentId} summary updated in database. Summary length: {SummaryLength}",
+                    id,
+                    summary.Length
+                );
+            }
+            catch (DatabaseException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to update document {DocumentId} summary in database.",
+                    id
+                );
+                throw new ServiceException("Could not update document summary.", ExceptionType.Internal, ex);
             }
         }
 
@@ -188,39 +209,6 @@ namespace Paperless.BL.Services
                 return false;
 
             return true;
-        }
-
-        public async Task UpdateDocumentSummaryAsync(Guid documentId, string summary)
-        {
-            try
-            {
-                DocumentEntity? entity = await _documentRepository.GetDocumentAsync(documentId);
-                if (entity == null)
-                {
-                    _logger.LogWarning("Document {DocumentId} not found in database.", documentId);
-                    throw new KeyNotFoundException($"Document {documentId} not found");
-                }
-                entity.Summary = summary;
-                await _documentRepository.UpdateDocumentAsync(entity);
-                _logger.LogInformation(
-                    "Document {DocumentId} summary updated in database. Summary length: {SummaryLength}",
-                    documentId,
-                    summary.Length
-                );
-            }
-            catch (KeyNotFoundException)
-            {
-                throw;
-            }
-            catch (DatabaseException ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Failed to update document {DocumentId} summary in database.",
-                    documentId
-                );
-                throw new ServiceException("Could not update document summary.", ExceptionType.Internal, ex);
-            }
         }
 
         private void AdjustFileType(Document document)

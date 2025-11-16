@@ -35,7 +35,7 @@ namespace Paperless.BL.Services
                 await using IChannel channel = await connection.CreateChannelAsync();
 
                 await channel.QueueDeclareAsync(
-                    queue: _config.OcrQueue, 
+                    queue: _config.QueueName, 
                     durable: true, 
                     exclusive: false, 
                     autoDelete: false
@@ -53,7 +53,7 @@ namespace Paperless.BL.Services
                 
                 await channel.BasicPublishAsync(
                     exchange: "",
-                    routingKey: _config.OcrQueue,
+                    routingKey: _config.QueueName,
                     mandatory: true,
                     basicProperties: properties,
                     body: body
@@ -62,7 +62,7 @@ namespace Paperless.BL.Services
                 _logger.LogInformation(
                     "Published document with ID {DocumentId} to Message Queue {QueueName} successfully.", 
                     id, 
-                    _config.OcrQueue
+                    _config.QueueName
                 );
 
             } catch (Exception ex) {

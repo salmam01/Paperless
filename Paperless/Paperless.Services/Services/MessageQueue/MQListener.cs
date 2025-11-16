@@ -47,7 +47,10 @@ namespace Paperless.Services.Services.MessageQueue
             );
 
             await _channel.BasicQosAsync(0, 1, false);
-            _logger.LogInformation("OCR Worker is running and listening for messages.");
+            _logger.LogInformation(
+                "RabbitMQ Queue {queueName} is running and listening for messages.",
+                _config.QueueName
+            );
 
             AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += async (_, ea) =>

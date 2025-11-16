@@ -30,12 +30,19 @@ builder.Services.Configure<RabbitMqConfig>("RabbitMqSummary", builder.Configurat
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OcrService>();
 builder.Services.AddSingleton<GenAIService>();
-builder.Services.AddSingleton<MQPublisher>();
+builder.Services.AddSingleton<MQPublisher>(sp =>
+{
+    ILogger<MQPublisher> logger = sp.GetRequiredService<ILogger<MQPublisher>>();
+    RabbitMqConfig config = sp.GetRequiredService<IOptionsMonitor<RabbitMqConfig>>()
+        .Get("RabbitMqSummary");
+
+    return new MQPublisher(logger, Options.Create(config));
+});
 builder.Services.AddKeyedSingleton("OcrListener", (sp, key) =>
 {
     ILogger<MQListener> logger = sp.GetRequiredService<ILogger<MQListener>>();
     RabbitMqConfig config = sp.GetRequiredService<IOptionsMonitor<RabbitMqConfig>>()
-                   .Get("RabbitMqOcr");
+        .Get("RabbitMqOcr");
 
     return new MQListener(logger, Options.Create(config));
 });
@@ -43,7 +50,7 @@ builder.Services.AddKeyedSingleton("SummaryListener", (sp, key) =>
 {
     ILogger<MQListener> logger = sp.GetRequiredService<ILogger<MQListener>>();
     RabbitMqConfig config = sp.GetRequiredService<IOptionsMonitor<RabbitMqConfig>>()
-                   .Get("RabbitMqOcr");
+        .Get("RabbitMqSummary");
 
     return new MQListener(logger, Options.Create(config));
 });

@@ -1,6 +1,8 @@
-﻿using Paperless.Services.Services.HttpClients;
+﻿using Paperless.Services.Models.Dtos;
+using Paperless.Services.Services.HttpClients;
 using Paperless.Services.Services.MessageQueue;
 using RabbitMQ.Client.Events;
+using System.Text.Json;
 
 namespace Paperless.Services.Workers
 {
@@ -9,15 +11,18 @@ namespace Paperless.Services.Workers
         private readonly ILogger<GenAIWorker> _logger;
         private readonly MQListener _mqListener;
         private readonly GenAIService _genAIService;
+        private readonly WorkerResultsService _workerResultsService;
 
         public GenAIWorker(
             ILogger<GenAIWorker> logger,
             [FromKeyedServices("SummaryListener")] MQListener mqListener,
-            GenAIService genAIService
+            GenAIService genAIService,
+            WorkerResultsService workerResultsService
         ) {
             _logger = logger;
             _mqListener = mqListener;
             _genAIService = genAIService;
+            _workerResultsService = workerResultsService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -26,63 +31,55 @@ namespace Paperless.Services.Workers
             await _mqListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
         }
 
-        private async Task HandleMessageAsync(string documentIdString, BasicDeliverEventArgs ea)
+        private async Task HandleMessageAsync(string message, BasicDeliverEventArgs ea)
         {
-            if (!Guid.TryParse(documentIdString, out Guid documentId))
-            {
-                _logger.LogError(
-                    "Invalid document ID format received from queue: {DocumentIdString}",
-                    documentIdString
-                );
-                throw new ArgumentException($"Invalid document ID format: {documentIdString}");
-            }
-
-            _logger.LogInformation(
-                "Document {DocumentId} for summary generation processing.",
-                documentId
-            );
-
-            //  no...don't do this
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            var documentService = scope.ServiceProvider.GetRequiredService<IDocumentService>();
-
             try
             {
-                //  or this...
-                var document = await documentService.GetDocumentAsync(documentId);
-                
-                if (string.IsNullOrWhiteSpace(document.Content))
+                if (string.IsNullOrEmpty(message))
                 {
-                    _logger.LogWarning(
-                        "Document {DocumentId} has no content. Skipping summary generation.",
-                        documentId
-                    );
                     return;
                 }
 
+                Dictionary<string, string> jsonObject = JsonSerializer.Deserialize<Dictionary<string, string>>(message)
+                    ?? new Dictionary<string, string>();
+
+                if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("OcrResult"))
+                {
+                    _logger.LogWarning(
+                        "Document has no content. Skipping summary generation."
+                    );
+                    return;
+                }
+                string id = jsonObject["Id"];
+                string ocrResult = jsonObject["OcrResult"];
+
                 _logger.LogInformation(
-                    "Document {DocumentId} content retrieved. Content length: {ContentLength}",
-                    documentId,
-                    document.Content.Length
+                    "Document {DocumentId} content retrieved.",
+                    id
                 );
                 
-                string summary = await _genAIService.GenerateSummaryAsync(document.Content);
+                string summary = await _genAIService.GenerateSummaryAsync(ocrResult);
 
-                // Update document with summary via BL Layer
-                await documentService.UpdateDocumentSummaryAsync(documentId, summary);
+                WorkerResultDto workerResultDto = new WorkerResultDto
+                {
+                    Id = id,
+                    OcrResult = ocrResult,
+                    SummaryResult = summary
+                };
 
                 _logger.LogInformation(
                     "Successfully generated & saved summary for document {DocumentId}. Summary length: {SummaryLength}",
-                    documentId,
+                    id,
                     summary.Length
                 );
+
+                await _workerResultsService.PostWorkerResultsAsync(workerResultDto);
             }
             catch (KeyNotFoundException ex)
             {
                 _logger.LogError(
                     ex,
-                    "Document {DocumentId} not found in database.",
-                    documentId
+                    "Document not found in database."
                 );
                 throw;
             }
@@ -90,8 +87,7 @@ namespace Paperless.Services.Workers
             {
                 _logger.LogError(
                     ex,
-                    "Failed to generate summary for document {DocumentId}. Error: {ErrorMessage}",
-                    documentId,
+                    "Failed to generate summary for document. Error: {ErrorMessage}",
                     ex.Message
                 );
                 throw;
