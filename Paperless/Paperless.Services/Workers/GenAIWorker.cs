@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Paperless.BL.Services;
-using Paperless.Services.Services;
+﻿using Paperless.Services.Services;
 using Paperless.Services.Services.MessageQueue;
 using RabbitMQ.Client.Events;
 
@@ -9,27 +7,23 @@ namespace Paperless.Services.Workers
     public class GenAIWorker : BackgroundService
     {
         private readonly ILogger<GenAIWorker> _logger;
-        private readonly MQListener _messageQueueService;
+        private readonly MQListener _mqListener;
         private readonly GenAIService _genAIService;
-        private readonly IServiceProvider _serviceProvider;
 
         public GenAIWorker(
             ILogger<GenAIWorker> logger,
-            MQListener messageQueueService,
-            GenAIService genAIService,
-            IServiceProvider serviceProvider
-        )
-        {
+            [FromKeyedServices("SummaryListener")] MQListener mqListener,
+            GenAIService genAIService
+        ) {
             _logger = logger;
-            _messageQueueService = messageQueueService;
+            _mqListener = mqListener;
             _genAIService = genAIService;
-            _serviceProvider = serviceProvider;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("GenAI Worker is starting...");
-            await _messageQueueService.StartListeningAsync(HandleMessageAsync, stoppingToken);
+            await _mqListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
         }
 
         private async Task HandleMessageAsync(string documentIdString, BasicDeliverEventArgs ea)
@@ -48,13 +42,13 @@ namespace Paperless.Services.Workers
                 documentId
             );
 
-            //  scope for scoped services creste (DocumentService from BL Layer)
+            //  no...don't do this
             using IServiceScope scope = _serviceProvider.CreateScope();
             var documentService = scope.ServiceProvider.GetRequiredService<IDocumentService>();
 
             try
             {
-                // Get document from database  BL Layer
+                //  or this...
                 var document = await documentService.GetDocumentAsync(documentId);
                 
                 if (string.IsNullOrWhiteSpace(document.Content))
@@ -107,7 +101,7 @@ namespace Paperless.Services.Workers
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("GenAI Worker is stopping...");
-            await _messageQueueService.StopListeningAsync();
+            await _mqListener.StopListeningAsync();
             await base.StopAsync(cancellationToken);
         }
     }

@@ -31,12 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Paperless.REST\Paperless.DAL\Paperless.DAL.csproj" />
-    <ProjectReference Include="..\Paperless.REST\Paperless.BL\Paperless.BL.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="Paperless.Services.Tests\**" />
     <Content Remove="Paperless.Services.Tests\**" />
     <EmbeddedResource Remove="Paperless.Services.Tests\**" />
     <None Remove="Paperless.Services.Tests\**" />

@@ -15,8 +15,7 @@ namespace Paperless.Services.Services
             IOptions<GenAIConfig> config,
             ILogger<GenAIService> logger,
             HttpClient httpClient
-        )
-        {
+        ) {
             _config = config.Value;
             _logger = logger;
             _httpClient = httpClient;

@@ -17,34 +17,38 @@ Log.Logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
-// Configuration
+//  Configuration
 builder.Services.Configure<MinIoConfig>(builder.Configuration.GetSection("MinIo"));
 builder.Services.Configure<OcrConfig>(builder.Configuration.GetSection("Ocr"));
 builder.Services.Configure<GenAIConfig>(builder.Configuration.GetSection("GenAI"));
 builder.Services.Configure<RabbitMqConfig>("RabbitMqOcr", builder.Configuration.GetSection("RabbitMqOcr"));
+builder.Services.Configure<RabbitMqConfig>("RabbitMqSummary", builder.Configuration.GetSection("RabbitMqSummary"));
 
-// Services
-builder.Services.AddSingleton<MQListener>(sp =>
-{
-    RabbitMqConfig config = sp.GetRequiredService<IOptionsMonitor<RabbitMqConfig>>().Get("RabbitMqOcr");
-    return new MQListener(
-        sp.GetRequiredService<ILogger<MQListener>>(),
-        config
-    );
-});
-builder.Services.AddSingleton<MQListener>(sp =>
-{
-    RabbitMqConfig config = sp.GetRequiredService<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMqSummary"));
-    return new MQListener(
-        sp.GetRequiredService<ILogger<MQListener>>(),
-        config
-    );
-});
-
+//  Services
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OcrService>();
+builder.Services.AddSingleton<GenAIService>();
+builder.Services.AddSingleton<MQPublisher>();
+builder.Services.AddKeyedSingleton("OcrListener", (sp, key) =>
+{
+    ILogger<MQListener> logger = sp.GetRequiredService<ILogger<MQListener>>();
+    RabbitMqConfig config = sp.GetRequiredService<IOptionsMonitor<RabbitMqConfig>>()
+                   .Get("RabbitMqOcr");
 
+    return new MQListener(logger, Options.Create(config));
+});
+builder.Services.AddKeyedSingleton("SummaryListener", (sp, key) =>
+{
+    ILogger<MQListener> logger = sp.GetRequiredService<ILogger<MQListener>>();
+    RabbitMqConfig config = sp.GetRequiredService<IOptionsMonitor<RabbitMqConfig>>()
+                   .Get("RabbitMqOcr");
+
+    return new MQListener(logger, Options.Create(config));
+});
+
+//  Workers
 builder.Services.AddHostedService<OcrWorker>();
+builder.Services.AddHostedService<GenAIWorker>();
 
 var host = builder.Build();
 host.Run();
