@@ -16,5 +16,6 @@ namespace Paperless.BL.Services
         Task EditDocumentAsync(Document document);
         Task DeleteDocumentsAsync();
         Task DeleteDocumentAsync(Guid id);
+        Task UpdateDocumentSummaryAsync(Guid documentId, string summary);
     }
 }

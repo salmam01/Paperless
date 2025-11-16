@@ -190,6 +190,39 @@ namespace Paperless.BL.Services
             return true;
         }
 
+        public async Task UpdateDocumentSummaryAsync(Guid documentId, string summary)
+        {
+            try
+            {
+                DocumentEntity? entity = await _documentRepository.GetDocumentAsync(documentId);
+                if (entity == null)
+                {
+                    _logger.LogWarning("Document {DocumentId} not found in database.", documentId);
+                    throw new KeyNotFoundException($"Document {documentId} not found");
+                }
+                entity.Summary = summary;
+                await _documentRepository.UpdateDocumentAsync(entity);
+                _logger.LogInformation(
+                    "Document {DocumentId} summary updated in database. Summary length: {SummaryLength}",
+                    documentId,
+                    summary.Length
+                );
+            }
+            catch (KeyNotFoundException)
+            {
+                throw;
+            }
+            catch (DatabaseException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to update document {DocumentId} summary in database.",
+                    documentId
+                );
+                throw new ServiceException("Could not update document summary.", ExceptionType.Internal, ex);
+            }
+        }
+
         private void AdjustFileType(Document document)
         {
             if (string.IsNullOrEmpty(document.Type)) {
