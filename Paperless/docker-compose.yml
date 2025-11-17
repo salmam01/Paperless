@@ -23,11 +23,17 @@ services:
     ports:
       - "5672:5672"   # AMQP
       - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - paperless-network
 
@@ -95,3 +101,4 @@ networks:
 volumes:
   pgdata:
   miniodata:
+  rabbitmqdata:
