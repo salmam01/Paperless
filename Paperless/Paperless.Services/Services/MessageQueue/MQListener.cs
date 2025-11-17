@@ -41,10 +41,50 @@ namespace Paperless.Services.Services.MessageQueue
                 _config.Port
             );
 
-            if (_connection == null || !_connection.IsOpen)
-                _connection = await _connectionFactory.CreateConnectionAsync();
+            // Retry logic for initial connection with exponential backoff
+            int maxConnectionRetries = 10;
+            int retryDelaySeconds = 5;
+            
+            for (int attempt = 1; attempt <= maxConnectionRetries; attempt++)
+            {
+                try
+                {
+                    if (_connection == null || !_connection.IsOpen)
+                        _connection = await _connectionFactory.CreateConnectionAsync();
+                    if (_channel == null || !_channel.IsOpen)
+                        _channel = await _connection.CreateChannelAsync();
+                    
+                    // Connection successful, break out of retry loop
+                    break;
+                }
+                catch (Exception ex) when (attempt < maxConnectionRetries)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to connect to RabbitMQ (attempt {Attempt}/{MaxRetries}). Retrying in {DelaySeconds} seconds...",
+                        attempt,
+                        maxConnectionRetries,
+                        retryDelaySeconds
+                    );
+                    
+                    await Task.Delay(TimeSpan.FromSeconds(retryDelaySeconds), stoppingToken);
+                    retryDelaySeconds = Math.Min(retryDelaySeconds * 2, 30); // Exponential backoff, max 30 seconds
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "Failed to connect to RabbitMQ after {MaxRetries} attempts. Giving up.",
+                        maxConnectionRetries
+                    );
+                    throw;
+                }
+            }
+
             if (_channel == null || !_channel.IsOpen)
-                _channel = await _connection.CreateChannelAsync();
+            {
+                throw new InvalidOperationException("Failed to establish RabbitMQ channel connection.");
+            }
 
             await _channel.QueueDeclareAsync(
                 queue: _config.QueueName,

@@ -30,9 +30,22 @@ namespace Paperless.Services.Services.HttpClients
                 documentContent?.Length ?? 0
             );
 
-            if (string.IsNullOrWhiteSpace(documentContent))
+            // Validate content: must not be null, empty, or whitespace
+            // Also check for minimum meaningful length (at least 50 characters after trimming)
+            const int MIN_CONTENT_LENGTH = 50;
+            string trimmedContent = documentContent?.Trim() ?? string.Empty;
+            
+            if (string.IsNullOrWhiteSpace(trimmedContent))
             {
-                throw new ArgumentException("Document content cann't be empty.", nameof(documentContent));
+                throw new ArgumentException("Document content cannot be empty.", nameof(documentContent));
+            }
+            
+            if (trimmedContent.Length < MIN_CONTENT_LENGTH)
+            {
+                throw new ArgumentException(
+                    $"Document content is too short for summary generation. Minimum length: {MIN_CONTENT_LENGTH} characters, actual length: {trimmedContent.Length} characters.",
+                    nameof(documentContent)
+                );
             }
 
             string url = string.Format(_config.ApiUrl, _config.ModelName);
