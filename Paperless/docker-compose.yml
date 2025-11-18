@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: PaperlessDB
     ports:
       - "5432:5432"
-    volumes: #vll muss du das doch so lassen, ich hatte mit data Fehlermeldungen.: - pgdata:/var/lib/postgresql/data
+    volumes:
       - pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U swen3 -d PaperlessDB"]
@@ -23,11 +23,17 @@ services:
     ports:
       - "5672:5672"   # AMQP
       - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 15
+      start_period: 60s
     networks:
       - paperless-network
 
@@ -95,3 +101,4 @@ networks:
 volumes:
   pgdata:
   miniodata:
+  rabbitmqdata:

@@ -13,7 +13,11 @@ export function DocumentCard({ document, onDelete, onSelect }: Props) {
                 <h3>{document.name}</h3>
                 <span className="document-type">{document.type}</span>
             </div>
-            <p className="document-content">{document.content}</p>
+            <div className="document-content-wrapper">
+                <p className="document-content">
+                    {document.summary}
+                </p>
+            </div>
             <div className="document-metadata">
                 <div className="document-metadata-left">
                     {onSelect && (

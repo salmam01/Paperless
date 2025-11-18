@@ -1,4 +1,3 @@
-/*
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -71,7 +70,7 @@ namespace Paperless.Services.Tests
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting temporary PDF")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting PDF Stream to an image")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
@@ -86,7 +85,7 @@ namespace Paperless.Services.Tests
         }
 
         [Fact]
-        public void logs_something_when_processing_image()
+        public void logs_something_when_processing_pdf()
         {
             OcrService service = new OcrService(_configMock.Object, _loggerMock.Object);
             MemoryStream emptyStream = new MemoryStream();
@@ -101,12 +100,12 @@ namespace Paperless.Services.Tests
                 // as expected
             }
 
-            // check if log was called
+            // check if log was called - should log "Extracting text from image"
             _loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting temporary image")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Extracting text from image")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
@@ -154,4 +153,3 @@ namespace Paperless.Services.Tests
         }
     }
 }
-*/

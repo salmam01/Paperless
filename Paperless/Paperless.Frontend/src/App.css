@@ -408,18 +408,37 @@
   flex-shrink: 0;
 }
 
-.document-content {
+.document-content-wrapper {
   margin: 0 0 1rem 0;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.document-content {
+  margin: 0;
+  padding: 0;
   opacity: 0.9;
   line-height: 1.5;
-  max-height: 60px;
+  color: rgba(255, 255, 255, 0.9);
   overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.content-ellipsis {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.1) 20%, rgba(255, 255, 255, 0.1) 100%);
+  padding-left: 0.75rem;
+  line-height: 1.5;
 }
 
 .document-metadata {
@@ -597,6 +616,7 @@
   border-color: rgba(255,255,255,0.4);
 }
 
+/* Show the appropriate tab panel when its radio is checked */
 .document-details #tab-summary:checked ~ .tab-panels .tab-panel[data-for="tab-summary"],
 .document-details #tab-content:checked ~ .tab-panels .tab-panel[data-for="tab-content"],
 .document-details #tab-meta:checked ~ .tab-panels .tab-panel[data-for="tab-meta"] {

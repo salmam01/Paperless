@@ -22,7 +22,8 @@ namespace Paperless.Services.Services
         public OcrResult ProcessPdf(MemoryStream documentContent)
         {
             _logger.LogInformation(
-                "Extracting text from image ..."
+                "Processing PDF for OCR. Document size: {DocumentSize} bytes.",
+                documentContent?.Length ?? 0
             );
 
             List<MagickImage> imageResult = ConvertPdfToImage(documentContent);
@@ -55,9 +56,10 @@ namespace Paperless.Services.Services
                 pages.Add(new OcrPage(i + 1, text, mean));
 
                 _logger.LogInformation(
-                    "====== Page {pageIndex} : Confidence {Confidence:P1} ======",
+                    "======== Page {PageIndex} of PDF. Confidence: {Confidence:P1}, Text length: {TextLength} characters.",
                     pages[i].PageIndex,
-                    pages[i].MeanConfidence
+                    pages[i].MeanConfidence,
+                    text?.Length ?? 0
                 );
             }
 
@@ -68,7 +70,14 @@ namespace Paperless.Services.Services
                 fileContent.AppendLine();
             }
 
-            return new OcrResult(pages, fileContent.ToString());
+            string finalContent = fileContent.ToString();
+            _logger.LogInformation(
+                "OCR processing completed. Total pages: {PageCount}, Total content length: {ContentLength} characters.",
+                pages.Count,
+                finalContent.Length
+            );
+
+            return new OcrResult(pages, finalContent);
         }
 
         //  Convert the content Stream to Magick.NET 
@@ -76,7 +85,10 @@ namespace Paperless.Services.Services
         public List<MagickImage> ConvertPdfToImage(MemoryStream documentContent)
         {
             _logger.LogInformation(
-                "Converting PDF Stream to an image..."
+                "Converting PDF stream to images. Document size: {DocumentSize} bytes, DPI: {Dpi}, Max pages: {MaxPages}.",
+                documentContent?.Length ?? 0,
+                _config.DefaultDpi,
+                _config.MaxPages
             );
 
             List<MagickImage> images = [];

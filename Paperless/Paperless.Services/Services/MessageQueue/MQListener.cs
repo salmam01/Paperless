@@ -34,10 +34,57 @@ namespace Paperless.Services.Services.MessageQueue
             Func<string, BasicDeliverEventArgs, Task> onMessageReceived,
             CancellationToken stoppingToken
         ) {
-            if (_connection == null || !_connection.IsOpen)
-                _connection = await _connectionFactory.CreateConnectionAsync();
+            _logger.LogInformation(
+                "Starting Message Queue listener. Queue: {QueueName}, Host: {Host}, Port: {Port}",
+                _config.QueueName,
+                _config.Host,
+                _config.Port
+            );
+
+            // Retry logic for initial connection with exponential backoff
+            int maxConnectionRetries = 10;
+            int retryDelaySeconds = 5;
+            
+            for (int attempt = 1; attempt <= maxConnectionRetries; attempt++)
+            {
+                try
+                {
+                    if (_connection == null || !_connection.IsOpen)
+                        _connection = await _connectionFactory.CreateConnectionAsync();
+                    if (_channel == null || !_channel.IsOpen)
+                        _channel = await _connection.CreateChannelAsync();
+                    
+                    // Connection successful, break out of retry loop
+                    break;
+                }
+                catch (Exception ex) when (attempt < maxConnectionRetries)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to connect to RabbitMQ (attempt {Attempt}/{MaxRetries}). Retrying in {DelaySeconds} seconds...",
+                        attempt,
+                        maxConnectionRetries,
+                        retryDelaySeconds
+                    );
+                    
+                    await Task.Delay(TimeSpan.FromSeconds(retryDelaySeconds), stoppingToken);
+                    retryDelaySeconds = Math.Min(retryDelaySeconds * 2, 30); // Exponential backoff, max 30 seconds
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "Failed to connect to RabbitMQ after {MaxRetries} attempts. Giving up.",
+                        maxConnectionRetries
+                    );
+                    throw;
+                }
+            }
+
             if (_channel == null || !_channel.IsOpen)
-                _channel = await _connection.CreateChannelAsync();
+            {
+                throw new InvalidOperationException("Failed to establish RabbitMQ channel connection.");
+            }
 
             await _channel.QueueDeclareAsync(
                 queue: _config.QueueName,
@@ -48,7 +95,7 @@ namespace Paperless.Services.Services.MessageQueue
 
             await _channel.BasicQosAsync(0, 1, false);
             _logger.LogInformation(
-                "RabbitMQ Queue {queueName} is running and listening for messages.",
+                "RabbitMQ Queue {QueueName} is running and listening for messages.",
                 _config.QueueName
             );
 
@@ -74,9 +121,10 @@ namespace Paperless.Services.Services.MessageQueue
                     body = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                     _logger.LogInformation(
-                        "Received message {message} from Message Queue {QueueName}.",
-                        body,
-                        _config.QueueName
+                        "Received message from Message Queue {QueueName}. Message length: {MessageLength} characters, Delivery tag: {DeliveryTag}",
+                        _config.QueueName,
+                        body?.Length ?? 0,
+                        ea.DeliveryTag
                     );
 
                     await onMessageReceived(body, ea);

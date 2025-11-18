@@ -33,10 +33,16 @@ namespace Paperless.Services.Workers
 
         private async Task HandleMessageAsync(string message, BasicDeliverEventArgs ea)
         {
+            _logger.LogInformation(
+                "Processing message from queue. Message length: {MessageLength} characters.",
+                message?.Length ?? 0
+            );
+
             try
             {
                 if (string.IsNullOrEmpty(message))
                 {
+                    _logger.LogWarning("Received empty message from queue. Skipping processing.");
                     return;
                 }
 
@@ -46,7 +52,8 @@ namespace Paperless.Services.Workers
                 if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("OcrResult"))
                 {
                     _logger.LogWarning(
-                        "Document has no content. Skipping summary generation."
+                        "Document has no content. Skipping summary generation. Message: {Message}",
+                        message
                     );
                     return;
                 }
@@ -54,11 +61,54 @@ namespace Paperless.Services.Workers
                 string ocrResult = jsonObject["OcrResult"];
 
                 _logger.LogInformation(
-                    "Document {DocumentId} content retrieved.",
-                    id
+                    "Document {DocumentId} content retrieved. OCR result length: {OcrLength} characters.",
+                    id,
+                    ocrResult?.Length ?? 0
                 );
                 
-                string summary = await _genAIService.GenerateSummaryAsync(ocrResult);
+                // Check if OCR result has meaningful content (minimum 50 characters after trimming)
+                const int MIN_CONTENT_LENGTH = 50;
+                string trimmedContent = ocrResult?.Trim() ?? string.Empty;
+                
+                string summary;
+                if (string.IsNullOrWhiteSpace(trimmedContent) || trimmedContent.Length < MIN_CONTENT_LENGTH)
+                {
+                    _logger.LogWarning(
+                        "Document {DocumentId} has insufficient content for summary generation. Content length: {ContentLength} characters (minimum: {MinLength}). Setting default summary.",
+                        id,
+                        trimmedContent.Length,
+                        MIN_CONTENT_LENGTH
+                    );
+                    summary = "No summary available - Document doesn't contain enough readable text.";
+                }
+                else
+                {
+                    try
+                    {
+                        summary = await _genAIService.GenerateSummaryAsync(ocrResult);
+                    }
+                    catch (ArgumentException argEx)
+                    {
+                        // Content validation failed - set default summary
+                        _logger.LogWarning(
+                            argEx,
+                            "Document {DocumentId} failed content validation for summary generation. Setting default summary. Error: {ErrorMessage}",
+                            id,
+                            argEx.Message
+                        );
+                        summary = "No summary available - Document doesn't contain enough readable text..";                    }
+                    catch (Exception apiEx)
+                    {
+                        // API call failed - set default summary to prevent message rejection
+                        _logger.LogError(
+                            apiEx,
+                            "Failed to generate summary via API for document {DocumentId}. Setting default summary. Error: {ErrorMessage}",
+                            id,
+                            apiEx.Message
+                        );
+                        summary = "No summary available - Error generating summary.";
+                    }
+                }
 
                 WorkerResultDto workerResultDto = new WorkerResultDto
                 {
@@ -68,7 +118,7 @@ namespace Paperless.Services.Workers
                 };
 
                 _logger.LogInformation(
-                    "Successfully generated & saved summary for document {DocumentId}. Summary length: {SummaryLength}\n*** Summary ***\n{Summary}",
+                    "Successfully processed summary for document {DocumentId}. Summary length: {SummaryLength}\n*** Summary ***\n{Summary}",
                     id,
                     summary.Length,
                     summary
@@ -88,7 +138,7 @@ namespace Paperless.Services.Workers
             {
                 _logger.LogError(
                     ex,
-                    "Failed to generate summary for document. Error: {ErrorMessage}",
+                    "Failed to process document. Error: {ErrorMessage}",
                     ex.Message
                 );
                 throw;

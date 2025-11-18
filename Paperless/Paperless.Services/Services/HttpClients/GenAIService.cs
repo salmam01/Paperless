@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using System.Net.Http.Json;
@@ -24,9 +25,27 @@ namespace Paperless.Services.Services.HttpClients
 
         public async Task<string> GenerateSummaryAsync(string documentContent)
         {
-            if (string.IsNullOrWhiteSpace(documentContent))
+            _logger.LogInformation(
+                "Generating summary using Google Gemini API. Document content length: {ContentLength} characters.",
+                documentContent?.Length ?? 0
+            );
+
+            // Validate content: must not be null, empty, or whitespace
+            // Also check for minimum meaningful length (at least 50 characters after trimming)
+            const int MIN_CONTENT_LENGTH = 50;
+            string trimmedContent = documentContent?.Trim() ?? string.Empty;
+            
+            if (string.IsNullOrWhiteSpace(trimmedContent))
             {
-                throw new ArgumentException("Document content cann't be empty.", nameof(documentContent));
+                throw new ArgumentException("Document content cannot be empty.", nameof(documentContent));
+            }
+            
+            if (trimmedContent.Length < MIN_CONTENT_LENGTH)
+            {
+                throw new ArgumentException(
+                    $"Document content is too short for summary generation. Minimum length: {MIN_CONTENT_LENGTH} characters, actual length: {trimmedContent.Length} characters.",
+                    nameof(documentContent)
+                );
             }
 
             string url = string.Format(_config.ApiUrl, _config.ModelName);
@@ -41,13 +60,16 @@ namespace Paperless.Services.Services.HttpClients
                         parts = new[]
                         {
                             new
-                            {  
-                                text = $"Erstelle eine Zusammenfassung des folgenden Dokuments auf deutsch :\n\n{documentContent}"
+                            {
+                                text =  $"Anaylze the following document and create a short and concise summary. " +
+                                        $"Only reply with the summary. " +
+                                        $"The document is:" +
+                                        $"\n\n{documentContent}"
                             }
                         }
                     }
                 },
-                generationConfig = new //das nochmal recherchieren
+                generationConfig = new
                 {
                     temperature = 0.7,
                     topK = 40,
@@ -58,7 +80,11 @@ namespace Paperless.Services.Services.HttpClients
 
             try
             {
-                _logger.LogInformation("Sending request to Google Gemini API for summary generation.");
+                _logger.LogInformation(
+                    "Sending request to Google Gemini API for summary generation. Model: {ModelName}, URL: {ApiUrl}",
+                    _config.ModelName,
+                    url
+                );
 
                 using HttpResponseMessage response = await _httpClient.PostAsJsonAsync(url, requestBody);
                 response.EnsureSuccessStatusCode();

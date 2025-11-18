@@ -28,6 +28,8 @@ namespace Paperless.BL.Services
 
         public async Task<IEnumerable<Document>> GetDocumentsAsync()
         {
+            _logger.LogInformation("Retrieving all documents from database.");
+
             try
             {
                 IEnumerable<DocumentEntity> entities = await _documentRepository.GetDocumentsAsync();
@@ -46,6 +48,8 @@ namespace Paperless.BL.Services
 
         public async Task<Document> GetDocumentAsync(Guid id)
         {
+            _logger.LogInformation("Retrieving document with ID {DocumentId} from database.", id);
+
             try
             {
                 DocumentEntity? entity = await _documentRepository.GetDocumentAsync(id);
@@ -67,6 +71,14 @@ namespace Paperless.BL.Services
 
         public async Task UploadDocumentAsync(Document document, Stream content)
         {
+            _logger.LogInformation(
+                "Uploading document. ID: {DocumentId}, Name: {DocumentName}, Type: {DocumentType}, Size: {DocumentSize} bytes.",
+                document.Id,
+                document.Name,
+                document.Type,
+                content?.Length ?? 0
+            );
+
             try
             {
                 AdjustFileType(document);
@@ -117,6 +129,13 @@ namespace Paperless.BL.Services
 
         public async Task UpdateDocumentAsync(string id, string content, string summary)
         {
+            _logger.LogInformation(
+                "Updating document. ID: {DocumentId}, Content length: {ContentLength} characters, Summary length: {SummaryLength} characters.",
+                id,
+                content?.Length ?? 0,
+                summary?.Length ?? 0
+            );
+
             try
             {
                 if (!Guid.TryParse(id, out Guid documentId))
@@ -159,6 +178,8 @@ namespace Paperless.BL.Services
         }
         public async Task DeleteDocumentsAsync()
         {
+            _logger.LogInformation("Deleting all documents from database and storage.");
+
             try
             {
                 await _storageService.DeleteDocumentsAsync();
@@ -178,6 +199,8 @@ namespace Paperless.BL.Services
         }
         public async Task DeleteDocumentAsync(Guid id)
         {
+            _logger.LogInformation("Deleting document with ID {DocumentId} from database and storage.", id);
+
             try
             {
                 DocumentEntity? entity = await _documentRepository.GetDocumentAsync(id);

@@ -22,10 +22,10 @@ export function DocumentDetails({ document, onBack }: Props) {
 
                 <div className="tab-panels">
                     <section className="tab-panel" data-for="tab-summary">
-                        <p>{document.summary}</p>
+                        <p>{document.summary || 'No summary available yet. The summary is being generated...'}</p>
                     </section>
                     <section className="tab-panel" data-for="tab-content">
-                        <p>{document.content}</p>
+                        <p>{document.content || 'No content available.'}</p>
                     </section>
                     <section className="tab-panel" data-for="tab-meta">
                         <p><strong>Type:</strong> {document.type || 'Unknown'}</p>
