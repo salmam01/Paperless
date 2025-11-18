@@ -1,7 +1,6 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.Extensions.Logging;
-using Paperless.BL.Models;
 using Paperless.BL.Exceptions;
 using System.Text;
 

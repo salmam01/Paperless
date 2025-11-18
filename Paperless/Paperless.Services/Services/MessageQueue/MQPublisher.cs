@@ -81,7 +81,7 @@ namespace Paperless.Services.Services.MessageQueue
                 );
 
                 _logger.LogInformation(
-                    "Document {DocumentId} to GenAI queue {QueueName} for summary generation published.",
+                    "Successfully published Document with ID {DocumentId} to GenAI queue {QueueName} for summary generation.",
                     documentId,
                     _config.QueueName
                 );

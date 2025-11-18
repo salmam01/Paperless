@@ -60,13 +60,16 @@ namespace Paperless.Services.Services.HttpClients
                         parts = new[]
                         {
                             new
-                            {  
-                                text = $"Erstelle eine Zusammenfassung des folgenden Dokuments auf deutsch :\n\n{documentContent}"
+                            {
+                                text =  $"Anaylze the following document and create a short and concise summary. " +
+                                        $"Only reply with the summary. " +
+                                        $"The document is:" +
+                                        $"\n\n{documentContent}"
                             }
                         }
                     }
                 },
-                generationConfig = new //das nochmal recherchieren
+                generationConfig = new
                 {
                     temperature = 0.7,
                     topK = 40,

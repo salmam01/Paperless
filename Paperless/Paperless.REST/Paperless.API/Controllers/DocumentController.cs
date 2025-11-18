@@ -355,8 +355,8 @@ namespace Paperless.API.Controllers
             (
                 id,
                 form.FileName,
-                string.Empty,
-                "Summary coming soon.", // temporary
+                "loading...",
+                "loading...",
                 $"{id}.{form.FileName}",
                 DateTime.UtcNow,
                 fileType,

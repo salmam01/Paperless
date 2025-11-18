@@ -15,7 +15,7 @@ export function DocumentCard({ document, onDelete, onSelect }: Props) {
             </div>
             <div className="document-content-wrapper">
                 <p className="document-content">
-                    {document.content}
+                    {document.summary}
                 </p>
             </div>
             <div className="document-metadata">

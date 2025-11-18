@@ -30,10 +30,8 @@ namespace Paperless.Services.Services.HttpClients
         public async Task PostWorkerResultsAsync(WorkerResultDto workerResult)
         {
             _logger.LogInformation(
-                "Worker results sentto REST server. Document ID: {DocumentId}, OCR result length: {OcrLength}, Summary length: {SummaryLength}",
-                workerResult.Id,
-                workerResult.OcrResult?.Length ?? 0,
-                workerResult.SummaryResult?.Length ?? 0
+                "Sending received Worker Results for Document with ID {Id} to REST server.",
+                workerResult.Id
             );
 
             using StringContent content = new(
@@ -53,9 +51,10 @@ namespace Paperless.Services.Services.HttpClients
             if (response.IsSuccessStatusCode)
             {
                 _logger.LogInformation(
-                    "Successfully sent results for ID {Id}. Response:\n{Response}",
+                    "Sent results for Document with ID {Id} to REST server successfully. OCR result length: {OcrLength}, Summary length: {SummaryLength}",
                     workerResult.Id,
-                    jsonResponse
+                    workerResult.OcrResult?.Length ?? 0,
+                workerResult.SummaryResult?.Length ?? 0
                 );
             } else {
                 _logger.LogWarning(
