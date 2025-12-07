@@ -4,7 +4,7 @@ using Minio;
 using Paperless.Services.Configurations;
 using Paperless.Services.Services;
 using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.MessageQueue;
+using Paperless.Services.Services.MessageQueues;
 using Paperless.Services.Workers;
 using Serilog;
 
@@ -23,36 +23,52 @@ builder.Services.Configure<EndpointsConfig>(builder.Configuration.GetSection("En
 builder.Services.Configure<MinIoConfig>(builder.Configuration.GetSection("MinIo"));
 builder.Services.Configure<OcrConfig>(builder.Configuration.GetSection("Ocr"));
 builder.Services.Configure<GenAIConfig>(builder.Configuration.GetSection("GenAI"));
-builder.Services.Configure<RabbitMqConfig>("RabbitMqOcr", builder.Configuration.GetSection("RabbitMqOcr"));
-builder.Services.Configure<RabbitMqConfig>("RabbitMqSummary", builder.Configuration.GetSection("RabbitMqSummary"));
+builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMq"));
+
+//  Configuration for different Queues
+builder.Services.Configure<QueueConfig>("MqPublisher", builder.Configuration.GetSection("MqPublisher"));
+builder.Services.Configure<QueueConfig>("OcrQueue", builder.Configuration.GetSection("OcrQueue"));
+builder.Services.Configure<QueueConfig>("SummaryQueue", builder.Configuration.GetSection("SummaryQueue"));
+builder.Services.Configure<QueueConfig>("IndexingQueue", builder.Configuration.GetSection("IndexingQueue"));
 
 //  Services
+builder.Services.AddSingleton<MQConnectionFactory>();
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OcrService>();
 builder.Services.AddSingleton<GenAIService>();
+
 builder.Services.AddSingleton<MQPublisher>(sp =>
 {
     ILogger<MQPublisher> logger = sp.GetRequiredService<ILogger<MQPublisher>>();
-    RabbitMqConfig config = sp.GetRequiredService<IOptionsMonitor<RabbitMqConfig>>()
-        .Get("RabbitMqSummary");
+    QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
+        .Get("MqPublisher");
 
-    return new MQPublisher(logger, Options.Create(config));
+    return new MQPublisher(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
 });
-builder.Services.AddKeyedSingleton("OcrListener", (sp, key) =>
-{
-    ILogger<MQListener> logger = sp.GetRequiredService<ILogger<MQListener>>();
-    RabbitMqConfig config = sp.GetRequiredService<IOptionsMonitor<RabbitMqConfig>>()
-        .Get("RabbitMqOcr");
 
-    return new MQListener(logger, Options.Create(config));
+builder.Services.AddSingleton<OCRListener> (sp =>
+{
+    ILogger<OCRListener> logger = sp.GetRequiredService<ILogger<OCRListener>>();
+    QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
+        .Get("OcrQueue");
+
+    return new OCRListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
 });
 builder.Services.AddKeyedSingleton("SummaryListener", (sp, key) =>
 {
     ILogger<MQListener> logger = sp.GetRequiredService<ILogger<MQListener>>();
-    RabbitMqConfig config = sp.GetRequiredService<IOptionsMonitor<RabbitMqConfig>>()
-        .Get("RabbitMqSummary");
+    QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
+        .Get("SummaryQueue");
 
-    return new MQListener(logger, Options.Create(config));
+    return new MQListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
+});
+builder.Services.AddKeyedSingleton("IndexingListener", (sp, key) =>
+{
+    ILogger<MQListener> logger = sp.GetRequiredService<ILogger<MQListener>>();
+    QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
+        .Get("IndexingQueue");
+
+    return new MQListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
 });
 
 //  HttpClients
@@ -62,6 +78,7 @@ builder.Services.AddHttpClient<GenAIService>();
 //  Workers
 builder.Services.AddHostedService<OcrWorker>();
 builder.Services.AddHostedService<GenAIWorker>();
+builder.Services.AddHostedService<IndexingWorker>();
 
 var host = builder.Build();
 host.Run();

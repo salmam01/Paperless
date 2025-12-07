@@ -2,7 +2,7 @@ using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.Ocr;
 using Paperless.Services.Services;
-using Paperless.Services.Services.MessageQueue;
+using Paperless.Services.Services.MessageQueues;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
@@ -13,19 +13,19 @@ namespace Paperless.Services.Workers
     public class OcrWorker : BackgroundService
     {
         private readonly ILogger<OcrWorker> _logger;
-        private readonly MQListener _mqListener;
+        private readonly OCRListener _ocrListener;
         private readonly MQPublisher _mqPublisher;
         private readonly StorageService _storageService;
         private readonly OcrService _ocrService;
 
         public OcrWorker(
             ILogger<OcrWorker> logger, 
-            [FromKeyedServices("OcrListener")] MQListener mqListener,
+            OCRListener ocrListener,
             MQPublisher mqPublisher,
             StorageService storageService,
             OcrService ocrService
         ) {
-            _mqListener = mqListener;
+            _ocrListener = ocrListener;
             _mqPublisher = mqPublisher;
             _storageService = storageService;
             _ocrService = ocrService;
@@ -35,7 +35,7 @@ namespace Paperless.Services.Workers
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             //  Stream -> Temp file -> Ghostscript -> Upload -> Delete
-            await _mqListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
+            await _ocrListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
         }
 
         private async Task HandleMessageAsync(string id, BasicDeliverEventArgs ea)
@@ -67,7 +67,7 @@ namespace Paperless.Services.Workers
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("OCR Worker is stopping...");
-            await _mqListener.StopListeningAsync();
+            await _ocrListener.StopListeningAsync();
             await base.StopAsync(cancellationToken);
         }
     }
