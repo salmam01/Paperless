@@ -36,6 +36,7 @@ builder.Services.AddSingleton<MQConnectionFactory>();
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OcrService>();
 builder.Services.AddSingleton<GenAIService>();
+builder.Services.AddSingleton<SearchService>();
 
 builder.Services.AddSingleton<MQPublisher>(sp =>
 {

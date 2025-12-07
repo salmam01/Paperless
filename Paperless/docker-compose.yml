@@ -44,6 +44,9 @@ services:
     ports:
       - "9000:9000" # MinIO API
       - "9090:9090" # MinIO Console
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
     volumes:
       - miniodata:/data
     networks:
