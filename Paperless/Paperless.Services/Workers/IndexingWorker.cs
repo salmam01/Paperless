@@ -57,7 +57,7 @@ namespace Paperless.Services.Workers
                 id
             );
 
-            _searchService.Store(id, ocrResult);
+            //_searchService.Store(id, ocrResult);
         }
 
         /*

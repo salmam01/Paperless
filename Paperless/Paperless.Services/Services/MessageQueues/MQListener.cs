@@ -21,7 +21,6 @@ namespace Paperless.Services.Services.MessageQueues
         ) {
             _logger = logger;
             _config = config.Value;
-
             _connectionFactory = mqConnectionFactory.ConnectionFactory;
         }
 
