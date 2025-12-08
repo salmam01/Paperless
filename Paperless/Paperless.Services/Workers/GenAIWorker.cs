@@ -35,7 +35,7 @@ namespace Paperless.Services.Workers
         private async Task HandleMessageAsync(string message, BasicDeliverEventArgs ea)
         {
             _logger.LogInformation(
-                "Processing message from queue. Message length: {MessageLength} characters.",
+                "Processing message from queue inside GenAI Worker.\nMessage length: {MessageLength} characters.",
                 message?.Length ?? 0
             );
 
@@ -43,14 +43,19 @@ namespace Paperless.Services.Workers
             {
                 if (string.IsNullOrEmpty(message))
                 {
-                    _logger.LogWarning("Received empty message from queue. Skipping processing.");
+                    _logger.LogWarning("Received empty message from queue inside GenAI Worker. Skipping processing.");
                     return;
                 }
 
                 DocumentDto document = ParseMessage(message);
+                if (document == null || string.IsNullOrEmpty(document.Id))
+                {
+                    _logger.LogWarning("Received invalid message from queue inside GenAI Worker. Skipping processing.");
+                    return;
+                }
 
                 _logger.LogInformation(
-                    "Document {DocumentId} content retrieved. OCR result length: {OcrLength} characters.",
+                    "Document {DocumentId} content retrieved.\nOCR result length: {OcrLength} characters.",
                     document.Id,
                     document.OcrResult?.Length ?? 0
                 );
@@ -63,12 +68,14 @@ namespace Paperless.Services.Workers
                 if (string.IsNullOrWhiteSpace(trimmedContent) || trimmedContent.Length < MIN_CONTENT_LENGTH)
                 {
                     _logger.LogWarning(
-                        "Document {DocumentId} has insufficient content for summary generation. Content length: {ContentLength} characters (minimum: {MinLength}). Setting default summary.",
+                        "Document {DocumentId} has insufficient content for summary generation." +
+                        "\nContent length: {ContentLength} characters (minimum: {MinLength})." +
+                        "\nSetting default summary message.",
                         document.Id,
                         trimmedContent.Length,
                         MIN_CONTENT_LENGTH
                     );
-                    summary = "No summary available - Document doesn't contain enough readable text.";
+                    summary = "No summary available: Document doesn't contain enough readable text.";
                 }
                 else
                 {
@@ -81,7 +88,7 @@ namespace Paperless.Services.Workers
                         // Content validation failed - set default summary
                         _logger.LogWarning(
                             argEx,
-                            "Document {DocumentId} failed content validation for summary generation. Setting default summary. Error: {ErrorMessage}",
+                            "Document {DocumentId} failed content validation for summary generation. Setting default summary.\nError: {ErrorMessage}",
                             document.Id,
                             argEx.Message
                         );
@@ -91,11 +98,11 @@ namespace Paperless.Services.Workers
                         // API call failed - set default summary to prevent message rejection
                         _logger.LogError(
                             apiEx,
-                            "Failed to generate summary via API for document {DocumentId}. Setting default summary. Error: {ErrorMessage}",
+                            "Failed to generate summary via API for document {DocumentId}. Setting default summary.\nError: {ErrorMessage}",
                             document.Id,
                             apiEx.Message
                         );
-                        summary = "No summary available - Error generating summary.";
+                        summary = "No summary available: Error generating summary.";
                     }
                 }
 
@@ -107,7 +114,9 @@ namespace Paperless.Services.Workers
                 };
 
                 _logger.LogInformation(
-                    "Successfully processed summary for document {DocumentId}. Summary length: {SummaryLength}\n*** Summary ***\n{Summary}",
+                    "Successfully processed summary for document {DocumentId}." +
+                    "\nSummary length: {SummaryLength}" +
+                    "\n*** Summary ***\n{Summary}",
                     document.Id,
                     summary.Length,
                     summary
@@ -115,19 +124,12 @@ namespace Paperless.Services.Workers
 
                 await _workerResultsService.PostWorkerResultsAsync(workerResultDto);
             }
-            catch (KeyNotFoundException ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Document not found in database."
-                );
-                throw;
-            }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Failed to process document. Error: {ErrorMessage}",
+                    "Failed to process document inside GenAI Worker." +
+                    "\nError: {ErrorMessage}",
                     ex.Message
                 );
                 throw;
@@ -145,7 +147,8 @@ namespace Paperless.Services.Workers
             if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("Title") || !jsonObject.ContainsKey("OcrResult"))
             {
                 _logger.LogWarning(
-                    "Document is NULL. Skipping summary generation. Message: {Message}",
+                    "Document is NULL. Skipping summary generation." +
+                    "\nMessage: {Message}",
                     message
                 );
                 return document;

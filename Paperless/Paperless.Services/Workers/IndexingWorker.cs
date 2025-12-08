@@ -1,14 +1,8 @@
-﻿using Paperless.Services.Models.Dtos;
-using Paperless.Services.Models.Search;
+﻿using Paperless.Services.Models.Search;
 using Paperless.Services.Services.MessageQueues;
 using Paperless.Services.Services.SearchService;
 using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Paperless.Services.Workers
 {
@@ -31,35 +25,50 @@ namespace Paperless.Services.Workers
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Indexing Worker is starting...");
+            await _elasticService.CreateIndexIfNotExistsAsync();
             await _mqListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
         }
 
         private async Task HandleMessageAsync(string message, BasicDeliverEventArgs ea)
         {
-            if (string.IsNullOrEmpty(message))
-            {
-                return;
-            }
-
-            Dictionary<string, string> jsonObject = JsonSerializer.Deserialize<Dictionary<string, string>>(message)
-                ?? new Dictionary<string, string>();
-
-            if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("OcrResult"))
-            {
-                _logger.LogWarning(
-                    "Document has no content. Skipping summary generation."
-                );
-                return;
-            }
-            SearchDocument document = ParseMessage(message);
-
             _logger.LogInformation(
-                "Document {DocumentId} content retrieved.",
-                document.Id
+                "Processing message from queue inside Indexing Worker." +
+                "\nMessage length: {MessageLength} characters.",
+                message?.Length ?? 0
             );
 
-            await _elasticService.CreateIndexIfNotExistsAsync();
-            await _elasticService.AddOrUpdate(document);
+            try
+            {
+                if (string.IsNullOrEmpty(message))
+                {
+                    _logger.LogWarning("Received empty message from queue inside Indexing Worker. Skipping processing.");
+                    return;
+                }
+
+                SearchDocument document = ParseMessage(message);
+                if (document == null || string.IsNullOrEmpty(document.Id))
+                {
+                    _logger.LogWarning("Received invalid message from queue inside Indexing Worker. Skipping processing.");
+                    return;
+                }
+
+                _logger.LogInformation(
+                    "Document {DocumentId} content retrieved inside Indexing Worker.",
+                    document.Id
+                );
+
+                await _elasticService.AddOrUpdate(document);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to process document inside Indexing Worker." +
+                    "\nError: {ErrorMessage}",
+                    ex.Message
+                );
+                throw;
+            }
         }
 
         private SearchDocument ParseMessage(string message)
@@ -72,7 +81,8 @@ namespace Paperless.Services.Workers
             if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("Title") || !jsonObject.ContainsKey("OcrResult"))
             {
                 _logger.LogWarning(
-                    "Document is NULL. Skipping summary generation. Message: {Message}",
+                    "Document is NULL. Skipping indexing for ElasticSearch." +
+                    "\nMessage Received: {Message}",
                     message
                 );
                 return document;
@@ -83,6 +93,13 @@ namespace Paperless.Services.Workers
             document.Content = jsonObject["OcrResult"];
 
             return document;
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Indexing Worker is stopping...");
+            await _mqListener.StopListeningAsync();
+            await base.StopAsync(cancellationToken);
         }
     }
 }

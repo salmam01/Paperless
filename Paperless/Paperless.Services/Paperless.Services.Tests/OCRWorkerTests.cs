@@ -5,8 +5,9 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.Ocr;
-using Paperless.Services.Services;
+using Paperless.Services.Services.FileStorage;
 using Paperless.Services.Services.MessageQueue;
+using Paperless.Services.Services.OCR;
 using Paperless.Services.Workers;
 using System.Text;
 

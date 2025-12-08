@@ -60,7 +60,7 @@ namespace Paperless.Services.Services.MessageQueues
 
                 _logger.LogInformation(
                     "Document {DocumentId} to GenAI queue {QueueName} for summary generation published.",
-                    documentId,
+                    document.Id,
                     _config.QueueName
                 );
             }
@@ -68,8 +68,8 @@ namespace Paperless.Services.Services.MessageQueues
             {
                 _logger.LogError(
                     ex,
-                    "Upps! Failed to send document {DocumentId} to {queueName}. Error: {ErrorMessage}",
-                    documentId,
+                    "Failed to send document {DocumentId} to {queueName}. Error: {ErrorMessage}",
+                    document.Id,
                     _config.QueueName,
                     ex.Message
                 );

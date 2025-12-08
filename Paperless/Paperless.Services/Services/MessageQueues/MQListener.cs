@@ -82,9 +82,9 @@ namespace Paperless.Services.Services.MessageQueues
                     body = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                     _logger.LogInformation(
-                        "Received message {message} from Message Queue {QueueName}.",
-                        body,
-                        _config.QueueName
+                        "Received message from Message Queue {QueueName}.\nMessage:\n{message}",
+                        _config.QueueName,
+                        body
                     );
 
                     await onMessageReceived(body, ea);
