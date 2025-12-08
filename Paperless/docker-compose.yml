@@ -53,6 +53,20 @@ services:
       - paperless-network
     command: server /data --console-address ":9090"
 
+  paperless-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.2
+    container_name: paperless-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTIC_PASSWORD=admin123
+    ports:
+      - "9200:9200" # Elasticsearch
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - paperless-network
+
   # Backend 
   paperless-rest:
     build:
@@ -65,6 +79,8 @@ services:
       paperless-db:
         condition: service_healthy
       paperless-rabbitmq:
+        condition: service_started
+      paperless-elasticsearch:
         condition: service_started
     networks:
       - paperless-network
@@ -92,8 +108,10 @@ services:
     depends_on:
       paperless-rabbitmq:
         condition: service_healthy
+      paperless-elasticsearch:
+        condition: service_started
     ports:
-    - "8082:8082"
+      - "8082:8082"
     networks:
       - paperless-network
 
@@ -105,3 +123,4 @@ volumes:
   pgdata:
   miniodata:
   rabbitmqdata:
+  esdata:
