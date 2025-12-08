@@ -73,7 +73,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void worker_result_dto_contains_all_required_fields()
         {
-            WorkerResultDto dto = new WorkerResultDto
+            DocumentDto dto = new DocumentDto
             {
                 Id = "test-id",
                 OcrResult = "OCR content",

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
+using Paperless.Services.Models.Dtos;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
@@ -23,7 +24,7 @@ namespace Paperless.Services.Services.MessageQueues
             _connectionFactory = mqConnectionFactory.ConnectionFactory;
         }
 
-        public async Task PublishOcrResult(string documentId, string ocrResult)
+        public async Task PublishOcrResult(DocumentDto document)
         {
             try
             {
@@ -37,13 +38,7 @@ namespace Paperless.Services.Services.MessageQueues
                     autoDelete: false
                 );
 
-                string resultToJson = JsonSerializer.Serialize(
-                    new
-                    {
-                        Id = documentId,
-                        OcrResult = ocrResult
-                    }
-                );
+                string resultToJson = JsonSerializer.Serialize(document);
                 byte[] body = Encoding.UTF8.GetBytes(resultToJson);
 
                 BasicProperties properties = new BasicProperties

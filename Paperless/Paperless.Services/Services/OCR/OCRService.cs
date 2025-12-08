@@ -4,9 +4,10 @@ using Paperless.Services.Configurations;
 using Paperless.Services.Models.Ocr;
 using System.Text;
 using Tesseract;
+using iText.Kernel.Pdf;
 
 
-namespace Paperless.Services.Services
+namespace Paperless.Services.Services.OCR
 {
     public class OcrService
     {
@@ -146,6 +147,17 @@ namespace Paperless.Services.Services
             }
 
             return images;
+        }
+
+        
+        public string ExtractPdfTitle(MemoryStream documentContent)
+        {
+            documentContent.Position = 0;
+            using PdfReader reader = new(documentContent);
+            using PdfDocument pdfDocument = new(reader);
+            var info = pdfDocument.GetDocumentInfo();
+
+            return info.GetTitle() ?? "Untitled";
         }
     }
 }

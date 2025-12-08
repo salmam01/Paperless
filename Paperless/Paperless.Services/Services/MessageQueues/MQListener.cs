@@ -19,8 +19,7 @@ namespace Paperless.Services.Services.MessageQueues
             ILogger<MQListener> logger,
             IOptions<QueueConfig> config,
             MQConnectionFactory mqConnectionFactory
-        )
-        {
+        ) {
             _logger = logger;
             _config = config.Value;
             _connectionFactory = mqConnectionFactory.ConnectionFactory;
@@ -29,8 +28,7 @@ namespace Paperless.Services.Services.MessageQueues
         public async Task StartListeningAsync(
             Func<string, BasicDeliverEventArgs, Task> onMessageReceived,
             CancellationToken stoppingToken
-        )
-        {
+        ) {
             if (_connection == null || !_connection.IsOpen)
                 _connection = await _connectionFactory.CreateConnectionAsync();
             if (_channel == null || !_channel.IsOpen)

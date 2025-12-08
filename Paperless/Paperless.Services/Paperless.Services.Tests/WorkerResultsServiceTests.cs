@@ -48,7 +48,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void creates_worker_result_dto()
         {
-            WorkerResultDto dto = new WorkerResultDto
+            DocumentDto dto = new DocumentDto
             {
                 Id = "doc-123",
                 OcrResult = "Extracted text from document",
@@ -63,7 +63,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void worker_result_dto_has_default_values()
         {
-            WorkerResultDto dto = new WorkerResultDto();
+            DocumentDto dto = new DocumentDto();
 
             Assert.Equal(string.Empty, dto.Id);
             Assert.Equal(string.Empty, dto.OcrResult);

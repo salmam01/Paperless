@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
+using Paperless.Services.Models.Dtos;
 using Paperless.Services.Models.Ocr;
-using Paperless.Services.Services;
+using Paperless.Services.Services.FileStorage;
 using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.OCR;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
@@ -60,8 +62,16 @@ namespace Paperless.Services.Workers
                 result.PdfContent?.Length ?? 0
             );
 
+            DocumentDto document = new DocumentDto
+            {
+                Id = id,
+                Title = _ocrService.ExtractPdfTitle(documentContent),
+                OcrResult = result.PdfContent ?? "Error processing document content.",
+                SummaryResult = string.Empty
+            };
+
             //  Send OCR Result to GenAIWorker through RabbitMQ
-            await _mqPublisher.PublishOcrResult(id, result.PdfContent);
+            await _mqPublisher.PublishOcrResult(document);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

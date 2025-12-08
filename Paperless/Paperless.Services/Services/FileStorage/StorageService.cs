@@ -4,7 +4,7 @@ using Minio;
 using Minio.DataModel.Args;
 using Paperless.Services.Configurations;
 
-namespace Paperless.Services.Services
+namespace Paperless.Services.Services.FileStorage
 {
     public class StorageService
     {

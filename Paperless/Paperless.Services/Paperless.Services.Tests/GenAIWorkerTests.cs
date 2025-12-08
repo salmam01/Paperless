@@ -163,7 +163,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void creates_worker_result_dto_correctly()
         {
-            WorkerResultDto dto = new WorkerResultDto
+            DocumentDto dto = new DocumentDto
             {
                 Id = "test-id",
                 OcrResult = "test ocr content",

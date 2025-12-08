@@ -2,6 +2,7 @@
 using Paperless.Services.Services.HttpClients;
 using Paperless.Services.Services.MessageQueues;
 using RabbitMQ.Client.Events;
+using System.Linq;
 using System.Text.Json;
 
 namespace Paperless.Services.Workers
@@ -46,36 +47,24 @@ namespace Paperless.Services.Workers
                     return;
                 }
 
-                Dictionary<string, string> jsonObject = JsonSerializer.Deserialize<Dictionary<string, string>>(message)
-                    ?? new Dictionary<string, string>();
-
-                if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("OcrResult"))
-                {
-                    _logger.LogWarning(
-                        "Document has no content. Skipping summary generation. Message: {Message}",
-                        message
-                    );
-                    return;
-                }
-                string id = jsonObject["Id"];
-                string ocrResult = jsonObject["OcrResult"];
+                DocumentDto document = ParseMessage(message);
 
                 _logger.LogInformation(
                     "Document {DocumentId} content retrieved. OCR result length: {OcrLength} characters.",
-                    id,
-                    ocrResult?.Length ?? 0
+                    document.Id,
+                    document.OcrResult?.Length ?? 0
                 );
                 
                 // Check if OCR result has meaningful content (minimum 50 characters after trimming)
                 const int MIN_CONTENT_LENGTH = 50;
-                string trimmedContent = ocrResult?.Trim() ?? string.Empty;
+                string trimmedContent = document.OcrResult?.Trim() ?? string.Empty;
                 
                 string summary;
                 if (string.IsNullOrWhiteSpace(trimmedContent) || trimmedContent.Length < MIN_CONTENT_LENGTH)
                 {
                     _logger.LogWarning(
                         "Document {DocumentId} has insufficient content for summary generation. Content length: {ContentLength} characters (minimum: {MinLength}). Setting default summary.",
-                        id,
+                        document.Id,
                         trimmedContent.Length,
                         MIN_CONTENT_LENGTH
                     );
@@ -85,7 +74,7 @@ namespace Paperless.Services.Workers
                 {
                     try
                     {
-                        summary = await _genAIService.GenerateSummaryAsync(ocrResult);
+                        summary = await _genAIService.GenerateSummaryAsync(document.OcrResult);
                     }
                     catch (ArgumentException argEx)
                     {
@@ -93,7 +82,7 @@ namespace Paperless.Services.Workers
                         _logger.LogWarning(
                             argEx,
                             "Document {DocumentId} failed content validation for summary generation. Setting default summary. Error: {ErrorMessage}",
-                            id,
+                            document.Id,
                             argEx.Message
                         );
                         summary = "No summary available - Document doesn't contain enough readable text..";                    }
@@ -103,23 +92,23 @@ namespace Paperless.Services.Workers
                         _logger.LogError(
                             apiEx,
                             "Failed to generate summary via API for document {DocumentId}. Setting default summary. Error: {ErrorMessage}",
-                            id,
+                            document.Id,
                             apiEx.Message
                         );
                         summary = "No summary available - Error generating summary.";
                     }
                 }
 
-                WorkerResultDto workerResultDto = new WorkerResultDto
+                DocumentDto workerResultDto = new DocumentDto
                 {
-                    Id = id,
-                    OcrResult = ocrResult,
+                    Id = document.Id,
+                    OcrResult = document.OcrResult,
                     SummaryResult = summary
                 };
 
                 _logger.LogInformation(
                     "Successfully processed summary for document {DocumentId}. Summary length: {SummaryLength}\n*** Summary ***\n{Summary}",
-                    id,
+                    document.Id,
                     summary.Length,
                     summary
                 );
@@ -143,6 +132,30 @@ namespace Paperless.Services.Workers
                 );
                 throw;
             }
+        }
+
+        //  Add a helper class
+        private DocumentDto ParseMessage(string message)
+        {
+            Dictionary<string, string> jsonObject = JsonSerializer.Deserialize<Dictionary<string, string>>(message)
+                ?? new Dictionary<string, string>();
+
+            DocumentDto document = new();
+
+            if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("Title") || !jsonObject.ContainsKey("OcrResult"))
+            {
+                _logger.LogWarning(
+                    "Document is NULL. Skipping summary generation. Message: {Message}",
+                    message
+                );
+                return document;
+            } 
+
+            document.Id = jsonObject["Id"];
+            document.Title = jsonObject["Title"];
+            document.OcrResult = jsonObject["OcrResult"];
+
+            return document;
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

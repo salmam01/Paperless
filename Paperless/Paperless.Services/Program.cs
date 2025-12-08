@@ -2,9 +2,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Minio;
 using Paperless.Services.Configurations;
-using Paperless.Services.Services;
+using Paperless.Services.Services.FileStorage;
 using Paperless.Services.Services.HttpClients;
 using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.OCR;
+using Paperless.Services.Services.SearchService;
 using Paperless.Services.Workers;
 using Serilog;
 
@@ -24,6 +26,7 @@ builder.Services.Configure<MinIoConfig>(builder.Configuration.GetSection("MinIo"
 builder.Services.Configure<OcrConfig>(builder.Configuration.GetSection("Ocr"));
 builder.Services.Configure<GenAIConfig>(builder.Configuration.GetSection("GenAI"));
 builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMq"));
+builder.Services.Configure<ElasticSearchConfig>(builder.Configuration.GetSection("ElasticSearch"));
 
 //  Configuration for different Queues
 builder.Services.Configure<QueueConfig>("MqPublisher", builder.Configuration.GetSection("MqPublisher"));
@@ -36,7 +39,7 @@ builder.Services.AddSingleton<MQConnectionFactory>();
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OcrService>();
 builder.Services.AddSingleton<GenAIService>();
-builder.Services.AddSingleton<SearchService>();
+builder.Services.AddSingleton<IElasticService, ElasticService>();
 
 builder.Services.AddSingleton<MQPublisher>(sp =>
 {

@@ -27,7 +27,7 @@ namespace Paperless.Services.Services.HttpClients
             _baseUrl = new Uri(config.Value.Rest);
         }
 
-        public async Task PostWorkerResultsAsync(WorkerResultDto workerResult)
+        public async Task PostWorkerResultsAsync(DocumentDto workerResult)
         {
             _logger.LogInformation(
                 "Sending received Worker Results for Document with ID {Id} to REST server.",
