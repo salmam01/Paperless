@@ -58,12 +58,22 @@ services:
     container_name: paperless-elasticsearch
     environment:
       - discovery.type=single-node
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTIC_PASSWORD=admin123
+      - xpack.security.enabled=false
+      - ELASTICSEARCH_PASSWORD=admin123
     ports:
       - "9200:9200" # Elasticsearch
     volumes:
       - esdata:/usr/share/elasticsearch/data
+    networks:
+      - paperless-network
+
+  paperless-kibana:
+    image: docker.elastic.co/kibana/kibana:9.2.2
+    container_name: paperless-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://paperless-elasticsearch:9200
+    ports:
+      - "5601:5601" # Kibana (ElasticSearch UI)
     networks:
       - paperless-network
 

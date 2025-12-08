@@ -57,12 +57,11 @@ namespace Paperless.Services.Workers
                 id
             );
 
+            /*
+             * What to store in ElasticSearch (NoSQL DB)
+             * Document ID, Title, OCR Result
+            */
             //_searchService.Store(id, ocrResult);
         }
-
-        /*
-         * What to store in ElasticSearch (NoSQL DB)
-         * Document ID, OCR Result, Search Related stuff?
-        */
     }
 }
