@@ -1,16 +1,12 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.Dtos;
+using Paperless.Services.Models.DTOs;
 using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.MessageQueue;
+using Paperless.Services.Services.MessageQueues;
 using Paperless.Services.Workers;
-using RabbitMQ.Client.Events;
-using System.Text;
-using System.Text.Json;
 
 namespace Paperless.Services.Tests
 {
@@ -26,8 +22,8 @@ namespace Paperless.Services.Tests
             _loggerMock = new Mock<ILogger<GenAIWorker>>();
             
             // Setup RabbitMqConfig mocks with valid values
-            Mock<IOptions<RabbitMqConfig>> rabbitMqConfigMock = new Mock<IOptions<RabbitMqConfig>>();
-            rabbitMqConfigMock.Setup(x => x.Value).Returns(new RabbitMqConfig
+            Mock<IOptions<RabbitMQConfig>> rabbitMqConfigMock = new Mock<IOptions<RabbitMQConfig>>();
+            rabbitMqConfigMock.Setup(x => x.Value).Returns(new RabbitMQConfig
             {
                 Host = "localhost",
                 Port = 5672,
@@ -57,10 +53,10 @@ namespace Paperless.Services.Tests
             );
             
             // Setup EndpointsConfig mock
-            Mock<IOptions<EndpointsConfig>> endpointsConfigMock = new Mock<IOptions<EndpointsConfig>>();
-            endpointsConfigMock.Setup(x => x.Value).Returns(new EndpointsConfig
+            Mock<IOptions<RESTConfig>> endpointsConfigMock = new Mock<IOptions<RESTConfig>>();
+            endpointsConfigMock.Setup(x => x.Value).Returns(new RESTConfig
             {
-                Rest = "https://localhost:5001/api/documents/"
+                Url = "https://localhost:5001/api/documents/"
             });
             
             _workerResultsServiceMock = new Mock<WorkerResultsService>(
@@ -163,7 +159,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void creates_worker_result_dto_correctly()
         {
-            WorkerResultDto dto = new WorkerResultDto
+            DocumentDTO dto = new DocumentDTO
             {
                 Id = "test-id",
                 OcrResult = "test ocr content",

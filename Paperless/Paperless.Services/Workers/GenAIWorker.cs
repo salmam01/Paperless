@@ -1,6 +1,6 @@
-﻿using Paperless.Services.Models.Dtos;
+﻿using Paperless.Services.Models.DTOs;
 using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.MessageQueue;
+using Paperless.Services.Services.MessageQueues;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
 
@@ -34,7 +34,7 @@ namespace Paperless.Services.Workers
         private async Task HandleMessageAsync(string message, BasicDeliverEventArgs ea)
         {
             _logger.LogInformation(
-                "Processing message from queue. Message length: {MessageLength} characters.",
+                "Processing message from queue inside GenAI Worker.\nMessage length: {MessageLength} characters.",
                 message?.Length ?? 0
             );
 
@@ -42,58 +42,53 @@ namespace Paperless.Services.Workers
             {
                 if (string.IsNullOrEmpty(message))
                 {
-                    _logger.LogWarning("Received empty message from queue. Skipping processing.");
+                    _logger.LogWarning("Received empty message from queue inside GenAI Worker. Skipping processing.");
                     return;
                 }
 
-                Dictionary<string, string> jsonObject = JsonSerializer.Deserialize<Dictionary<string, string>>(message)
-                    ?? new Dictionary<string, string>();
-
-                if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("OcrResult"))
+                DocumentDTO document = ParseMessage(message);
+                if (document == null || string.IsNullOrEmpty(document.Id))
                 {
-                    _logger.LogWarning(
-                        "Document has no content. Skipping summary generation. Message: {Message}",
-                        message
-                    );
+                    _logger.LogWarning("Received invalid message from queue inside GenAI Worker. Skipping processing.");
                     return;
                 }
-                string id = jsonObject["Id"];
-                string ocrResult = jsonObject["OcrResult"];
 
                 _logger.LogInformation(
-                    "Document {DocumentId} content retrieved. OCR result length: {OcrLength} characters.",
-                    id,
-                    ocrResult?.Length ?? 0
+                    "Document {DocumentId} content retrieved.\nOCR result length: {OcrLength} characters.",
+                    document.Id,
+                    document.OcrResult?.Length ?? 0
                 );
                 
                 // Check if OCR result has meaningful content (minimum 50 characters after trimming)
                 const int MIN_CONTENT_LENGTH = 50;
-                string trimmedContent = ocrResult?.Trim() ?? string.Empty;
+                string trimmedContent = document.OcrResult?.Trim() ?? string.Empty;
                 
                 string summary;
                 if (string.IsNullOrWhiteSpace(trimmedContent) || trimmedContent.Length < MIN_CONTENT_LENGTH)
                 {
                     _logger.LogWarning(
-                        "Document {DocumentId} has insufficient content for summary generation. Content length: {ContentLength} characters (minimum: {MinLength}). Setting default summary.",
-                        id,
+                        "Document {DocumentId} has insufficient content for summary generation." +
+                        "\nContent length: {ContentLength} characters (minimum: {MinLength})." +
+                        "\nSetting default summary message.",
+                        document.Id,
                         trimmedContent.Length,
                         MIN_CONTENT_LENGTH
                     );
-                    summary = "No summary available - Document doesn't contain enough readable text.";
+                    summary = "No summary available: Document doesn't contain enough readable text.";
                 }
                 else
                 {
                     try
                     {
-                        summary = await _genAIService.GenerateSummaryAsync(ocrResult);
+                        summary = await _genAIService.GenerateSummaryAsync(document.OcrResult);
                     }
                     catch (ArgumentException argEx)
                     {
                         // Content validation failed - set default summary
                         _logger.LogWarning(
                             argEx,
-                            "Document {DocumentId} failed content validation for summary generation. Setting default summary. Error: {ErrorMessage}",
-                            id,
+                            "Document {DocumentId} failed content validation for summary generation. Setting default summary.\nError: {ErrorMessage}",
+                            document.Id,
                             argEx.Message
                         );
                         summary = "No summary available - Document doesn't contain enough readable text..";                    }
@@ -102,47 +97,67 @@ namespace Paperless.Services.Workers
                         // API call failed - set default summary to prevent message rejection
                         _logger.LogError(
                             apiEx,
-                            "Failed to generate summary via API for document {DocumentId}. Setting default summary. Error: {ErrorMessage}",
-                            id,
+                            "Failed to generate summary via API for document {DocumentId}. Setting default summary.\nError: {ErrorMessage}",
+                            document.Id,
                             apiEx.Message
                         );
-                        summary = "No summary available - Error generating summary.";
+                        summary = "No summary available: Error generating summary.";
                     }
                 }
 
-                WorkerResultDto workerResultDto = new WorkerResultDto
+                DocumentDTO workerResultDto = new DocumentDTO
                 {
-                    Id = id,
-                    OcrResult = ocrResult,
+                    Id = document.Id,
+                    OcrResult = document.OcrResult,
                     SummaryResult = summary
                 };
 
                 _logger.LogInformation(
-                    "Successfully processed summary for document {DocumentId}. Summary length: {SummaryLength}\n*** Summary ***\n{Summary}",
-                    id,
+                    "Successfully processed summary for document {DocumentId}." +
+                    "\nSummary length: {SummaryLength}" +
+                    "\n*** Summary ***\n{Summary}",
+                    document.Id,
                     summary.Length,
                     summary
                 );
 
                 await _workerResultsService.PostWorkerResultsAsync(workerResultDto);
             }
-            catch (KeyNotFoundException ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Document not found in database."
-                );
-                throw;
-            }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Failed to process document. Error: {ErrorMessage}",
+                    "Failed to process document inside GenAI Worker." +
+                    "\nError: {ErrorMessage}",
                     ex.Message
                 );
                 throw;
             }
+        }
+
+        //  Add a helper class
+        private DocumentDTO ParseMessage(string message)
+        {
+            Dictionary<string, string> jsonObject = JsonSerializer.Deserialize<Dictionary<string, string>>(message)
+                ?? new Dictionary<string, string>();
+
+            DocumentDTO document = new();
+
+            if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("Title") || !jsonObject.ContainsKey("OcrResult"))
+            {
+                _logger.LogWarning(
+                    "Document is NULL. Skipping summary generation." +
+                    "\nMessage: {Message}",
+                    message
+                );
+                return document;
+            } 
+
+            document.Id = jsonObject["Id"];
+            document.Title = jsonObject["Title"];
+            document.OcrResult = jsonObject["OcrResult"];
+
+            return document;
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

@@ -2,89 +2,43 @@
 using Paperless.Services.Configurations;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Data.Common;
 using System.Text;
 
-namespace Paperless.Services.Services.MessageQueue
+namespace Paperless.Services.Services.MessageQueues
 {
-    public class MQListener {
+    public class MQListener
+    {
         private readonly ILogger<MQListener> _logger;
-        private readonly RabbitMqConfig _config;
+        private readonly QueueConfig _config;
         private readonly ConnectionFactory _connectionFactory;
         private IChannel? _channel;
         private IConnection? _connection;
 
         public MQListener(
             ILogger<MQListener> logger,
-            IOptions<RabbitMqConfig> config
+            IOptions<QueueConfig> config,
+            MQConnectionFactory mqConnectionFactory
         ) {
             _logger = logger;
             _config = config.Value;
-
-            _connectionFactory = new ConnectionFactory()
-            {
-                HostName = _config.Host,
-                Port = _config.Port,
-                UserName = _config.User,
-                Password = _config.Password,
-            };
+            _connectionFactory = mqConnectionFactory.ConnectionFactory;
         }
 
         public async Task StartListeningAsync(
             Func<string, BasicDeliverEventArgs, Task> onMessageReceived,
             CancellationToken stoppingToken
         ) {
-            _logger.LogInformation(
-                "Starting Message Queue listener. Queue: {QueueName}, Host: {Host}, Port: {Port}",
-                _config.QueueName,
-                _config.Host,
-                _config.Port
-            );
-
-            // Retry logic for initial connection with exponential backoff
-            int maxConnectionRetries = 10;
-            int retryDelaySeconds = 5;
-            
-            for (int attempt = 1; attempt <= maxConnectionRetries; attempt++)
-            {
-                try
-                {
-                    if (_connection == null || !_connection.IsOpen)
-                        _connection = await _connectionFactory.CreateConnectionAsync();
-                    if (_channel == null || !_channel.IsOpen)
-                        _channel = await _connection.CreateChannelAsync();
-                    
-                    // Connection successful, break out of retry loop
-                    break;
-                }
-                catch (Exception ex) when (attempt < maxConnectionRetries)
-                {
-                    _logger.LogWarning(
-                        ex,
-                        "Failed to connect to RabbitMQ (attempt {Attempt}/{MaxRetries}). Retrying in {DelaySeconds} seconds...",
-                        attempt,
-                        maxConnectionRetries,
-                        retryDelaySeconds
-                    );
-                    
-                    await Task.Delay(TimeSpan.FromSeconds(retryDelaySeconds), stoppingToken);
-                    retryDelaySeconds = Math.Min(retryDelaySeconds * 2, 30); // Exponential backoff, max 30 seconds
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(
-                        ex,
-                        "Failed to connect to RabbitMQ after {MaxRetries} attempts. Giving up.",
-                        maxConnectionRetries
-                    );
-                    throw;
-                }
-            }
-
+            if (_connection == null || !_connection.IsOpen)
+                _connection = await _connectionFactory.CreateConnectionAsync();
             if (_channel == null || !_channel.IsOpen)
-            {
-                throw new InvalidOperationException("Failed to establish RabbitMQ channel connection.");
-            }
+                _channel = await _connection.CreateChannelAsync();
+
+            await _channel.ExchangeDeclareAsync(
+                exchange: _config.ExchangeName,
+                type: ExchangeType.Fanout,
+                durable: true,
+                autoDelete: false
+            );
 
             await _channel.QueueDeclareAsync(
                 queue: _config.QueueName,
@@ -93,9 +47,15 @@ namespace Paperless.Services.Services.MessageQueue
                 autoDelete: false
             );
 
+            await _channel.QueueBindAsync(
+                queue: _config.QueueName,
+                exchange: _config.ExchangeName,
+                routingKey: ""
+            );
+
             await _channel.BasicQosAsync(0, 1, false);
             _logger.LogInformation(
-                "RabbitMQ Queue {QueueName} is running and listening for messages.",
+                "RabbitMQ Queue {queueName} is running and listening for messages.",
                 _config.QueueName
             );
 
@@ -105,8 +65,8 @@ namespace Paperless.Services.Services.MessageQueue
                 if (stoppingToken.IsCancellationRequested)
                 {
                     await _channel.BasicNackAsync(
-                        ea.DeliveryTag, 
-                        multiple: false, 
+                        ea.DeliveryTag,
+                        multiple: false,
                         requeue: true
                     );
                     await StopListeningAsync();
@@ -114,17 +74,16 @@ namespace Paperless.Services.Services.MessageQueue
 
                 int retryCount = GetRetryCount(ea);
                 string? body;
-                
+
                 try
                 {
 
                     body = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                     _logger.LogInformation(
-                        "Received message from Message Queue {QueueName}. Message length: {MessageLength} characters, Delivery tag: {DeliveryTag}",
+                        "Received message from Message Queue {QueueName}.\nMessage:\n{message}",
                         _config.QueueName,
-                        body?.Length ?? 0,
-                        ea.DeliveryTag
+                        body
                     );
 
                     await onMessageReceived(body, ea);
@@ -159,8 +118,8 @@ namespace Paperless.Services.Services.MessageQueue
                         );
 
                         await _channel.BasicNackAsync(
-                            deliveryTag: ea.DeliveryTag, 
-                            multiple: false, 
+                            deliveryTag: ea.DeliveryTag,
+                            multiple: false,
                             requeue: false
                         );
                     }
@@ -168,8 +127,8 @@ namespace Paperless.Services.Services.MessageQueue
             };
 
             await _channel.BasicConsumeAsync(
-                queue: _config.QueueName, 
-                autoAck: false, 
+                queue: _config.QueueName,
+                autoAck: false,
                 consumer: consumer
             );
         }
@@ -178,7 +137,8 @@ namespace Paperless.Services.Services.MessageQueue
         {
             if (ea.BasicProperties.Headers != null &&
                 ea.BasicProperties.Headers.TryGetValue("x-retry-count", out var retryCountObj)
-            ) {
+            )
+            {
                 try
                 {
                     return Convert.ToInt32(retryCountObj);

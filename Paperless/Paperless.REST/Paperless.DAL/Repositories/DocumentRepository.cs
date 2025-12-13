@@ -3,12 +3,6 @@ using Npgsql;
 using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Exceptions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Paperless.DAL.Repositories
 {
@@ -73,7 +67,7 @@ namespace Paperless.DAL.Repositories
             }
         }
 
-        public async Task UpdateDocumentContentAndSummaryAsync(Guid id, string content, string summary)
+        public async Task UpdateDocumentContentAsync(Guid id, string content, string summary)
         {
             try
             {
@@ -128,12 +122,6 @@ namespace Paperless.DAL.Repositories
                 else
                     throw;
             }
-        }
-
-        //  TODO: Full-text search
-        public IEnumerable<DocumentEntity> SearchForDocument(string query)
-        {
-            throw new NotImplementedException();
         }
 
         private async Task SaveChangesAsync()

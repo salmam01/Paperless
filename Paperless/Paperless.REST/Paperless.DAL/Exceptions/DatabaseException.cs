@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Paperless.DAL.Exceptions
+﻿namespace Paperless.DAL.Exceptions
 {
     public class DatabaseException : Exception
     {

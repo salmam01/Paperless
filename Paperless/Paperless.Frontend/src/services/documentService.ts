@@ -13,7 +13,13 @@ export async function getDocument(id: string): Promise<DocumentDto> {
     const response = await fetch(`${apiUrl}/${id}`)
 
     if (!response.ok) throw new Error(`Failed to fetch document with ID: ${id}`);
+    return await response.json();
+}
 
+export async function getSearchResult(query: string): Promise<DocumentDto[]> {
+    const response = await fetch(`${apiUrl}/search/${query}`)
+
+    if (!response.ok) throw new Error(`Failed searching for ${query}`);
     return await response.json();
 }
 

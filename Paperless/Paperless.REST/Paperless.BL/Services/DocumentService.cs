@@ -2,7 +2,11 @@
 using Microsoft.Extensions.Logging;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Helpers;
-using Paperless.BL.Models;
+using Paperless.BL.Models.Domain;
+using Paperless.BL.Models.DTOs;
+using Paperless.BL.Services.Messaging;
+using Paperless.BL.Services.Search;
+using Paperless.BL.Services.Storage;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Exceptions;
 using Paperless.DAL.Repositories;
@@ -12,14 +16,16 @@ namespace Paperless.BL.Services
 {
     public class DocumentService (
         IDocumentRepository documentrepository,
+        IDocumentSearchService searchService,
         DocumentPublisher documentPublisher,
         StorageService storageService,
         Parser parser,
         IMapper mapper, 
         ILogger<DocumentService> logger
-        ) : IDocumentService
+    ) : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
+        private readonly IDocumentSearchService _searchService = searchService;
         private readonly DocumentPublisher _documentPublisher = documentPublisher;
         private readonly StorageService _storageService = storageService;
         private readonly Parser _parser = parser;
@@ -66,6 +72,35 @@ namespace Paperless.BL.Services
                 );
 
                 throw new ServiceException("Could not retrieve document.", ExceptionType.Internal, ex);
+            }
+        }
+
+        public async Task<List<Document>> SearchForDocument(string query)
+        {
+            _logger.LogInformation("Retrieving document by query {query} from database.", query);
+
+            try
+            {
+                List<SearchResult> searchResults = await _searchService.SearchAsync(query);
+                List<Document> documents = [];
+
+                foreach (SearchResult result in searchResults)
+                {
+                    DocumentEntity? entity = await _documentRepository.GetDocumentAsync(result.Id);
+                    documents.Add(_mapper.Map<Document>(entity));
+                }
+
+                return documents;
+            }
+            catch (ElasticSearchException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /document/search/{query} failed in {layer} Layer due to {reason}.",
+                    "GET", query, "Business", "a search error"
+                );
+
+                throw new ServiceException("Could not search for query.", ExceptionType.Search, ex);
             }
         }
 
@@ -147,7 +182,7 @@ namespace Paperless.BL.Services
                     throw new ServiceException($"Invalid document ID format: {id}", ExceptionType.Validation);
                 }
 
-                await _documentRepository.UpdateDocumentContentAndSummaryAsync(documentId, content, summary);
+                await _documentRepository.UpdateDocumentContentAsync(documentId, content, summary);
                 _logger.LogInformation(
                     "Document {DocumentId} summary updated in database. Summary length: {SummaryLength}",
                     id,
@@ -171,11 +206,6 @@ namespace Paperless.BL.Services
             throw new NotImplementedException();
         }
 
-        //  TODO: Implement in later sprints
-        public async Task SearchForDocument(string query)
-        {
-            throw new NotImplementedException();
-        }
         public async Task DeleteDocumentsAsync()
         {
             _logger.LogInformation("Deleting all documents from database and storage.");
@@ -183,7 +213,6 @@ namespace Paperless.BL.Services
             try
             {
                 await _storageService.DeleteDocumentsAsync();
-
                 await _documentRepository.DeleteDocumentsAsync();
             }
             catch (DatabaseException ex)
@@ -197,6 +226,7 @@ namespace Paperless.BL.Services
                 throw new ServiceException("Could not delete documents.", ExceptionType.Internal, ex);
             }
         }
+
         public async Task DeleteDocumentAsync(Guid id)
         {
             _logger.LogInformation("Deleting document with ID {DocumentId} from database and storage.", id);

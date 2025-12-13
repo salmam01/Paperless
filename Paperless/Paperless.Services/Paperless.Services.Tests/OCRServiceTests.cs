@@ -2,24 +2,22 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.Ocr;
-using Paperless.Services.Services;
-using System.Text;
+using Paperless.Services.Services.OCR;
 
 namespace Paperless.Services.Tests
 {
     public class OCRServiceTests
     {
-        private readonly Mock<ILogger<OcrService>> _loggerMock;
-        private readonly Mock<IOptions<OcrConfig>> _configMock;
-        private readonly OcrConfig _testConfig;
+        private readonly Mock<ILogger<OCRService>> _loggerMock;
+        private readonly Mock<IOptions<OCRConfig>> _configMock;
+        private readonly OCRConfig _testConfig;
 
         public OCRServiceTests()
         {
-            _loggerMock = new Mock<ILogger<OcrService>>();
-            _configMock = new Mock<IOptions<OcrConfig>>();
+            _loggerMock = new Mock<ILogger<OCRService>>();
+            _configMock = new Mock<IOptions<OCRConfig>>();
             
-            _testConfig = new OcrConfig
+            _testConfig = new OCRConfig
             {
                 DefaultLanguage = "deu+eng",
                 DefaultOem = "LstmOnly",
@@ -37,14 +35,14 @@ namespace Paperless.Services.Tests
         [Fact]
         public void can_create_service()
         {
-            OcrService service = new OcrService(_configMock.Object, _loggerMock.Object);
+            OCRService service = new OCRService(_configMock.Object, _loggerMock.Object);
             Assert.NotNull(service);
         }
 
         [Fact]
         public void throws_when_stream_is_empty()
         {
-            OcrService service = new OcrService(_configMock.Object, _loggerMock.Object);
+            OCRService service = new OCRService(_configMock.Object, _loggerMock.Object);
             MemoryStream emptyStream = new MemoryStream();
             Assert.ThrowsAny<Exception>(() => service.ConvertPdfToImage(emptyStream));
         }
@@ -52,7 +50,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void logs_something_when_converting_pdf()
         {
-            OcrService service = new OcrService(_configMock.Object, _loggerMock.Object);
+            OCRService service = new OCRService(_configMock.Object, _loggerMock.Object);
             MemoryStream emptyStream = new MemoryStream();
             
             // will fail but that's fine
@@ -79,7 +77,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void throws_when_processing_pdf_with_empty_stream()
         {
-            OcrService service = new OcrService(_configMock.Object, _loggerMock.Object);
+            OCRService service = new OCRService(_configMock.Object, _loggerMock.Object);
             MemoryStream emptyStream = new MemoryStream();
             Assert.ThrowsAny<Exception>(() => service.ProcessPdf(emptyStream));
         }
@@ -87,7 +85,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void logs_something_when_processing_pdf()
         {
-            OcrService service = new OcrService(_configMock.Object, _loggerMock.Object);
+            OCRService service = new OCRService(_configMock.Object, _loggerMock.Object);
             MemoryStream emptyStream = new MemoryStream();
 
             // will fail but don't care
@@ -114,7 +112,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void has_reasonable_defaults()
         {
-            OcrConfig config = new OcrConfig();
+            OCRConfig config = new OCRConfig();
             
             Assert.Equal("deu+eng", config.DefaultLanguage);
             Assert.Equal("LstmOnly", config.DefaultOem);
@@ -129,7 +127,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void can_be_configured()
         {
-            OcrConfig config = new OcrConfig
+            OCRConfig config = new OCRConfig
             {
                 DefaultLanguage = "eng",
                 DefaultOem = "TesseractOnly",

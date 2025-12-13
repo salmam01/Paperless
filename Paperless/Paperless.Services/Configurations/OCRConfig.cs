@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Paperless.Services.Configurations
+﻿namespace Paperless.Services.Configurations
 {
-    public class OcrConfig
+    public class OCRConfig
     {
         public string DefaultLanguage { get; set; } = "deu+eng";
 

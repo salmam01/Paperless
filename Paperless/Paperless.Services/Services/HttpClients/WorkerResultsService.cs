@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.Dtos;
+using Paperless.Services.Models.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,14 +20,14 @@ namespace Paperless.Services.Services.HttpClients
         public WorkerResultsService(
             ILogger<WorkerResultsService> logger,
             HttpClient client, 
-            IOptions<EndpointsConfig> config
+            IOptions<RESTConfig> config
         ) {
             _logger = logger;
             _client = client;
-            _baseUrl = new Uri(config.Value.Rest);
+            _baseUrl = new Uri(config.Value.Url);
         }
 
-        public async Task PostWorkerResultsAsync(WorkerResultDto workerResult)
+        public async Task PostWorkerResultsAsync(DocumentDTO workerResult)
         {
             _logger.LogInformation(
                 "Sending received Worker Results for Document with ID {Id} to REST server.",

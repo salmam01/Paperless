@@ -1,13 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Moq.Protected;
 using Paperless.Services.Configurations;
 using Paperless.Services.Services.HttpClients;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
 
 namespace Paperless.Services.Tests
 {

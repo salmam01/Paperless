@@ -4,11 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Paperless.API.Controllers;
-using Paperless.API.Dtos;
 using Paperless.BL.Services;
-using Paperless.BL.Models;
 using Microsoft.Extensions.Options;
 using Paperless.BL.Configurations;
+using Paperless.BL.Services.Messaging;
 
 namespace Paperless.Tests;
 
@@ -31,7 +30,7 @@ public class DocumentControllerValidationTests
 
     public DocumentControllerValidationTests()
     {
-        RabbitMqConfig cfg = new RabbitMqConfig { Host = "localhost", Port = 5672, User = "guest", Password = "guest", QueueName = "test" };
+        RabbitMQConfig cfg = new RabbitMQConfig { Host = "localhost", Port = 5672, User = "guest", Password = "guest", QueueName = "test" };
         _publisher = new DocumentPublisher(Options.Create(cfg), Mock.Of<ILogger<DocumentPublisher>>());
     }
 

@@ -2,9 +2,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.Dtos;
+using Paperless.Services.Models.DTOs;
 using Paperless.Services.Services.HttpClients;
-using System.Text;
 
 namespace Paperless.Services.Tests
 {
@@ -15,16 +14,16 @@ namespace Paperless.Services.Tests
         private readonly Mock<ILogger<GenAIService>> _genAILoggerMock;
         private readonly Mock<ILogger<WorkerResultsService>> _workerResultsLoggerMock;
         private readonly Mock<IOptions<GenAIConfig>> _genAIConfigMock;
-        private readonly Mock<IOptions<EndpointsConfig>> _endpointsConfigMock;
+        private readonly Mock<IOptions<RESTConfig>> _endpointsConfigMock;
         private readonly GenAIConfig _testGenAIConfig;
-        private readonly EndpointsConfig _testEndpointsConfig;
+        private readonly RESTConfig _testEndpointsConfig;
 
         public GenAIIntegrationTests()
         {
             _genAILoggerMock = new Mock<ILogger<GenAIService>>();
             _workerResultsLoggerMock = new Mock<ILogger<WorkerResultsService>>();
             _genAIConfigMock = new Mock<IOptions<GenAIConfig>>();
-            _endpointsConfigMock = new Mock<IOptions<EndpointsConfig>>();
+            _endpointsConfigMock = new Mock<IOptions<RESTConfig>>();
 
             _testGenAIConfig = new GenAIConfig
             {
@@ -35,9 +34,9 @@ namespace Paperless.Services.Tests
                 TimeoutSeconds = 30
             };
 
-            _testEndpointsConfig = new EndpointsConfig
+            _testEndpointsConfig = new RESTConfig
             {
-                Rest = "https://localhost:5001/api/documents/"
+                Url = "https://localhost:5001/api/documents/"
             };
 
             _genAIConfigMock.Setup(x => x.Value).Returns(_testGenAIConfig);
@@ -73,7 +72,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void worker_result_dto_contains_all_required_fields()
         {
-            WorkerResultDto dto = new WorkerResultDto
+            DocumentDTO dto = new DocumentDTO
             {
                 Id = "test-id",
                 OcrResult = "OCR content",
@@ -103,13 +102,13 @@ namespace Paperless.Services.Tests
         [Fact]
         public void endpoints_config_has_rest_endpoint()
         {
-            EndpointsConfig config = new EndpointsConfig
+            RESTConfig config = new RESTConfig
             {
-                Rest = "https://localhost:5001/api/documents/"
+                Url = "https://localhost:5001/api/documents/"
             };
 
-            Assert.NotNull(config.Rest);
-            Assert.NotEmpty(config.Rest);
+            Assert.NotNull(config.Url);
+            Assert.NotEmpty(config.Url);
         }
 
         [Fact]

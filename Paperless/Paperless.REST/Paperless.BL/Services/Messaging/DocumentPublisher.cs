@@ -5,15 +5,15 @@ using Paperless.BL.Exceptions;
 using RabbitMQ.Client;
 using System.Text;
 
-namespace Paperless.BL.Services
+namespace Paperless.BL.Services.Messaging
 {
     public class DocumentPublisher
     {
         private readonly ConnectionFactory _connectionFactory;
-        private readonly RabbitMqConfig _config;
+        private readonly RabbitMQConfig _config;
         private readonly ILogger<DocumentPublisher> _logger;
         
-        public DocumentPublisher(IOptions<RabbitMqConfig> config, ILogger<DocumentPublisher> logger)
+        public DocumentPublisher(IOptions<RabbitMQConfig> config, ILogger<DocumentPublisher> logger)
         {
             _config = config.Value;
             _logger = logger;

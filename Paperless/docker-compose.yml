@@ -44,11 +44,38 @@ services:
     ports:
       - "9000:9000" # MinIO API
       - "9090:9090" # MinIO Console
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
     volumes:
       - miniodata:/data
     networks:
       - paperless-network
     command: server /data --console-address ":9090"
+
+  paperless-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.2
+    container_name: paperless-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ELASTICSEARCH_PASSWORD=admin123
+    ports:
+      - "9200:9200" # Elasticsearch
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - paperless-network
+
+  paperless-kibana:
+    image: docker.elastic.co/kibana/kibana:9.2.2
+    container_name: paperless-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://paperless-elasticsearch:9200
+    ports:
+      - "5601:5601" # Kibana (ElasticSearch UI)
+    networks:
+      - paperless-network
 
   # Backend 
   paperless-rest:
@@ -62,6 +89,8 @@ services:
       paperless-db:
         condition: service_healthy
       paperless-rabbitmq:
+        condition: service_started
+      paperless-elasticsearch:
         condition: service_started
     networks:
       - paperless-network
@@ -89,8 +118,10 @@ services:
     depends_on:
       paperless-rabbitmq:
         condition: service_healthy
+      paperless-elasticsearch:
+        condition: service_started
     ports:
-    - "8082:8082"
+      - "8082:8082"
     networks:
       - paperless-network
 
@@ -102,3 +133,4 @@ volumes:
   pgdata:
   miniodata:
   rabbitmqdata:
+  esdata:

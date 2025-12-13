@@ -1,47 +1,31 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
+using Paperless.Services.Models.DTOs;
 using RabbitMQ.Client;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace Paperless.Services.Services.MessageQueue
+namespace Paperless.Services.Services.MessageQueues
 {
     public class MQPublisher
     {
         private readonly ILogger<MQPublisher> _logger;
         private readonly ConnectionFactory _connectionFactory;
-        private readonly RabbitMqConfig _config;
+        private readonly QueueConfig _config;
 
         public MQPublisher(
             ILogger<MQPublisher> logger,
-            IOptions<RabbitMqConfig> config
-        ) {
+            IOptions<QueueConfig> config,
+            MQConnectionFactory mqConnectionFactory
+        )
+        {
             _logger = logger;
             _config = config.Value;
-
-            _connectionFactory = new ConnectionFactory()
-            {
-                HostName = _config.Host,
-                Port = _config.Port,
-                UserName = _config.User,
-                Password = _config.Password,
-            };
+            _connectionFactory = mqConnectionFactory.ConnectionFactory;
         }
 
-        public async Task PublishOcrResult(string documentId, string ocrResult)
+        public async Task PublishOcrResult(DocumentDTO document)
         {
-            _logger.LogInformation(
-                "Publishing OCR result to queue. Document ID: {DocumentId}, Queue: {QueueName}, OCR result length: {OcrLength} characters.",
-                documentId,
-                _config.QueueName,
-                ocrResult?.Length ?? 0
-            );
-
             try
             {
                 await using IConnection connection = await _connectionFactory.CreateConnectionAsync();
@@ -54,13 +38,7 @@ namespace Paperless.Services.Services.MessageQueue
                     autoDelete: false
                 );
 
-                string resultToJson = JsonSerializer.Serialize(
-                    new
-                    {
-                        Id = documentId,
-                        OcrResult = ocrResult
-                    }
-                );
+                string resultToJson = JsonSerializer.Serialize(document);
                 byte[] body = Encoding.UTF8.GetBytes(resultToJson);
 
                 BasicProperties properties = new BasicProperties
@@ -73,16 +51,16 @@ namespace Paperless.Services.Services.MessageQueue
                 };
 
                 await channel.BasicPublishAsync(
-                    exchange: "",
-                    routingKey: _config.QueueName,
+                    exchange: _config.ExchangeName,
+                    routingKey: "",
                     mandatory: true,
                     basicProperties: properties,
                     body: body
                 );
 
                 _logger.LogInformation(
-                    "Successfully published Document with ID {DocumentId} to GenAI queue {QueueName} for summary generation.",
-                    documentId,
+                    "Document {DocumentId} to GenAI queue {QueueName} for summary generation published.",
+                    document.Id,
                     _config.QueueName
                 );
             }
@@ -90,8 +68,8 @@ namespace Paperless.Services.Services.MessageQueue
             {
                 _logger.LogError(
                     ex,
-                    "Upps! Failed to send document {DocumentId} to {queueName}. Error: {ErrorMessage}",
-                    documentId,
+                    "Failed to send document {DocumentId} to {queueName}. Error: {ErrorMessage}",
+                    document.Id,
                     _config.QueueName,
                     ex.Message
                 );

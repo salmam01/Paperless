@@ -1,9 +1,4 @@
-﻿using Paperless.BL.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Paperless.BL.Models.Domain;
 
 namespace Paperless.BL.Services
 {
@@ -13,7 +8,7 @@ namespace Paperless.BL.Services
         Task<Document> GetDocumentAsync(Guid id);
         Task UploadDocumentAsync(Document document, Stream content);
         Task UpdateDocumentAsync(string documentId, string content, string summary);
-        Task SearchForDocument(string query);
+        Task<List<Document>> SearchForDocument(string query);
         Task EditDocumentAsync(Document document);
         Task DeleteDocumentsAsync();
         Task DeleteDocumentAsync(Guid id);

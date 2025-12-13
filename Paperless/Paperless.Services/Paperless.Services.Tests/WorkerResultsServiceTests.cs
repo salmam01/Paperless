@@ -2,26 +2,25 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.Dtos;
+using Paperless.Services.Models.DTOs;
 using Paperless.Services.Services.HttpClients;
-using System.Text;
 
 namespace Paperless.Services.Tests
 {
     public class WorkerResultsServiceTests
     {
         private readonly Mock<ILogger<WorkerResultsService>> _loggerMock;
-        private readonly Mock<IOptions<EndpointsConfig>> _configMock;
-        private readonly EndpointsConfig _testConfig;
+        private readonly Mock<IOptions<RESTConfig>> _configMock;
+        private readonly RESTConfig _testConfig;
 
         public WorkerResultsServiceTests()
         {
             _loggerMock = new Mock<ILogger<WorkerResultsService>>();
-            _configMock = new Mock<IOptions<EndpointsConfig>>();
+            _configMock = new Mock<IOptions<RESTConfig>>();
             
-            _testConfig = new EndpointsConfig
+            _testConfig = new RESTConfig
             {
-                Rest = "https://localhost:5001/api/documents/"
+                Url = "https://localhost:5001/api/documents/"
             };
 
             _configMock.Setup(x => x.Value).Returns(_testConfig);
@@ -40,15 +39,15 @@ namespace Paperless.Services.Tests
         [Fact]
         public void has_reasonable_defaults()
         {
-            EndpointsConfig config = new EndpointsConfig();
-            Assert.Equal(string.Empty, config.Rest);
+            RESTConfig config = new RESTConfig();
+            Assert.Equal(string.Empty, config.Url);
         }
         
 
         [Fact]
         public void creates_worker_result_dto()
         {
-            WorkerResultDto dto = new WorkerResultDto
+            DocumentDTO dto = new DocumentDTO
             {
                 Id = "doc-123",
                 OcrResult = "Extracted text from document",
@@ -63,7 +62,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void worker_result_dto_has_default_values()
         {
-            WorkerResultDto dto = new WorkerResultDto();
+            DocumentDTO dto = new DocumentDTO();
 
             Assert.Equal(string.Empty, dto.Id);
             Assert.Equal(string.Empty, dto.OcrResult);
