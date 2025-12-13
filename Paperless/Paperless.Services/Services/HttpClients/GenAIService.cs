@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using System.Net.Http.Json;

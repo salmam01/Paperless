@@ -1,8 +1,7 @@
-﻿using Paperless.Services.Models.Dtos;
+﻿using Paperless.Services.Models.DTOs;
 using Paperless.Services.Services.HttpClients;
 using Paperless.Services.Services.MessageQueues;
 using RabbitMQ.Client.Events;
-using System.Linq;
 using System.Text.Json;
 
 namespace Paperless.Services.Workers
@@ -47,7 +46,7 @@ namespace Paperless.Services.Workers
                     return;
                 }
 
-                DocumentDto document = ParseMessage(message);
+                DocumentDTO document = ParseMessage(message);
                 if (document == null || string.IsNullOrEmpty(document.Id))
                 {
                     _logger.LogWarning("Received invalid message from queue inside GenAI Worker. Skipping processing.");
@@ -106,7 +105,7 @@ namespace Paperless.Services.Workers
                     }
                 }
 
-                DocumentDto workerResultDto = new DocumentDto
+                DocumentDTO workerResultDto = new DocumentDTO
                 {
                     Id = document.Id,
                     OcrResult = document.OcrResult,
@@ -137,12 +136,12 @@ namespace Paperless.Services.Workers
         }
 
         //  Add a helper class
-        private DocumentDto ParseMessage(string message)
+        private DocumentDTO ParseMessage(string message)
         {
             Dictionary<string, string> jsonObject = JsonSerializer.Deserialize<Dictionary<string, string>>(message)
                 ?? new Dictionary<string, string>();
 
-            DocumentDto document = new();
+            DocumentDTO document = new();
 
             if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("Title") || !jsonObject.ContainsKey("OcrResult"))
             {

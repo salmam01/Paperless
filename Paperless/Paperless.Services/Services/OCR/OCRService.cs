@@ -1,7 +1,7 @@
 ﻿using ImageMagick;
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.Ocr;
+using Paperless.Services.Models.OCR;
 using System.Text;
 using Tesseract;
 using iText.Kernel.Pdf;
@@ -9,18 +9,18 @@ using iText.Kernel.Pdf;
 
 namespace Paperless.Services.Services.OCR
 {
-    public class OcrService
+    public class OCRService
     {
-        private readonly OcrConfig _config;
-        private readonly ILogger<OcrService> _logger;
+        private readonly OCRConfig _config;
+        private readonly ILogger<OCRService> _logger;
 
-        public OcrService(IOptions<OcrConfig> config, ILogger<OcrService> logger)
+        public OCRService(IOptions<OCRConfig> config, ILogger<OCRService> logger)
         {
             _config = config.Value;
             _logger = logger;
         }
         
-        public OcrResult ProcessPdf(MemoryStream documentContent)
+        public OCRResult ProcessPdf(MemoryStream documentContent)
         {
             _logger.LogInformation(
                 "Processing PDF for OCR. Document size: {DocumentSize} bytes.",
@@ -37,7 +37,7 @@ namespace Paperless.Services.Services.OCR
             };
 
             //  Each page of the original file is converted seperately
-            List<OcrPage> pages = [];
+            List<OCRPage> pages = [];
 
             for (int i = 0; i < imageResult.Count; i++)
             {
@@ -54,7 +54,7 @@ namespace Paperless.Services.Services.OCR
                 //  Tesseracts average certainty for all recognized characters in that page
                 float mean = page.GetMeanConfidence();
 
-                pages.Add(new OcrPage(i + 1, text, mean));
+                pages.Add(new OCRPage(i + 1, text, mean));
 
                 _logger.LogInformation(
                     "======== Page {PageIndex} of PDF. Confidence: {Confidence:P1}, Text length: {TextLength} characters.",
@@ -65,7 +65,7 @@ namespace Paperless.Services.Services.OCR
             }
 
             StringBuilder fileContent = new();
-            foreach (OcrPage page in pages)
+            foreach (OCRPage page in pages)
             {
                 fileContent.AppendLine(page.Text);
                 fileContent.AppendLine();
@@ -78,7 +78,7 @@ namespace Paperless.Services.Services.OCR
                 finalContent.Length
             );
 
-            return new OcrResult(pages, finalContent);
+            return new OCRResult(pages, finalContent);
         }
 
         //  Convert the content Stream to Magick.NET 

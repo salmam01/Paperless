@@ -12,18 +12,18 @@ namespace Paperless.Services.Tests
     // checking if OCR components work together
     public class OCRIntegrationTests
     {
-        private readonly Mock<ILogger<OcrService>> _ocrLoggerMock;
+        private readonly Mock<ILogger<OCRService>> _ocrLoggerMock;
         private readonly Mock<ILogger<StorageService>> _storageLoggerMock;
-        private readonly Mock<IOptions<OcrConfig>> _ocrConfigMock;
-        private readonly OcrConfig _testOcrConfig;
+        private readonly Mock<IOptions<OCRConfig>> _ocrConfigMock;
+        private readonly OCRConfig _testOcrConfig;
 
         public OCRIntegrationTests()
         {
-            _ocrLoggerMock = new Mock<ILogger<OcrService>>();
+            _ocrLoggerMock = new Mock<ILogger<OCRService>>();
             _storageLoggerMock = new Mock<ILogger<StorageService>>();
-            _ocrConfigMock = new Mock<IOptions<OcrConfig>>();
+            _ocrConfigMock = new Mock<IOptions<OCRConfig>>();
 
-            _testOcrConfig = new OcrConfig
+            _testOcrConfig = new OCRConfig
             {
                 DefaultLanguage = "deu+eng",
                 DefaultOem = "LstmOnly",
@@ -41,7 +41,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void uses_ghostscript_for_pdf_conversion()
         {
-            OcrService service = new OcrService(_ocrConfigMock.Object, _ocrLoggerMock.Object);
+            OCRService service = new OCRService(_ocrConfigMock.Object, _ocrLoggerMock.Object);
             MemoryStream emptyStream = new MemoryStream();
 
             // will fail but that's fine - want to see if it tries
@@ -61,7 +61,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void uses_tesseract_for_text_recognition()
         {
-            OcrService service = new OcrService(_ocrConfigMock.Object, _ocrLoggerMock.Object);
+            OCRService service = new OCRService(_ocrConfigMock.Object, _ocrLoggerMock.Object);
             MemoryStream emptyStream = new MemoryStream();
 
             // will fail but we're checking if tesseract is used
@@ -81,7 +81,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void converts_pdf_to_image_first()
         {
-            OcrService service = new OcrService(_ocrConfigMock.Object, _ocrLoggerMock.Object);
+            OCRService service = new OCRService(_ocrConfigMock.Object, _ocrLoggerMock.Object);
             MemoryStream emptyStream = new MemoryStream();
 
             // ProcessPdf should first convert PDF to image, then process with Tesseract
@@ -103,15 +103,15 @@ namespace Paperless.Services.Tests
         [Fact]
         public void can_configure_max_pages()
         {
-            OcrConfig config = new OcrConfig
+            OCRConfig config = new OCRConfig
             {
                 MaxPages = 10,
                 DefaultDpi = 300
             };
-            Mock<IOptions<OcrConfig>> configMock = new Mock<IOptions<OcrConfig>>();
+            Mock<IOptions<OCRConfig>> configMock = new Mock<IOptions<OCRConfig>>();
             configMock.Setup(x => x.Value).Returns(config);
             
-            OcrService service = new OcrService(configMock.Object, _ocrLoggerMock.Object);
+            OCRService service = new OCRService(configMock.Object, _ocrLoggerMock.Object);
             
             Assert.Equal(10, config.MaxPages);
             Assert.NotNull(service);
@@ -120,7 +120,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void supports_multiple_languages()
         {
-            OcrConfig config = new OcrConfig
+            OCRConfig config = new OCRConfig
             {
                 DefaultLanguage = "deu+eng"
             };
@@ -132,7 +132,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void supports_image_processing_options()
         {
-            OcrConfig config = new OcrConfig
+            OCRConfig config = new OCRConfig
             {
                 UseDeskew = true,
                 UseAdaptiveThreshold = true,

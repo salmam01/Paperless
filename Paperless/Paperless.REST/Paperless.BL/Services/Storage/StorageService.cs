@@ -5,7 +5,7 @@ using Minio.DataModel.Args;
 using Paperless.BL.Exceptions;
 using Paperless.Services.Configurations;
 
-namespace Paperless.BL.Services
+namespace Paperless.BL.Services.Storage
 {
     public class StorageService 
     {

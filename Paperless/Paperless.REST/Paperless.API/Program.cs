@@ -1,10 +1,13 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Paperless.API.Dtos;
+using Paperless.API.DTOs;
 using Paperless.BL.Configurations;
 using Paperless.BL.Helpers;
 using Paperless.BL.Models.Domain;
 using Paperless.BL.Services;
+using Paperless.BL.Services.Messaging;
+using Paperless.BL.Services.Search;
+using Paperless.BL.Services.Storage;
 using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories;
@@ -24,9 +27,9 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 //  Automapper configuration
-var mapperConfig = new MapperConfiguration(
+MapperConfiguration mapperConfig = new(
     cfg => {
-        cfg.CreateMap<DocumentDto, Document>().ReverseMap();
+        cfg.CreateMap<DocumentDTO, Document>().ReverseMap();
         cfg.CreateMap<Document, DocumentEntity>().ReverseMap();
     }
 );
@@ -40,7 +43,7 @@ builder.Services.AddLogging(loggingBuilder =>
 });
 
 // Configurations
-builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMQ"));
+builder.Services.Configure<RabbitMQConfig>(builder.Configuration.GetSection("RabbitMQ"));
 builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("MinIO"));
 builder.Services.Configure<ElasticSearchConfig>(builder.Configuration.GetSection("ElasticSearch"));
 builder.Services.AddScoped<PaperlessDbContext>();

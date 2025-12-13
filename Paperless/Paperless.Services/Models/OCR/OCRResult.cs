@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Paperless.Services.Models.Ocr
+﻿namespace Paperless.Services.Models.OCR
 {
-    public record OcrResult
+    public record OCRResult
     (
-        List<OcrPage> Pages,
-        string PdfContent
+        List<OCRPage> Pages,
+        string PDFContent
     );
 }

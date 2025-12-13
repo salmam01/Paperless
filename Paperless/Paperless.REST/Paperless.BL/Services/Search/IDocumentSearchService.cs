@@ -1,6 +1,6 @@
-﻿using Paperless.BL.Models.Dtos;
+﻿using Paperless.BL.Models.DTOs;
 
-namespace Paperless.BL.Services
+namespace Paperless.BL.Services.Search
 {
     public interface IDocumentSearchService
     {

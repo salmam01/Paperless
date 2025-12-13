@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.Dtos;
+using Paperless.Services.Models.DTOs;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
@@ -24,7 +24,7 @@ namespace Paperless.Services.Services.MessageQueues
             _connectionFactory = mqConnectionFactory.ConnectionFactory;
         }
 
-        public async Task PublishOcrResult(DocumentDto document)
+        public async Task PublishOcrResult(DocumentDTO document)
         {
             try
             {

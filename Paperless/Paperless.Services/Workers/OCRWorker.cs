@@ -1,31 +1,27 @@
-using Microsoft.Extensions.Options;
-using Paperless.Services.Configurations;
-using Paperless.Services.Models.Dtos;
-using Paperless.Services.Models.Ocr;
+using Paperless.Services.Models.DTOs;
+using Paperless.Services.Models.OCR;
 using Paperless.Services.Services.FileStorage;
 using Paperless.Services.Services.MessageQueues;
 using Paperless.Services.Services.OCR;
-using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Text;
 
 namespace Paperless.Services.Workers
 {
     //  OCR - Optional Character Recognition :)
-    public class OcrWorker : BackgroundService
+    public class OCRWorker : BackgroundService
     {
-        private readonly ILogger<OcrWorker> _logger;
+        private readonly ILogger<OCRWorker> _logger;
         private readonly OCRListener _ocrListener;
         private readonly MQPublisher _mqPublisher;
         private readonly StorageService _storageService;
-        private readonly OcrService _ocrService;
+        private readonly OCRService _ocrService;
 
-        public OcrWorker(
-            ILogger<OcrWorker> logger, 
+        public OCRWorker(
+            ILogger<OCRWorker> logger, 
             OCRListener ocrListener,
             MQPublisher mqPublisher,
             StorageService storageService,
-            OcrService ocrService
+            OCRService ocrService
         ) {
             _ocrListener = ocrListener;
             _mqPublisher = mqPublisher;
@@ -53,20 +49,20 @@ namespace Paperless.Services.Workers
                 throw new Exception("Document stream is empty.");
 
             //  Process file to text
-            OcrResult result = _ocrService.ProcessPdf(documentContent);
+            OCRResult result = _ocrService.ProcessPdf(documentContent);
 
             _logger.LogInformation(
                 "OCR processing completed successfully. Document ID: {DocumentId}, Pages processed: {PageCount}, Content length: {ContentLength} characters.",
                 id,
                 result.Pages.Count,
-                result.PdfContent?.Length ?? 0
+                result.PDFContent?.Length ?? 0
             );
 
-            DocumentDto document = new DocumentDto
+            DocumentDTO document = new DocumentDTO
             {
                 Id = id,
                 Title = _ocrService.ExtractPdfTitle(documentContent),
-                OcrResult = result.PdfContent ?? "Error processing document content.",
+                OcrResult = result.PDFContent ?? "Error processing document content.",
                 SummaryResult = string.Empty
             };
 

@@ -1,4 +1,4 @@
-﻿namespace Paperless.BL.Models.Dtos
+﻿namespace Paperless.BL.Models.DTOs
 {
     public class SearchResult
     {

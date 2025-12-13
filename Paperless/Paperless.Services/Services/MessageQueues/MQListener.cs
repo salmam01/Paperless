@@ -2,7 +2,6 @@
 using Paperless.Services.Configurations;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Data.Common;
 using System.Text;
 
 namespace Paperless.Services.Services.MessageQueues

@@ -1,6 +1,6 @@
 ﻿namespace Paperless.BL.Configurations
 {
-    public class RabbitMqConfig
+    public class RabbitMQConfig
     {
         public string Host { get; set; } = string.Empty;
         public int Port { get; set; } = 0;

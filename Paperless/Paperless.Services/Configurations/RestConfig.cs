@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Paperless.Services.Configurations
+﻿namespace Paperless.Services.Configurations
 {
-    public class RestConfig
+    public class RESTConfig
     {
         public string Url { get; set; } = string.Empty;
     }

@@ -1,6 +1,6 @@
 ﻿namespace Paperless.API.DTOs
 {
-    public class WorkerResultDto
+    public class WorkerResultDTO
     {
         public string Id { get; set; } = string.Empty;
         public string OcrResult { get; set; } = string.Empty;

@@ -1,20 +1,15 @@
 ﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using RabbitMQ.Client;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Paperless.Services.Services.MessageQueues
 {
     public class MQConnectionFactory
     {
-        private readonly RabbitMqConfig _config;
+        private readonly RabbitMQConfig _config;
         public readonly ConnectionFactory ConnectionFactory;
 
-        public MQConnectionFactory(IOptions<RabbitMqConfig> rabbitMqConfig)
+        public MQConnectionFactory(IOptions<RabbitMQConfig> rabbitMqConfig)
         {
             _config = rabbitMqConfig.Value;
 

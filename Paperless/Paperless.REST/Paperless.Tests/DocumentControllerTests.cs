@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Paperless.API.Controllers;
-using Paperless.API.Dtos;
+using Paperless.API.DTOs;
 using Paperless.BL.Services;
 using Paperless.BL.Configurations;
 using Paperless.BL.Models.Domain;
@@ -29,7 +29,7 @@ namespace Paperless.Tests
 
         public DocumentControllerTests()
         {
-            RabbitMqConfig cfg = new RabbitMqConfig { Host = "localhost", Port = 5672, User = "guest", Password = "guest", QueueName = "test" };
+            RabbitMQConfig cfg = new RabbitMQConfig { Host = "localhost", Port = 5672, User = "guest", Password = "guest", QueueName = "test" };
         }
 
         [Fact]
@@ -42,11 +42,11 @@ namespace Paperless.Tests
             };
 
             _documentService.Setup(s => s.GetDocumentsAsync()).ReturnsAsync(docs);
-            _mapper.Setup(m => m.Map<IEnumerable<DocumentDto>>(It.IsAny<IEnumerable<Document>>()))
-                   .Returns(new List<DocumentDto>());
+            _mapper.Setup(m => m.Map<IEnumerable<DocumentDTO>>(It.IsAny<IEnumerable<Document>>()))
+                   .Returns(new List<DocumentDTO>());
 
             DocumentController controller = CreateController();
-            ActionResult<IEnumerable<DocumentDto>> result = await controller.GetAll();
+            ActionResult<IEnumerable<DocumentDTO>> result = await controller.GetAll();
 
             Assert.IsType<OkObjectResult>(result.Result);
         }
@@ -58,8 +58,8 @@ namespace Paperless.Tests
             Document doc = new Document(id, "Doc", "C", "S", "f", DateTime.UtcNow, "txt", 1.0);
 
             _documentService.Setup(s => s.GetDocumentAsync(id)).ReturnsAsync(doc);
-            _mapper.Setup(m => m.Map<DocumentDto>(It.IsAny<Document>()))
-                   .Returns(new DocumentDto { Id = id, Name = "Doc" });
+            _mapper.Setup(m => m.Map<DocumentDTO>(It.IsAny<Document>()))
+                   .Returns(new DocumentDTO { Id = id, Name = "Doc" });
 
             DocumentController controller = CreateController();
             ActionResult result = await controller.Get(id.ToString());
@@ -82,7 +82,7 @@ namespace Paperless.Tests
             file.SetupGet(f => f.Length).Returns(0);
 
             DocumentController controller = CreateController();
-            ActionResult<DocumentDto> result = await controller.Post(file.Object);
+            ActionResult<DocumentDTO> result = await controller.Post(file.Object);
             Assert.IsType<BadRequestObjectResult>(result.Result);
         }
 

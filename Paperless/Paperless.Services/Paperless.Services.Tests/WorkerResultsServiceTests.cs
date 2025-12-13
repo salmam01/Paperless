@@ -2,24 +2,23 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.Dtos;
+using Paperless.Services.Models.DTOs;
 using Paperless.Services.Services.HttpClients;
-using System.Text;
 
 namespace Paperless.Services.Tests
 {
     public class WorkerResultsServiceTests
     {
         private readonly Mock<ILogger<WorkerResultsService>> _loggerMock;
-        private readonly Mock<IOptions<RestConfig>> _configMock;
-        private readonly RestConfig _testConfig;
+        private readonly Mock<IOptions<RESTConfig>> _configMock;
+        private readonly RESTConfig _testConfig;
 
         public WorkerResultsServiceTests()
         {
             _loggerMock = new Mock<ILogger<WorkerResultsService>>();
-            _configMock = new Mock<IOptions<RestConfig>>();
+            _configMock = new Mock<IOptions<RESTConfig>>();
             
-            _testConfig = new RestConfig
+            _testConfig = new RESTConfig
             {
                 Url = "https://localhost:5001/api/documents/"
             };
@@ -40,7 +39,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void has_reasonable_defaults()
         {
-            RestConfig config = new RestConfig();
+            RESTConfig config = new RESTConfig();
             Assert.Equal(string.Empty, config.Url);
         }
         
@@ -48,7 +47,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void creates_worker_result_dto()
         {
-            DocumentDto dto = new DocumentDto
+            DocumentDTO dto = new DocumentDTO
             {
                 Id = "doc-123",
                 OcrResult = "Extracted text from document",
@@ -63,7 +62,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void worker_result_dto_has_default_values()
         {
-            DocumentDto dto = new DocumentDto();
+            DocumentDTO dto = new DocumentDTO();
 
             Assert.Equal(string.Empty, dto.Id);
             Assert.Equal(string.Empty, dto.OcrResult);

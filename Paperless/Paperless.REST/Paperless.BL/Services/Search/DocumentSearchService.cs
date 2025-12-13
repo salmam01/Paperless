@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Paperless.BL.Configurations;
-using Paperless.BL.Models.Dtos;
+using Paperless.BL.Models.DTOs;
 
-namespace Paperless.BL.Services
+namespace Paperless.BL.Services.Search
 {
     public class DocumentSearchService : IDocumentSearchService
     {

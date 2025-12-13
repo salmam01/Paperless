@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Paperless.API.Dtos;
 using Paperless.API.DTOs;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models.Domain;
@@ -23,7 +22,7 @@ namespace Paperless.API.Controllers
         [HttpGet(Name = "GetDocuments")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<DocumentDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<DocumentDTO>>> GetAll()
         {
             _logger.LogInformation(
                 "Incoming GET /document from {ip}.",
@@ -33,10 +32,10 @@ namespace Paperless.API.Controllers
             try
             {
                 IEnumerable<Document> documents = await _documentService.GetDocumentsAsync();
-                IEnumerable<DocumentDto> documentDto = _mapper.Map<IEnumerable<DocumentDto>>(documents);
+                IEnumerable<DocumentDTO> documentDTO = _mapper.Map<IEnumerable<DocumentDTO>>(documents);
 
-                _logger.LogInformation("GET /document retrieved {count} documents successfully.", documentDto.Count());
-                return Ok(documentDto);
+                _logger.LogInformation("GET /document retrieved {count} documents successfully.", documentDTO.Count());
+                return Ok(documentDTO);
             }
             catch (ServiceException ex)
             {
@@ -87,10 +86,10 @@ namespace Paperless.API.Controllers
             try
             {
                 Document document = await _documentService.GetDocumentAsync(guid);
-                DocumentDto documentDto = _mapper.Map<DocumentDto>(document);
+                DocumentDTO documentDTO = _mapper.Map<DocumentDTO>(document);
 
                 _logger.LogInformation("GET /document/{id} retrieved document successfully.", id);
-                return Ok(documentDto);
+                return Ok(documentDTO);
             }
             catch (ServiceException ex)
             {
@@ -134,14 +133,14 @@ namespace Paperless.API.Controllers
             try
             {
                 List<Document> documents = await _documentService.SearchForDocument(query);
-                List<DocumentDto> documentDto = _mapper.Map<List<DocumentDto>>(documents);
+                List<DocumentDTO> documentDTO = _mapper.Map<List<DocumentDTO>>(documents);
 
                 _logger.LogInformation(
                     "GET /document/search/{query} retrieved {count} document(s) successfully.",
-                    documentDto.Count(),
+                    documentDTO.Count(),
                     query
                 );
-                return Ok(documentDto);
+                return Ok(documentDTO);
             }
             catch (ServiceException ex)
             {
@@ -175,7 +174,7 @@ namespace Paperless.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<DocumentDto>> Post(IFormFile form) {
+        public async Task<ActionResult<DocumentDTO>> Post(IFormFile form) {
             _logger.LogInformation(
                 "Incoming POST /document from {ip}. File: {fileName}, ContentType: {contentType}, Size: {size}",
                 HttpContext.Connection.RemoteIpAddress?.ToString(),
@@ -192,15 +191,15 @@ namespace Paperless.API.Controllers
 
             try
             {
-                DocumentDto documentDto = parseFormMetaData(form);
-                if (documentDto == null)
+                DocumentDTO documentDTO = parseFormMetaData(form);
+                if (documentDTO == null)
                     return BadRequest("Empty or invalid document.");
 
-                Document document = _mapper.Map<Document>(documentDto);
+                Document document = _mapper.Map<Document>(documentDTO);
                 await _documentService.UploadDocumentAsync(document, form.OpenReadStream());
 
-                _logger.LogInformation("POST /document uploaded document with ID {Id} successfully.", documentDto.Id);
-                return CreatedAtAction(nameof(Get), new { id = documentDto.Id }, documentDto);
+                _logger.LogInformation("POST /document uploaded document with ID {Id} successfully.", documentDTO.Id);
+                return CreatedAtAction(nameof(Get), new { id = documentDTO.Id }, documentDTO);
             }
             catch (ServiceException ex)
             {
@@ -237,7 +236,7 @@ namespace Paperless.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult> PostServicesResult([FromRoute] string id, [FromBody] WorkerResultDto result)
+        public async Task<ActionResult> PostServicesResult([FromRoute] string id, [FromBody] WorkerResultDTO result)
         {
             _logger.LogInformation(
                 "Incoming POST /document/{id} from {ip}. Document ID: {DocumentId}, OCR result length: {OcrLength}, Summary length: {SummaryLength}",
@@ -389,14 +388,14 @@ namespace Paperless.API.Controllers
             }
         }
 
-        private DocumentDto parseFormMetaData(IFormFile form)
+        private DocumentDTO parseFormMetaData(IFormFile form)
         {
             _logger.LogInformation("Parsing file: {fileName}.", form.FileName);
             
             Guid id = Guid.NewGuid();
             string fileType = Path.GetExtension(form.FileName).ToLowerInvariant();
 
-            DocumentDto documentDto = new
+            DocumentDTO documentDTO = new
             (
                 id,
                 form.FileName,
@@ -408,7 +407,7 @@ namespace Paperless.API.Controllers
                 Math.Round(form.Length / Math.Pow(1024.0, 2), 2)
             );
 
-            return documentDto;
+            return documentDTO;
         }
 
         private int GetHttpStatusCode(ExceptionType type)
