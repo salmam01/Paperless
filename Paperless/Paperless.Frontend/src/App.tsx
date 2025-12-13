@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import type { DocumentDto } from './dto/documentDto'
-import { getDocuments, getDocument, deleteDocument, deleteDocuments, postDocument } from './services/documentService'
+import { getDocuments, getDocument, getSearchResult, deleteDocument, deleteDocuments, postDocument } from './services/documentService'
 import { DocumentsGrid } from './components/DocumentsGrid'
 import { DocumentDetails } from './components/DocumentDetails'
+import { Searchbar } from './components/Searchbar'
 import { UploadPanel } from './components/UploadPanel'
 
 function App() {
@@ -11,6 +12,8 @@ function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<DocumentDto | null>(null);
   const [loading, setLoading] = useState(true);
+  //const [showSearchbar, setShowSearchbar] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [showUploadPanel, setShowUploadPanel] = useState(false);
   const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: 'error' | 'success' | 'info'}>>([]);
 
@@ -79,6 +82,24 @@ function App() {
     setSelectedDocument(null);
     setShowUploadPanel(true);
   };
+
+  //  for button, later
+  /*const handleShowSearchbar = () => {
+    setShowSearchbar(true);
+  }*/
+
+  const handleSearch = async (query: string) => {
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery === "") {
+      await fetchDocuments()
+    } else {
+      setLoading(true);
+      const result = await getSearchResult(trimmedQuery);
+      setDocuments(result);
+      setLoading(false);
+    }
+  }
 
   const handleDelete = async (id: string) => {
     try {
@@ -163,6 +184,12 @@ function App() {
         
         <div className="documents-section">
           <h2>Documents ({documents.length})</h2>
+          <Searchbar 
+            query={searchQuery}
+            onChange={(val) => {
+              setSearchQuery(val);
+              handleSearch(val);
+            }}/>
           <div className="documents-toolbar">
             <button onClick={handleShowUpload} disabled={loading}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

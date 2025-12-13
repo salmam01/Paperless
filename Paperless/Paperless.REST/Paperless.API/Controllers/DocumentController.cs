@@ -122,13 +122,13 @@ namespace Paperless.API.Controllers
             }
         }
 
-        [HttpGet("{query}", Name = "SearchForDocument")]
+        [HttpGet("search/{query}", Name = "SearchForDocument")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> GetByQuery(string query)
         {
             _logger.LogInformation(
-                "Incoming GET /document/{query} from {ip}.",
+                "Incoming GET /document/search/{query} from {ip}.",
                 query,
                 HttpContext.Connection.RemoteIpAddress?.ToString()
             );
@@ -139,7 +139,8 @@ namespace Paperless.API.Controllers
                 List<DocumentDto> documentDto = _mapper.Map<List<DocumentDto>>(documents);
 
                 _logger.LogInformation(
-                    "GET /document/{query} retrieved document(s) successfully.",
+                    "GET /document/search/{query} retrieved {count} document(s) successfully.",
+                    documentDto.Count(),
                     query
                 );
                 return Ok(documentDto);
@@ -148,7 +149,7 @@ namespace Paperless.API.Controllers
             {
                 _logger.LogError(
                     ex,
-                    "{method} /document/{query} failed in {layer} Layer due to {reason}.",
+                    "{method} /document/search/{query} failed in {layer} Layer due to {reason}.",
                     "GET", query, "Business", GetExceptionMessage(ex.Type)
                 );
                 return Problem(
@@ -161,7 +162,7 @@ namespace Paperless.API.Controllers
             {
                 _logger.LogError(
                     ex,
-                    "{method} /document/{query} failed in {layer} Layer due to {reason}.",
+                    "{method} /document/search/{query} failed in {layer} Layer due to {reason}.",
                     "GET", query, "API", ex.Message
                 );
                 return Problem(

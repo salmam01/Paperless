@@ -22,13 +22,13 @@ namespace Paperless.BL.Services
             ElasticsearchClientSettings settings = new ElasticsearchClientSettings(new Uri(_config.Url))
                 .DefaultIndex(_config.Index);
 
-            _client = new ElasticsearchClient(settings);
+            _client = new(settings);
         }
 
         public async Task<List<SearchResult>> SearchAsync(string query)
         {
             _logger.LogInformation(
-                "Searching for Documents using {query} in Index {index}.",
+                "Searching for Documents with Query {query} in Index {index}.",
                 query,
                 _config.Index
             );
@@ -49,6 +49,11 @@ namespace Paperless.BL.Services
                     Id = Guid.Parse(h.Id),
                     Score = h.Score ?? 0
                 }
+            );
+
+            _logger.LogInformation(
+                "Found {count} documents matching search query. Documents:",
+                results.Count()
             );
 
             return results.OrderByDescending(r => r.Score).ToList();

@@ -21,7 +21,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
 //  Configuration
-builder.Services.Configure<RestConfig>(builder.Configuration.GetSection("Endpoints"));
+builder.Services.Configure<RestConfig>(builder.Configuration.GetSection("Rest"));
 builder.Services.Configure<MinIoConfig>(builder.Configuration.GetSection("MinIo"));
 builder.Services.Configure<OcrConfig>(builder.Configuration.GetSection("Ocr"));
 builder.Services.Configure<GenAIConfig>(builder.Configuration.GetSection("GenAI"));

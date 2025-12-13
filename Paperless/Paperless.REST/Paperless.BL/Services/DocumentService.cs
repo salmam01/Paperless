@@ -89,16 +89,15 @@ namespace Paperless.BL.Services
 
                 return documents;
             }
-            //  add new exception type for elasticsearch, delete this
-            catch (DatabaseException ex)
+            catch (ElasticSearchException ex)
             {
                 _logger.LogError(
                     ex,
-                    "{method} /document/{query} failed in {layer} Layer due to {reason}.",
-                    "GET", query, "DataAccess", "a database error"
+                    "{method} /document/search/{query} failed in {layer} Layer due to {reason}.",
+                    "GET", query, "Business", "a search error"
                 );
 
-                throw new ServiceException("Could not retrieve document.", ExceptionType.Internal, ex);
+                throw new ServiceException("Could not search for query.", ExceptionType.Search, ex);
             }
         }
 
