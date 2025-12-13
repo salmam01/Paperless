@@ -20,11 +20,11 @@ namespace Paperless.Services.Services.HttpClients
         public WorkerResultsService(
             ILogger<WorkerResultsService> logger,
             HttpClient client, 
-            IOptions<EndpointsConfig> config
+            IOptions<RestConfig> config
         ) {
             _logger = logger;
             _client = client;
-            _baseUrl = new Uri(config.Value.Rest);
+            _baseUrl = new Uri(config.Value.Url);
         }
 
         public async Task PostWorkerResultsAsync(DocumentDto workerResult)

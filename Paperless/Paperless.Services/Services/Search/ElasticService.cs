@@ -2,16 +2,10 @@
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.Search;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
-namespace Paperless.Services.Services.SearchService
+namespace Paperless.Services.Services.Search
 {
-    public class ElasticService : IElasticService
+    public class ElasticService : IElasticRepository
     {
         private readonly ElasticsearchClient _client;
         private readonly ElasticSearchConfig _config;
@@ -42,7 +36,7 @@ namespace Paperless.Services.Services.SearchService
             }
         }
 
-        public async Task<bool> AddOrUpdate(SearchDocument document)
+        public async Task<bool> IndexAsync(SearchDocument document)
         {
             _logger.LogInformation(
                 "Adding new Document with ID {id} and name {title} to Index {index}.",
@@ -58,34 +52,7 @@ namespace Paperless.Services.Services.SearchService
             return response.IsValidResponse;
         }
 
-        public async Task<SearchDocument?> Get(string id)
-        {
-            _logger.LogInformation(
-                "Retrieving Document with ID {id} from Index {index}.",
-                id,
-                _config.Index
-            );
-
-            var response = await _client.GetAsync<SearchDocument>(id, g =>
-                g.Index(_config.Index)
-            );
-            return response.Source ?? new SearchDocument();
-        }
-
-        public async Task<List<SearchDocument>?> GetAll()
-        {
-            _logger.LogInformation(
-                "Retrieving all document from Index {index}.",
-                _config.Index
-            );
-
-            var response = await _client.SearchAsync<SearchDocument> (s =>
-                s.Indices(_config.Index)
-            );
-            return response.IsValidResponse ? response.Documents.ToList() : [];
-        }
-
-        public async Task<bool> Remove(string id)
+        public async Task<bool> RemoveAsync(string id)
         {
             _logger.LogInformation(
                 "Removing Document with ID {id} from Index {index}.",
@@ -99,7 +66,7 @@ namespace Paperless.Services.Services.SearchService
             return response.IsValidResponse;
         }
 
-        public async Task<long?> RemoveAll()
+        public async Task<long?> RemoveAllAsync()
         {
             _logger.LogInformation(
                 "Removing all documents from Index {index}.",

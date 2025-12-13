@@ -11,7 +11,6 @@ namespace Paperless.DAL.Repositories
     {
         Task<IEnumerable<DocumentEntity>> GetDocumentsAsync();
         Task<DocumentEntity?> GetDocumentAsync(Guid Id);
-        IEnumerable<DocumentEntity> SearchForDocument(string query);
         Task InsertDocumentAsync(DocumentEntity document);
         Task UpdateDocumentContentAndSummaryAsync(Guid id, string content, string summary);
         Task DeleteDocumentsAsync();

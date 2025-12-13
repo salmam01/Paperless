@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.Ocr;
 using Paperless.Services.Services.FileStorage;
 using Paperless.Services.Services.OCR;
 using System.Text;

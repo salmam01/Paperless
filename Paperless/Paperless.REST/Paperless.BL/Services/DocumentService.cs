@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.Extensions.Logging;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Helpers;
@@ -12,14 +13,16 @@ namespace Paperless.BL.Services
 {
     public class DocumentService (
         IDocumentRepository documentrepository,
+        IDocumentSearchService searchService,
         DocumentPublisher documentPublisher,
         StorageService storageService,
         Parser parser,
         IMapper mapper, 
         ILogger<DocumentService> logger
-        ) : IDocumentService
+    ) : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
+        private readonly IDocumentSearchService _searchService = searchService;
         private readonly DocumentPublisher _documentPublisher = documentPublisher;
         private readonly StorageService _storageService = storageService;
         private readonly Parser _parser = parser;
@@ -63,6 +66,36 @@ namespace Paperless.BL.Services
                     ex,
                     "{method} /document/{id} failed in {layer} Layer due to {reason}.",
                     "GET", id, "DataAccess", "a database error"
+                );
+
+                throw new ServiceException("Could not retrieve document.", ExceptionType.Internal, ex);
+            }
+        }
+
+        public async Task<List<Document>> SearchForDocument(string query)
+        {
+            _logger.LogInformation("Retrieving document by query {query} from database.", query);
+
+            try
+            {
+                List<SearchResult> searchResults = await _searchService.SearchAsync(query);
+                List<Document> documents = [];
+
+                foreach (SearchResult result in searchResults)
+                {
+                    DocumentEntity? entity = await _documentRepository.GetDocumentAsync(result.Id);
+                    documents.Add(_mapper.Map<Document>(entity));
+                }
+
+                return documents;
+            }
+            //  add new exception type for elasticsearch, delete this
+            catch (DatabaseException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /document/{query} failed in {layer} Layer due to {reason}.",
+                    "GET", query, "DataAccess", "a database error"
                 );
 
                 throw new ServiceException("Could not retrieve document.", ExceptionType.Internal, ex);
@@ -171,11 +204,6 @@ namespace Paperless.BL.Services
             throw new NotImplementedException();
         }
 
-        //  TODO: Implement in later sprints
-        public async Task SearchForDocument(string query)
-        {
-            throw new NotImplementedException();
-        }
         public async Task DeleteDocumentsAsync()
         {
             _logger.LogInformation("Deleting all documents from database and storage.");
@@ -183,7 +211,6 @@ namespace Paperless.BL.Services
             try
             {
                 await _storageService.DeleteDocumentsAsync();
-
                 await _documentRepository.DeleteDocumentsAsync();
             }
             catch (DatabaseException ex)
@@ -197,6 +224,7 @@ namespace Paperless.BL.Services
                 throw new ServiceException("Could not delete documents.", ExceptionType.Internal, ex);
             }
         }
+
         public async Task DeleteDocumentAsync(Guid id)
         {
             _logger.LogInformation("Deleting document with ID {DocumentId} from database and storage.", id);

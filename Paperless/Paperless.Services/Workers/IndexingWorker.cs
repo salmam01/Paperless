@@ -1,6 +1,6 @@
 ﻿using Paperless.Services.Models.Search;
 using Paperless.Services.Services.MessageQueues;
-using Paperless.Services.Services.SearchService;
+using Paperless.Services.Services.Search;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
 
@@ -10,12 +10,12 @@ namespace Paperless.Services.Workers
     {
         private readonly ILogger _logger;
         private readonly MQListener _mqListener;
-        private readonly IElasticService _elasticService;
+        private readonly IElasticRepository _elasticService;
 
         public IndexingWorker(
             ILogger<IndexingWorker> logger,
             [FromKeyedServices("IndexingListener")] MQListener mqListener,
-            IElasticService searchService
+            IElasticRepository searchService
         ) {
             _logger = logger;
             _mqListener = mqListener;
@@ -57,7 +57,7 @@ namespace Paperless.Services.Workers
                     document.Id
                 );
 
-                await _elasticService.AddOrUpdate(document);
+                await _elasticService.IndexAsync(document);
             }
             catch (Exception ex)
             {

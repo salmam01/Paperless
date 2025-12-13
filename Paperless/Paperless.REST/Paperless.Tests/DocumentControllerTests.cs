@@ -82,7 +82,7 @@ namespace Paperless.Tests
             file.SetupGet(f => f.Length).Returns(0);
 
             DocumentController controller = CreateController();
-            ActionResult<DocumentDto> result = await controller.UploadDocument(file.Object);
+            ActionResult<DocumentDto> result = await controller.Post(file.Object);
             Assert.IsType<BadRequestObjectResult>(result.Result);
         }
 

@@ -6,7 +6,7 @@ using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.Dtos;
 using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.MessageQueue;
+using Paperless.Services.Services.MessageQueues;
 using Paperless.Services.Workers;
 using RabbitMQ.Client.Events;
 using System.Text;
@@ -57,10 +57,10 @@ namespace Paperless.Services.Tests
             );
             
             // Setup EndpointsConfig mock
-            Mock<IOptions<EndpointsConfig>> endpointsConfigMock = new Mock<IOptions<EndpointsConfig>>();
-            endpointsConfigMock.Setup(x => x.Value).Returns(new EndpointsConfig
+            Mock<IOptions<RestConfig>> endpointsConfigMock = new Mock<IOptions<RestConfig>>();
+            endpointsConfigMock.Setup(x => x.Value).Returns(new RestConfig
             {
-                Rest = "https://localhost:5001/api/documents/"
+                Url = "https://localhost:5001/api/documents/"
             });
             
             _workerResultsServiceMock = new Mock<WorkerResultsService>(

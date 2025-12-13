@@ -130,12 +130,6 @@ namespace Paperless.DAL.Repositories
             }
         }
 
-        //  TODO: Full-text search
-        public IEnumerable<DocumentEntity> SearchForDocument(string query)
-        {
-            throw new NotImplementedException();
-        }
-
         private async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

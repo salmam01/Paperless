@@ -11,17 +11,17 @@ namespace Paperless.Services.Tests
     public class WorkerResultsServiceTests
     {
         private readonly Mock<ILogger<WorkerResultsService>> _loggerMock;
-        private readonly Mock<IOptions<EndpointsConfig>> _configMock;
-        private readonly EndpointsConfig _testConfig;
+        private readonly Mock<IOptions<RestConfig>> _configMock;
+        private readonly RestConfig _testConfig;
 
         public WorkerResultsServiceTests()
         {
             _loggerMock = new Mock<ILogger<WorkerResultsService>>();
-            _configMock = new Mock<IOptions<EndpointsConfig>>();
+            _configMock = new Mock<IOptions<RestConfig>>();
             
-            _testConfig = new EndpointsConfig
+            _testConfig = new RestConfig
             {
-                Rest = "https://localhost:5001/api/documents/"
+                Url = "https://localhost:5001/api/documents/"
             };
 
             _configMock.Setup(x => x.Value).Returns(_testConfig);
@@ -40,8 +40,8 @@ namespace Paperless.Services.Tests
         [Fact]
         public void has_reasonable_defaults()
         {
-            EndpointsConfig config = new EndpointsConfig();
-            Assert.Equal(string.Empty, config.Rest);
+            RestConfig config = new RestConfig();
+            Assert.Equal(string.Empty, config.Url);
         }
         
 

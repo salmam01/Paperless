@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Paperless.Services.Configurations
 {
-    public class EndpointsConfig
+    public class RestConfig
     {
-        public string Rest { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
     }
 }

@@ -38,12 +38,16 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.ClearProviders();
     loggingBuilder.AddSerilog();
 });
+
+// Configurations
 builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMQ"));
 builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("MinIO"));
+builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("ElasticSearch"));
 builder.Services.AddScoped<PaperlessDbContext>();
 
 builder.Services.AddSingleton<Parser>();
 builder.Services.AddSingleton<StorageService>();
+builder.Services.AddSingleton<DocumentSearchService>();
 builder.Services.AddSingleton<DocumentPublisher>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();

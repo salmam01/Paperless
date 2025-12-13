@@ -6,7 +6,7 @@ using Paperless.Services.Services.FileStorage;
 using Paperless.Services.Services.HttpClients;
 using Paperless.Services.Services.MessageQueues;
 using Paperless.Services.Services.OCR;
-using Paperless.Services.Services.SearchService;
+using Paperless.Services.Services.Search;
 using Paperless.Services.Workers;
 using Serilog;
 
@@ -21,7 +21,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
 //  Configuration
-builder.Services.Configure<EndpointsConfig>(builder.Configuration.GetSection("Endpoints"));
+builder.Services.Configure<RestConfig>(builder.Configuration.GetSection("Endpoints"));
 builder.Services.Configure<MinIoConfig>(builder.Configuration.GetSection("MinIo"));
 builder.Services.Configure<OcrConfig>(builder.Configuration.GetSection("Ocr"));
 builder.Services.Configure<GenAIConfig>(builder.Configuration.GetSection("GenAI"));
@@ -39,7 +39,7 @@ builder.Services.AddSingleton<MQConnectionFactory>();
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OcrService>();
 builder.Services.AddSingleton<GenAIService>();
-builder.Services.AddSingleton<IElasticService, ElasticService>();
+builder.Services.AddSingleton<IElasticRepository, ElasticService>();
 
 builder.Services.AddSingleton<MQPublisher>(sp =>
 {

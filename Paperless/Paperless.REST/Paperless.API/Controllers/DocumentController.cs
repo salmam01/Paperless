@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Paperless.API.Dtos;
 using Paperless.API.DTOs;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models;
 using Paperless.BL.Services;
+using System;
 
 namespace Paperless.API.Controllers
 {
@@ -20,7 +22,7 @@ namespace Paperless.API.Controllers
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<DocumentController> _logger = logger;
 
-        [HttpGet(Name = "GetDocument")]
+        [HttpGet(Name = "GetDocuments")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<DocumentDto>>> GetAll()
@@ -66,7 +68,7 @@ namespace Paperless.API.Controllers
             }
         }
 
-        [HttpGet("{id}", Name = "GetDocumentById")]
+        [HttpGet("{id}", Name = "GetDocument")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -120,11 +122,61 @@ namespace Paperless.API.Controllers
             }
         }
 
+        [HttpGet("{query}", Name = "SearchForDocument")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> GetByQuery(string query)
+        {
+            _logger.LogInformation(
+                "Incoming GET /document/{query} from {ip}.",
+                query,
+                HttpContext.Connection.RemoteIpAddress?.ToString()
+            );
+
+            try
+            {
+                List<Document> documents = await _documentService.SearchForDocument(query);
+                List<DocumentDto> documentDto = _mapper.Map<List<DocumentDto>>(documents);
+
+                _logger.LogInformation(
+                    "GET /document/{query} retrieved document(s) successfully.",
+                    query
+                );
+                return Ok(documentDto);
+            }
+            catch (ServiceException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /document/{query} failed in {layer} Layer due to {reason}.",
+                    "GET", query, "Business", GetExceptionMessage(ex.Type)
+                );
+                return Problem(
+                    detail: ex.Message,
+                    statusCode: GetHttpStatusCode(ex.Type),
+                    title: GetExceptionMessage(ex.Type)
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /document/{query} failed in {layer} Layer due to {reason}.",
+                    "GET", query, "API", ex.Message
+                );
+                return Problem(
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "Internal Server Error"
+                );
+            }
+        }
+
         [HttpPost(Name = "PostDocument")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<DocumentDto>> UploadDocument(IFormFile form) {
+        public async Task<ActionResult<DocumentDto>> Post(IFormFile form) {
             _logger.LogInformation(
                 "Incoming POST /document from {ip}. File: {fileName}, ContentType: {contentType}, Size: {size}",
                 HttpContext.Connection.RemoteIpAddress?.ToString(),
@@ -186,7 +238,7 @@ namespace Paperless.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult> UploadServicesResult([FromRoute] string id, [FromBody] WorkerResultDto result)
+        public async Task<ActionResult> PostServicesResult([FromRoute] string id, [FromBody] WorkerResultDto result)
         {
             _logger.LogInformation(
                 "Incoming POST /document/{id} from {ip}. Document ID: {DocumentId}, OCR result length: {OcrLength}, Summary length: {SummaryLength}",
