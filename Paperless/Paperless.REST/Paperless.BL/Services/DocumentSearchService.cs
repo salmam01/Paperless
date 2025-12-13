@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Paperless.BL.Configurations;
-using Paperless.BL.Models;
+using Paperless.BL.Models.Dtos;
 
 namespace Paperless.BL.Services
 {

@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Paperless.BL.Models
+namespace Paperless.BL.Models.Domain
 {
     public class Document
     {

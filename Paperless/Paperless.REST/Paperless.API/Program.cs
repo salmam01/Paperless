@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Paperless.API.Dtos;
 using Paperless.BL.Configurations;
 using Paperless.BL.Helpers;
-using Paperless.BL.Models;
+using Paperless.BL.Models.Domain;
 using Paperless.BL.Services;
 using Paperless.DAL.Database;
 using Paperless.DAL.Entities;

@@ -15,7 +15,7 @@ namespace Paperless.BL.Helpers
             _logger = logger;
         }
 
-        public void ParseDocument(Models.Document document, Stream content)
+        public void ParseDocument(Models.Domain.Document document, Stream content)
         {
             _logger.LogInformation(
                 "Parsing document. ID: {DocumentId}, Type: {DocumentType}, Content size: {ContentSize} bytes.",
@@ -50,7 +50,7 @@ namespace Paperless.BL.Helpers
             }
         }
 
-        private void ParseByDocumentType (Models.Document document, MemoryStream contentMs)
+        private void ParseByDocumentType (Models.Domain.Document document, MemoryStream contentMs)
         {
             switch (document.Type)
             {
@@ -72,7 +72,7 @@ namespace Paperless.BL.Helpers
             }
         }
 
-        private void ParseDocx(Models.Document document, MemoryStream contentMs)
+        private void ParseDocx(Models.Domain.Document document, MemoryStream contentMs)
         {
             using (WordprocessingDocument wordprocessingDocument = WordprocessingDocument.Open(contentMs, true))
             {
@@ -96,7 +96,7 @@ namespace Paperless.BL.Helpers
             }
         }
 
-        private void ParseTxt(Models.Document document, MemoryStream contentMs)
+        private void ParseTxt(Models.Domain.Document document, MemoryStream contentMs)
         {
             byte[] buffer = contentMs.ToArray();
             document.Content = Encoding.UTF8.GetString(buffer);

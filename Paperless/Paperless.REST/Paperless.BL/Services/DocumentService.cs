@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.Extensions.Logging;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Helpers;
-using Paperless.BL.Models;
+using Paperless.BL.Models.Domain;
+using Paperless.BL.Models.Dtos;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Exceptions;
 using Paperless.DAL.Repositories;
@@ -179,7 +179,7 @@ namespace Paperless.BL.Services
                     throw new ServiceException($"Invalid document ID format: {id}", ExceptionType.Validation);
                 }
 
-                await _documentRepository.UpdateDocumentContentAndSummaryAsync(documentId, content, summary);
+                await _documentRepository.UpdateDocumentContentAsync(documentId, content, summary);
                 _logger.LogInformation(
                     "Document {DocumentId} summary updated in database. Summary length: {SummaryLength}",
                     id,

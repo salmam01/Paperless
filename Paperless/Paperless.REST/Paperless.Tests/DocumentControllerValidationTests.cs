@@ -4,9 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Paperless.API.Controllers;
-using Paperless.API.Dtos;
 using Paperless.BL.Services;
-using Paperless.BL.Models;
 using Microsoft.Extensions.Options;
 using Paperless.BL.Configurations;
 

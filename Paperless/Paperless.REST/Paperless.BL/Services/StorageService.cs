@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
 using Paperless.BL.Exceptions;
-using Paperless.Services;
 using Paperless.Services.Configurations;
-using System.Threading.Tasks;
 
 namespace Paperless.BL.Services
 {

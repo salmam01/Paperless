@@ -1,12 +1,10 @@
 ﻿using AutoMapper;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Paperless.API.Dtos;
 using Paperless.API.DTOs;
 using Paperless.BL.Exceptions;
-using Paperless.BL.Models;
+using Paperless.BL.Models.Domain;
 using Paperless.BL.Services;
-using System;
 
 namespace Paperless.API.Controllers
 {
@@ -122,7 +120,7 @@ namespace Paperless.API.Controllers
             }
         }
 
-        [HttpGet("search/{query}", Name = "SearchForDocument")]
+        [HttpGet("search/{query}", Name = "Search")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> GetByQuery(string query)
@@ -296,12 +294,6 @@ namespace Paperless.API.Controllers
                     title: "Internal Server Error"
                 );
             }
-        }
-
-        [HttpPut(Name = "PutDocument")]
-        public void Put()
-        {
-            //  TODO: implement later, edit document
         }
 
         [HttpDelete(Name = "DeleteDocument")]

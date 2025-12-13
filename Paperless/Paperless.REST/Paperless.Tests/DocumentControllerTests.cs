@@ -6,8 +6,8 @@ using Moq;
 using Paperless.API.Controllers;
 using Paperless.API.Dtos;
 using Paperless.BL.Services;
-using Paperless.BL.Models;
 using Paperless.BL.Configurations;
+using Paperless.BL.Models.Domain;
 
 namespace Paperless.Tests
 {
