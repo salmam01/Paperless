@@ -21,19 +21,32 @@ namespace Paperless.Services.Tests
         {
             _loggerMock = new Mock<ILogger<GenAIWorker>>();
             
-            // Setup RabbitMqConfig mocks with valid values
+            // Setup QueueConfig mock
+            Mock<IOptions<QueueConfig>> queueConfigMock = new Mock<IOptions<QueueConfig>>();
+            queueConfigMock.Setup(x => x.Value).Returns(new QueueConfig
+            {
+                QueueName = "summary.queue",
+                ExchangeName = "services.fanout",
+                MaxRetries = 3
+            });
+            
+            // Setup RabbitMQConfig mock
             Mock<IOptions<RabbitMQConfig>> rabbitMqConfigMock = new Mock<IOptions<RabbitMQConfig>>();
             rabbitMqConfigMock.Setup(x => x.Value).Returns(new RabbitMQConfig
             {
                 Host = "localhost",
                 Port = 5672,
                 User = "guest",
-                Password = "guest",
-                QueueName = "test-queue",
-                MaxRetries = 3
+                Password = "guest"
             });
             
-            _mqListenerMock = new Mock<MQListener>(Mock.Of<ILogger<MQListener>>(), rabbitMqConfigMock.Object);
+            MQConnectionFactory mqConnectionFactory = new MQConnectionFactory(rabbitMqConfigMock.Object);
+            
+            _mqListenerMock = new Mock<MQListener>(
+                Mock.Of<ILogger<MQListener>>(), 
+                queueConfigMock.Object,
+                mqConnectionFactory
+            );
             
             // Setup GenAIConfig mock
             Mock<IOptions<GenAIConfig>> genAIConfigMock = new Mock<IOptions<GenAIConfig>>();

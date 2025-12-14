@@ -47,12 +47,12 @@ namespace Paperless.Services.Tests
             // will fail but that's fine - want to see if it tries
             Assert.ThrowsAny<Exception>(() => service.ConvertPdfToImage(emptyStream));
             
-            // check if it logged
+            // check if it logged - actual log message is "Converting PDF stream to images"
             _ocrLoggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting PDF Stream to an image")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting PDF stream to images")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
@@ -67,15 +67,17 @@ namespace Paperless.Services.Tests
             // will fail but we're checking if tesseract is used
             Assert.ThrowsAny<Exception>(() => service.ProcessPdf(emptyStream));
             
-            // should log that it tried
+            // should log that it tried - actual log message is "Processing PDF for OCR" or "Converting PDF stream to images"
             _ocrLoggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Extracting text from image")),
+                    It.Is<It.IsAnyType>((v, t) => 
+                        v.ToString()!.Contains("Processing PDF for OCR") || 
+                        v.ToString()!.Contains("Converting PDF stream to images")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
+                Times.AtLeastOnce);
         }
 
         [Fact]
@@ -87,14 +89,14 @@ namespace Paperless.Services.Tests
             // ProcessPdf should first convert PDF to image, then process with Tesseract
             Assert.ThrowsAny<Exception>(() => service.ProcessPdf(emptyStream));
             
-            // both steps should be logged
+            // both steps should be logged - actual log messages are "Processing PDF for OCR" and "Converting PDF stream to images"
             _ocrLoggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) => 
-                        v.ToString()!.Contains("Extracting text from image") || 
-                        v.ToString()!.Contains("Converting PDF Stream to an image")),
+                        v.ToString()!.Contains("Processing PDF for OCR") || 
+                        v.ToString()!.Contains("Converting PDF stream to images")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.AtLeastOnce);

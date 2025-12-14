@@ -22,20 +22,38 @@ namespace Paperless.Services.Tests
         {
             _loggerMock = new Mock<ILogger<OCRWorker>>();
             
-            // Setup RabbitMqConfig mocks with valid values
+            // Setup QueueConfig mock
+            Mock<IOptions<QueueConfig>> queueConfigMock = new Mock<IOptions<QueueConfig>>();
+            queueConfigMock.Setup(x => x.Value).Returns(new QueueConfig
+            {
+                QueueName = "ocr.queue",
+                ExchangeName = "services.fanout",
+                MaxRetries = 3
+            });
+            
+            // Setup RabbitMQConfig mock
             Mock<IOptions<RabbitMQConfig>> rabbitMqConfigMock = new Mock<IOptions<RabbitMQConfig>>();
             rabbitMqConfigMock.Setup(x => x.Value).Returns(new RabbitMQConfig
             {
                 Host = "localhost",
                 Port = 5672,
                 User = "guest",
-                Password = "guest",
-                QueueName = "test-queue",
-                MaxRetries = 3
+                Password = "guest"
             });
             
-            _mqListenerMock = new Mock<MQListener>(Mock.Of<ILogger<MQListener>>(), rabbitMqConfigMock.Object);
-            _mqPublisherMock = new Mock<MQPublisher>(Mock.Of<ILogger<MQPublisher>>(), rabbitMqConfigMock.Object);
+            MQConnectionFactory mqConnectionFactory = new MQConnectionFactory(rabbitMqConfigMock.Object);
+            
+            _mqListenerMock = new Mock<MQListener>(
+                Mock.Of<ILogger<MQListener>>(), 
+                queueConfigMock.Object,
+                mqConnectionFactory
+            );
+            
+            _mqPublisherMock = new Mock<MQPublisher>(
+                Mock.Of<ILogger<MQPublisher>>(), 
+                queueConfigMock.Object,
+                mqConnectionFactory
+            );
 
             // real instances with mocked dependencies
             Mock<IOptions<MinIOConfig>> minIoConfigMock = new Mock<IOptions<Configurations.MinIOConfig>>();
@@ -64,7 +82,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void can_create_worker()
         {
-            OCRWorker worker = new OcrWorker(
+            OCRWorker worker = new OCRWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _mqPublisherMock.Object,
@@ -78,7 +96,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void worker_gets_created_successfully()
         {
-            OCRWorker worker = new OcrWorker(
+            OCRWorker worker = new OCRWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _mqPublisherMock.Object,
@@ -92,7 +110,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void is_a_background_service()
         {
-            OCRWorker worker = new OcrWorker(
+            OCRWorker worker = new OCRWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _mqPublisherMock.Object,

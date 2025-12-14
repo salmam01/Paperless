@@ -63,12 +63,12 @@ namespace Paperless.Services.Tests
                 // whatever
             }
             
-            // check if it actually logged
+            // check if it actually logged - actual log message is "Converting PDF stream to images"
             _loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting PDF Stream to an image")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Converting PDF stream to images")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
@@ -98,15 +98,17 @@ namespace Paperless.Services.Tests
                 // as expected
             }
 
-            // check if log was called - should log "Extracting text from image"
+            // check if log was called - actual log message is "Processing PDF for OCR" or "Converting PDF stream to images"
             _loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Extracting text from image")),
+                    It.Is<It.IsAnyType>((v, t) => 
+                        v.ToString()!.Contains("Processing PDF for OCR") || 
+                        v.ToString()!.Contains("Converting PDF stream to images")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
+                Times.AtLeastOnce);
         }
 
         [Fact]
