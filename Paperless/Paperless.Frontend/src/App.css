@@ -18,8 +18,10 @@
 
 .app-header h1 {
   margin: 0 0 0.5rem 0;
-  font-size: 2.5rem;
-  font-weight: 300;
+  font-size: 3.5rem;
+  font-weight: 400;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
 }
 
 .app-header p {
@@ -51,8 +53,80 @@
 }
 
 .documents-section h2 {
-  margin-bottom: 2rem;
-  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 400;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  letter-spacing: 0.3px;
+  opacity: 0.9;
+}
+
+/* Searchbar Styling */
+.searchbar-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 auto 1.5rem auto;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  transition: all 0.3s ease;
+  max-width: 650px;
+  width: 100%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.searchbar-section:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.searchbar-section:focus-within {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 30px rgba(118, 75, 162, 0.4);
+  transform: translateY(-2px);
+}
+
+#search-icon {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.15rem;
+  margin-right: 0.875rem;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.searchbar-section:hover #search-icon {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.searchbar-section:focus-within #search-icon {
+  color: rgba(255, 255, 255, 1);
+  transform: scale(1.05);
+}
+
+.searchbar-section input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 1.05rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 0;
+  width: 100%;
+  font-weight: 400;
+}
+
+.searchbar-section input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+  font-style: italic;
   font-weight: 300;
 }
 
@@ -61,8 +135,11 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin: 0 auto 2.5rem auto;
+  max-width: 650px;
+  width: 100%;
 }
 
 .documents-toolbar button {
