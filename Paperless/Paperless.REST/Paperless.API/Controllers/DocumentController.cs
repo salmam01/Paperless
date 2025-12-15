@@ -191,7 +191,7 @@ namespace Paperless.API.Controllers
 
             try
             {
-                DocumentDTO documentDTO = parseFormMetaData(form);
+                DocumentDTO documentDTO = ParseFormMetaData(form);
                 if (documentDTO == null)
                     return BadRequest("Empty or invalid document.");
 
@@ -388,7 +388,7 @@ namespace Paperless.API.Controllers
             }
         }
 
-        private DocumentDTO parseFormMetaData(IFormFile form)
+        private DocumentDTO ParseFormMetaData(IFormFile form)
         {
             _logger.LogInformation("Parsing file: {fileName}.", form.FileName);
             

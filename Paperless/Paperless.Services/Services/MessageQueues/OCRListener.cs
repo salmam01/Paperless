@@ -26,7 +26,7 @@ namespace Paperless.Services.Services.MessageQueues
 
         public async Task StartListeningAsync(
             Func<string, BasicDeliverEventArgs, Task> onMessageReceived,
-            CancellationToken stoppingToken
+            CancellationToken cancellationToken
         ) {
             if (_connection == null || !_connection.IsOpen)
                 _connection = await _connectionFactory.CreateConnectionAsync();
@@ -49,7 +49,7 @@ namespace Paperless.Services.Services.MessageQueues
             AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += async (_, ea) =>
             {
-                if (stoppingToken.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
                     await _channel.BasicNackAsync(
                         ea.DeliveryTag,

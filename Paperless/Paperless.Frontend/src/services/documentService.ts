@@ -31,7 +31,6 @@ export async function postDocument(document: FormData): Promise<DocumentDto> {
     });
 
     if (!response.ok) throw new Error('Failed to send document');
-    
     return await response.json();
 }
 

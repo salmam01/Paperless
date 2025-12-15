@@ -48,7 +48,7 @@ namespace Paperless.DAL.Repositories
             }
         }
         
-        public async Task InsertDocumentAsync(DocumentEntity document)
+        public async Task AddDocumentAsync(DocumentEntity document)
         {
             try
             {

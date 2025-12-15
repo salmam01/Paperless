@@ -24,13 +24,27 @@ namespace Paperless.BL.Services.Storage
             _logger = logger;
         }
 
-        public async Task UploadDocumentToStorageAsync(Guid id, string fileType, Stream content)
+        private async Task CreateBucketIfNotExistsAsync(string bucketName)
+        {
+            bool found = await _minIO.BucketExistsAsync(
+                new BucketExistsArgs()
+                    .WithBucket(bucketName));
+
+            if (!found)
+            {
+                await _minIO.MakeBucketAsync(
+                    new MakeBucketArgs()
+                        .WithBucket(bucketName));
+            }
+        }
+
+        public async Task StoreDocumentAsync(Guid id, string type, Stream content)
         {
             try
             {
                 await CreateBucketIfNotExistsAsync(_bucketName);
 
-                string ft = fileType.ToLowerInvariant();
+                string ft = type.ToLowerInvariant();
 
                 await _minIO.PutObjectAsync(
                     new PutObjectArgs()
@@ -57,13 +71,13 @@ namespace Paperless.BL.Services.Storage
             }
         }
 
-        public async Task DeleteDocumentAsync(Guid id, string fileType)
+        public async Task DeleteDocumentAsync(Guid id, string type)
         {
             try
             {
                 await CreateBucketIfNotExistsAsync(_bucketName);
 
-                string ft = fileType.ToLowerInvariant();
+                string ft = type.ToLowerInvariant();
 
                 await _minIO.RemoveObjectAsync(
                     new RemoveObjectArgs()
@@ -131,20 +145,6 @@ namespace Paperless.BL.Services.Storage
                     "DELETE", "Business", "deletion from MinIO failing."
                 );
                 throw new MinIOException($"Failed to delete documents from Storage.", ex);
-            }
-        }
-
-        private async Task CreateBucketIfNotExistsAsync(string bucketName)
-        {
-            bool found = await _minIO.BucketExistsAsync(
-                new BucketExistsArgs()
-                    .WithBucket(bucketName));
-
-            if (!found)
-            {
-                await _minIO.MakeBucketAsync(
-                    new MakeBucketArgs()
-                        .WithBucket(bucketName));
             }
         }
     }

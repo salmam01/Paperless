@@ -22,28 +22,28 @@ namespace Paperless.Services.Services.HttpClients
             _httpClient.Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds);
         }
 
-        public async Task<string> GenerateSummaryAsync(string documentContent)
+        public async Task<string> GenerateSummaryAsync(string content)
         {
             _logger.LogInformation(
                 "Generating summary using Google Gemini API. Document content length: {ContentLength} characters.",
-                documentContent?.Length ?? 0
+                content?.Length ?? 0
             );
 
             // Validate content: must not be null, empty, or whitespace
             // Also check for minimum meaningful length (at least 50 characters after trimming)
             const int MIN_CONTENT_LENGTH = 50;
-            string trimmedContent = documentContent?.Trim() ?? string.Empty;
+            string trimmedContent = content?.Trim() ?? string.Empty;
             
             if (string.IsNullOrWhiteSpace(trimmedContent))
             {
-                throw new ArgumentException("Document content cannot be empty.", nameof(documentContent));
+                throw new ArgumentException("Document content cannot be empty.", nameof(content));
             }
             
             if (trimmedContent.Length < MIN_CONTENT_LENGTH)
             {
                 throw new ArgumentException(
                     $"Document content is too short for summary generation. Minimum length: {MIN_CONTENT_LENGTH} characters, actual length: {trimmedContent.Length} characters.",
-                    nameof(documentContent)
+                    nameof(content)
                 );
             }
 
@@ -63,7 +63,7 @@ namespace Paperless.Services.Services.HttpClients
                                 text =  $"Anaylze the following document and create a short and concise summary. " +
                                         $"Only reply with the summary. " +
                                         $"The document is:" +
-                                        $"\n\n{documentContent}"
+                                        $"\n\n{content}"
                             }
                         }
                     }

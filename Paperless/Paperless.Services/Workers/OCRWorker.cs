@@ -44,7 +44,7 @@ namespace Paperless.Services.Workers
             );
 
             //  Download file (stream) from minIO
-            MemoryStream documentContent = await _storageService.DownloadDocumentFromStorageAsync(id);
+            MemoryStream documentContent = await _storageService.DownloadDocumentAsync(id);
             if (documentContent.Length <= 0)
                 throw new Exception("Document stream is empty.");
 

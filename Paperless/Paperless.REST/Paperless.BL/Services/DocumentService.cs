@@ -120,17 +120,17 @@ namespace Paperless.BL.Services
 
                 if (document.Type == "PDF")
                 {
-                    await _storageService.UploadDocumentToStorageAsync(document.Id, document.Type, content);
+                    await _storageService.StoreDocumentAsync(document.Id, document.Type, content);
                     await _documentPublisher.PublishDocumentAsync(document.Id);
                 }
                 else
                 {
                     _parser.ParseDocument(document, content);
-                    await _storageService.UploadDocumentToStorageAsync(document.Id, document.Type, content);
+                    await _storageService.StoreDocumentAsync(document.Id, document.Type, content);
                 }
 
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
-                await _documentRepository.InsertDocumentAsync(entity);
+                await _documentRepository.AddDocumentAsync(entity);
             }
             catch (MinIOException ex)
             {
@@ -198,12 +198,6 @@ namespace Paperless.BL.Services
                 );
                 throw new ServiceException("Could not update document summary.", ExceptionType.Internal, ex);
             }
-        }
-
-        //  TODO: Implement in later sprints
-        public async Task EditDocumentAsync(Document document)
-        {
-            throw new NotImplementedException();
         }
 
         public async Task DeleteDocumentsAsync()

@@ -37,7 +37,7 @@ namespace Paperless.BL.Helpers
                 content.Position = 0;
                 contentMs.Position = 0;
 
-                ParseByDocumentType(document, contentMs);
+                ParseByType(document, contentMs);
             }
             catch (Exception ex)
             {
@@ -50,7 +50,7 @@ namespace Paperless.BL.Helpers
             }
         }
 
-        private void ParseByDocumentType (Models.Domain.Document document, MemoryStream contentMs)
+        private void ParseByType (Models.Domain.Document document, MemoryStream contentMs)
         {
             switch (document.Type)
             {

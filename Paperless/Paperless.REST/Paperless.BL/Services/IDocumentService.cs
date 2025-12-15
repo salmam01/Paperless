@@ -6,10 +6,9 @@ namespace Paperless.BL.Services
     {
         Task<IEnumerable<Document>> GetDocumentsAsync();
         Task<Document> GetDocumentAsync(Guid id);
-        Task UploadDocumentAsync(Document document, Stream content);
-        Task UpdateDocumentAsync(string documentId, string content, string summary);
         Task<List<Document>> SearchForDocument(string query);
-        Task EditDocumentAsync(Document document);
+        Task UploadDocumentAsync(Document document, Stream content);
+        Task UpdateDocumentAsync(string id, string content, string summary);
         Task DeleteDocumentsAsync();
         Task DeleteDocumentAsync(Guid id);
     }
