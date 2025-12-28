@@ -7,7 +7,7 @@ using Paperless.Services.Configurations;
 
 namespace Paperless.BL.Services.Storage
 {
-    public class StorageService 
+    public class StorageService : IStorageService
     {
         private readonly IMinioClient _minIO;
         private readonly string _bucketName;

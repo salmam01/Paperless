@@ -17,8 +17,8 @@ namespace Paperless.BL.Services
     public class DocumentService (
         IDocumentRepository documentrepository,
         IDocumentSearchService searchService,
-        DocumentPublisher documentPublisher,
-        StorageService storageService,
+        IDocumentPublisher documentPublisher,
+        IStorageService storageService,
         Parser parser,
         IMapper mapper, 
         ILogger<DocumentService> logger
@@ -26,8 +26,8 @@ namespace Paperless.BL.Services
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
         private readonly IDocumentSearchService _searchService = searchService;
-        private readonly DocumentPublisher _documentPublisher = documentPublisher;
-        private readonly StorageService _storageService = storageService;
+        private readonly IDocumentPublisher _documentPublisher = documentPublisher;
+        private readonly IStorageService _storageService = storageService;
         private readonly Parser _parser = parser;
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<DocumentService> _logger = logger;

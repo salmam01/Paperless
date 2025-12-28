@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Paperless.BL.Services.Messaging
 {
-    public class DocumentPublisher
+    public class DocumentPublisher : IDocumentPublisher
     {
         private readonly ConnectionFactory _connectionFactory;
         private readonly RabbitMQConfig _config;

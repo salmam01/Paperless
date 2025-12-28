@@ -49,9 +49,9 @@ builder.Services.Configure<ElasticSearchConfig>(builder.Configuration.GetSection
 builder.Services.AddScoped<PaperlessDbContext>();
 
 builder.Services.AddSingleton<Parser>();
-builder.Services.AddSingleton<StorageService>();
+builder.Services.AddSingleton<IStorageService, StorageService>();
 builder.Services.AddSingleton<IDocumentSearchService, DocumentSearchService>();
-builder.Services.AddSingleton<DocumentPublisher>();
+builder.Services.AddSingleton<IDocumentPublisher, DocumentPublisher>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddSingleton(mapper);
