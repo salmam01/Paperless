@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Paperless.API.Controllers;
-using Paperless.BL.Services;
 using Microsoft.Extensions.Options;
 using Paperless.BL.Configurations;
 using Paperless.BL.Services.Messaging;
+using Paperless.BL.Services.Documents;
 
 namespace Paperless.Tests;
 

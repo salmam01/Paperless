@@ -4,13 +4,13 @@ using Paperless.API.DTOs;
 using Paperless.BL.Configurations;
 using Paperless.BL.Helpers;
 using Paperless.BL.Models.Domain;
-using Paperless.BL.Services;
+using Paperless.BL.Services.Documents;
 using Paperless.BL.Services.Messaging;
 using Paperless.BL.Services.Search;
 using Paperless.BL.Services.Storage;
 using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
-using Paperless.DAL.Repositories;
+using Paperless.DAL.Repositories.Documents;
 using Paperless.Services.Configurations;
 using Serilog;
 
@@ -46,6 +46,7 @@ builder.Services.AddLogging(loggingBuilder =>
 builder.Services.Configure<RabbitMQConfig>(builder.Configuration.GetSection("RabbitMQ"));
 builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("MinIO"));
 builder.Services.Configure<ElasticSearchConfig>(builder.Configuration.GetSection("ElasticSearch"));
+builder.Services.Configure<CategoriesConfig>(builder.Configuration.GetSection("Categories"));
 builder.Services.AddScoped<PaperlessDbContext>();
 
 builder.Services.AddSingleton<Parser>();

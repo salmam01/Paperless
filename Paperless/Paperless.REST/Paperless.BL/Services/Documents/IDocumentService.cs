@@ -1,6 +1,6 @@
 ﻿using Paperless.BL.Models.Domain;
 
-namespace Paperless.BL.Services
+namespace Paperless.BL.Services.Documents
 {
     public interface IDocumentService
     {

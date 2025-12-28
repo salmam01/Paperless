@@ -9,10 +9,10 @@ using Paperless.BL.Services.Search;
 using Paperless.BL.Services.Storage;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Exceptions;
-using Paperless.DAL.Repositories;
+using Paperless.DAL.Repositories.Documents;
 
 
-namespace Paperless.BL.Services
+namespace Paperless.BL.Services.Documents
 {
     public class DocumentService (
         IDocumentRepository documentrepository,

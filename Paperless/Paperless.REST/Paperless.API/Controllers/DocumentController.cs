@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Paperless.API.DTOs;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models.Domain;
-using Paperless.BL.Services;
+using Paperless.BL.Services.Documents;
 
 namespace Paperless.API.Controllers
 {

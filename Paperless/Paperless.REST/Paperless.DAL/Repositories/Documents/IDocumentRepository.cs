@@ -1,6 +1,6 @@
 ﻿using Paperless.DAL.Entities;
 
-namespace Paperless.DAL.Repositories
+namespace Paperless.DAL.Repositories.Documents
 {
     public interface IDocumentRepository
     {

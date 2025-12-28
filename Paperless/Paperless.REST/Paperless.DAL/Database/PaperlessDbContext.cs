@@ -7,6 +7,7 @@ namespace Paperless.DAL.Database
     {
         private readonly string _connectionString = "Host=paperless-db;Port=5432;Database=PaperlessDB;Username=swen3;Password=paperless123";
         public DbSet<DocumentEntity> Documents { get; set; }
+        public DbSet<CategoryEntity> Categories { get; set; }
 
         public PaperlessDbContext() { }
         
@@ -15,7 +16,7 @@ namespace Paperless.DAL.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if(!optionsBuilder.IsConfigured)
+            if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseNpgsql(_connectionString);
             }
@@ -25,9 +26,11 @@ namespace Paperless.DAL.Database
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<DocumentEntity>();
-
-            //  TODO: Full-text search vector
+            modelBuilder.Entity<DocumentEntity>()
+                .HasOne(d => d.Category)
+                .WithMany(c => c.Documents)
+                .HasForeignKey(d => d.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

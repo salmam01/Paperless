@@ -4,7 +4,7 @@ using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Exceptions;
 
-namespace Paperless.DAL.Repositories
+namespace Paperless.DAL.Repositories.Documents
 {
     public class DocumentRepository : IDocumentRepository
     {
@@ -56,7 +56,7 @@ namespace Paperless.DAL.Repositories
                     throw new ArgumentNullException(nameof(document), "InsertDocument: Document shouldn't be empty!");
 
                 await _context.AddAsync(document);
-                await SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -78,7 +78,7 @@ namespace Paperless.DAL.Repositories
                 existDocument.Content = content;
                 existDocument.Summary = summary;
 
-                await SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -124,16 +124,11 @@ namespace Paperless.DAL.Repositories
             }
         }
 
-        private async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
-
         private bool IsDatabaseException(Exception ex)
         {
-            return (ex is DbUpdateException ||
+            return ex is DbUpdateException ||
                     ex is PostgresException ||
-                    ex is InvalidOperationException);
+                    ex is InvalidOperationException;
         }
     }
 }
