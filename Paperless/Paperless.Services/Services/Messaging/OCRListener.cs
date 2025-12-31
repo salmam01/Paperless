@@ -1,21 +1,22 @@
 ﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
+using Paperless.Services.Services.Messaging.Base;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 
-namespace Paperless.Services.Services.MessageQueues
+namespace Paperless.Services.Services.Messaging
 {
-    public class MQListener
+    public class OCRListener
     {
-        private readonly ILogger<MQListener> _logger;
+        private readonly ILogger<OCRListener> _logger;
         private readonly QueueConfig _config;
         private readonly ConnectionFactory _connectionFactory;
         private IChannel? _channel;
         private IConnection? _connection;
 
-        public MQListener(
-            ILogger<MQListener> logger,
+        public OCRListener(
+            ILogger<OCRListener> logger,
             IOptions<QueueConfig> config,
             MQConnectionFactory mqConnectionFactory
         ) {
@@ -26,31 +27,18 @@ namespace Paperless.Services.Services.MessageQueues
 
         public async Task StartListeningAsync(
             Func<string, BasicDeliverEventArgs, Task> onMessageReceived,
-            CancellationToken stoppingToken
+            CancellationToken cancellationToken
         ) {
             if (_connection == null || !_connection.IsOpen)
                 _connection = await _connectionFactory.CreateConnectionAsync();
             if (_channel == null || !_channel.IsOpen)
                 _channel = await _connection.CreateChannelAsync();
 
-            await _channel.ExchangeDeclareAsync(
-                exchange: _config.ExchangeName,
-                type: ExchangeType.Fanout,
-                durable: true,
-                autoDelete: false
-            );
-
             await _channel.QueueDeclareAsync(
                 queue: _config.QueueName,
                 durable: true,
                 exclusive: false,
                 autoDelete: false
-            );
-
-            await _channel.QueueBindAsync(
-                queue: _config.QueueName,
-                exchange: _config.ExchangeName,
-                routingKey: ""
             );
 
             await _channel.BasicQosAsync(0, 1, false);
@@ -62,7 +50,7 @@ namespace Paperless.Services.Services.MessageQueues
             AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += async (_, ea) =>
             {
-                if (stoppingToken.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
                     await _channel.BasicNackAsync(
                         ea.DeliveryTag,
@@ -137,8 +125,7 @@ namespace Paperless.Services.Services.MessageQueues
         {
             if (ea.BasicProperties.Headers != null &&
                 ea.BasicProperties.Headers.TryGetValue("x-retry-count", out var retryCountObj)
-            )
-            {
+            ) {
                 try
                 {
                     return Convert.ToInt32(retryCountObj);

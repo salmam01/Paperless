@@ -1,11 +1,12 @@
 ﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.DTOs;
+using Paperless.Services.Services.Messaging.Base;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
 
-namespace Paperless.Services.Services.MessageQueues
+namespace Paperless.Services.Services.Messaging
 {
     public class MQPublisher
     {

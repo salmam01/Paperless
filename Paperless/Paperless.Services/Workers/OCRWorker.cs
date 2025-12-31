@@ -1,7 +1,7 @@
 using Paperless.Services.Models.DTOs;
 using Paperless.Services.Models.OCR;
 using Paperless.Services.Services.FileStorage;
-using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.OCR;
 using RabbitMQ.Client.Events;
 

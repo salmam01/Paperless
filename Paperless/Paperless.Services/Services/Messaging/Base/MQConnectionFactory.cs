@@ -2,7 +2,7 @@
 using Paperless.Services.Configurations;
 using RabbitMQ.Client;
 
-namespace Paperless.Services.Services.MessageQueues
+namespace Paperless.Services.Services.Messaging.Base
 {
     public class MQConnectionFactory
     {

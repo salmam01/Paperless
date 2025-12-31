@@ -5,7 +5,8 @@ using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.DTOs;
 using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.Messaging;
+using Paperless.Services.Services.Messaging.Base;
 using Paperless.Services.Workers;
 
 namespace Paperless.Services.Tests

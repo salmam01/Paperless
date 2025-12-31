@@ -1,21 +1,22 @@
 ﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
+using Paperless.Services.Services.Messaging.Base;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 
-namespace Paperless.Services.Services.MessageQueues
+namespace Paperless.Services.Services.Messaging
 {
-    public class OCRListener
+    public class MQListener
     {
-        private readonly ILogger<OCRListener> _logger;
+        private readonly ILogger<MQListener> _logger;
         private readonly QueueConfig _config;
         private readonly ConnectionFactory _connectionFactory;
         private IChannel? _channel;
         private IConnection? _connection;
 
-        public OCRListener(
-            ILogger<OCRListener> logger,
+        public MQListener(
+            ILogger<MQListener> logger,
             IOptions<QueueConfig> config,
             MQConnectionFactory mqConnectionFactory
         ) {
@@ -26,18 +27,31 @@ namespace Paperless.Services.Services.MessageQueues
 
         public async Task StartListeningAsync(
             Func<string, BasicDeliverEventArgs, Task> onMessageReceived,
-            CancellationToken cancellationToken
+            CancellationToken stoppingToken
         ) {
             if (_connection == null || !_connection.IsOpen)
                 _connection = await _connectionFactory.CreateConnectionAsync();
             if (_channel == null || !_channel.IsOpen)
                 _channel = await _connection.CreateChannelAsync();
 
+            await _channel.ExchangeDeclareAsync(
+                exchange: _config.ExchangeName,
+                type: ExchangeType.Fanout,
+                durable: true,
+                autoDelete: false
+            );
+
             await _channel.QueueDeclareAsync(
                 queue: _config.QueueName,
                 durable: true,
                 exclusive: false,
                 autoDelete: false
+            );
+
+            await _channel.QueueBindAsync(
+                queue: _config.QueueName,
+                exchange: _config.ExchangeName,
+                routingKey: ""
             );
 
             await _channel.BasicQosAsync(0, 1, false);
@@ -49,7 +63,7 @@ namespace Paperless.Services.Services.MessageQueues
             AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += async (_, ea) =>
             {
-                if (cancellationToken.IsCancellationRequested)
+                if (stoppingToken.IsCancellationRequested)
                 {
                     await _channel.BasicNackAsync(
                         ea.DeliveryTag,
@@ -64,7 +78,6 @@ namespace Paperless.Services.Services.MessageQueues
 
                 try
                 {
-
                     body = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                     _logger.LogInformation(
@@ -79,37 +92,7 @@ namespace Paperless.Services.Services.MessageQueues
                 }
                 catch (Exception ex)
                 {
-                    retryCount++;
-
-                    if (retryCount <= _config.MaxRetries)
-                    {
-                        _logger.LogWarning(
-                            ex,
-                            "Retry attempt {RetryCount}/{MaxRetries} from Message Queue {QueueName}. Error: {ErrorMessage}",
-                            retryCount,
-                            _config.MaxRetries,
-                            _config.QueueName,
-                            ex.Message
-                        );
-
-                        await RetryTask(_channel, ea, retryCount);
-                    }
-                    else
-                    {
-                        _logger.LogError(
-                            ex,
-                            "Max retries ({MaxRetries}) exceeded from Message Queue {QueueName}. Message will be permanently rejected. Error: {ErrorMessage}",
-                            _config.MaxRetries,
-                            _config.QueueName,
-                            ex.Message
-                        );
-
-                        await _channel.BasicNackAsync(
-                            deliveryTag: ea.DeliveryTag,
-                            multiple: false,
-                            requeue: false
-                        );
-                    }
+                    retryCount = await IncreaseRetryCount(retryCount, ea, ex);
                 }
             };
 
@@ -124,7 +107,8 @@ namespace Paperless.Services.Services.MessageQueues
         {
             if (ea.BasicProperties.Headers != null &&
                 ea.BasicProperties.Headers.TryGetValue("x-retry-count", out var retryCountObj)
-            ) {
+            )
+            {
                 try
                 {
                     return Convert.ToInt32(retryCountObj);
@@ -136,6 +120,43 @@ namespace Paperless.Services.Services.MessageQueues
             }
 
             return 0;
+        }
+
+        private async Task<int> IncreaseRetryCount(int retryCount, BasicDeliverEventArgs ea, Exception ex)
+        {
+            retryCount++;
+
+            if (retryCount <= _config.MaxRetries)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Retry attempt {RetryCount}/{MaxRetries} from Message Queue {QueueName}. Error: {ErrorMessage}",
+                    retryCount,
+                    _config.MaxRetries,
+                    _config.QueueName,
+                    ex.Message
+                );
+
+                await RetryTask(_channel, ea, retryCount);
+            }
+            else
+            {
+                _logger.LogError(
+                    ex,
+                    "Max retries ({MaxRetries}) exceeded from Message Queue {QueueName}. Message will be permanently rejected. Error: {ErrorMessage}",
+                    _config.MaxRetries,
+                    _config.QueueName,
+                    ex.Message
+                );
+
+                await _channel.BasicNackAsync(
+                    deliveryTag: ea.DeliveryTag,
+                    multiple: false,
+                    requeue: false
+                );
+            }
+
+            return retryCount;
         }
 
         private async Task RetryTask(IChannel channel, BasicDeliverEventArgs ea, int retryCount)

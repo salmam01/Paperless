@@ -5,11 +5,12 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.Search;
-using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.Search;
 using Paperless.Services.Workers;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
+using Paperless.Services.Services.Messaging.Base;
 
 namespace Paperless.Services.Tests
 {

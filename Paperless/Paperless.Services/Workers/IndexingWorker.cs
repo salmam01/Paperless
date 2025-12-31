@@ -1,5 +1,5 @@
 ﻿using Paperless.Services.Models.Search;
-using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.Search;
 using RabbitMQ.Client.Events;
 using System.Text.Json;

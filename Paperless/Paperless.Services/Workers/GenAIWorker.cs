@@ -1,6 +1,6 @@
 ﻿using Paperless.Services.Models.DTOs;
 using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.Messaging;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
 
