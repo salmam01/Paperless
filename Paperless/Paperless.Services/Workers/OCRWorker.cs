@@ -1,9 +1,12 @@
 using Paperless.Services.Models.DTOs;
 using Paperless.Services.Models.OCR;
 using Paperless.Services.Services.FileStorage;
-using Paperless.Services.Services.Messaging;
+using Paperless.Services.Services.Messaging.Publishers;
+using Paperless.Services.Services.Messaging.Base;
 using Paperless.Services.Services.OCR;
 using RabbitMQ.Client.Events;
+using Paperless.Services.Services.Messaging.Listeners;
+using Paperless.Services.Models.DTOs.Payloads;
 
 namespace Paperless.Services.Workers
 {
@@ -17,7 +20,7 @@ namespace Paperless.Services.Workers
         private readonly OCRService _ocrService;
 
         public OCRWorker(
-            ILogger<OCRWorker> logger, 
+            ILogger<OCRWorker> logger,
             OCRListener ocrListener,
             MQPublisher mqPublisher,
             StorageService storageService,
@@ -30,21 +33,23 @@ namespace Paperless.Services.Workers
             _logger = logger;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             //  Stream -> Temp file -> Ghostscript -> Upload -> Delete
-            await _ocrListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
+            await _ocrListener.StartListeningAsync(HandleMessageAsync, cancellationToken);
         }
 
-        private async Task HandleMessageAsync(string id, BasicDeliverEventArgs ea)
+        private async Task HandleMessageAsync(BasicDeliverEventArgs ea)
         {
+            OCRPayload payload = _ocrListener.ProcessPayload(ea);
+
             _logger.LogInformation(
                 "Processing OCR request for document ID: {DocumentId}.",
-                id
+                payload.Id
             );
 
             //  Download file (stream) from minIO
-            MemoryStream documentContent = await _storageService.DownloadDocumentAsync(id);
+            MemoryStream documentContent = await _storageService.DownloadDocumentAsync(payload.Id);
             if (documentContent.Length <= 0)
                 throw new Exception("Document stream is empty.");
 
@@ -53,21 +58,21 @@ namespace Paperless.Services.Workers
 
             _logger.LogInformation(
                 "OCR processing completed successfully. Document ID: {DocumentId}, Pages processed: {PageCount}, Content length: {ContentLength} characters.",
-                id,
+                payload.Id,
                 result.Pages.Count,
                 result.PDFContent?.Length ?? 0
             );
 
-            DocumentDTO document = new DocumentDTO
+            OCRCompletedPayload ocrCompletedPayload = new OCRCompletedPayload
             {
-                Id = id,
+                Id = payload.Id,
                 Title = _ocrService.ExtractPdfTitle(documentContent),
-                OcrResult = result.PDFContent ?? "Error processing document content.",
-                SummaryResult = string.Empty
+                OCRResult = result.PDFContent ?? "Error processing document content.",
+                CategoryList = payload.CategoryList,
             };
 
             //  Send OCR Result to GenAIWorker through RabbitMQ
-            await _mqPublisher.PublishOcrResult(document);
+            await _mqPublisher.PublishOcrResult(ocrCompletedPayload);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

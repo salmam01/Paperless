@@ -5,15 +5,15 @@ using System.Text.Json;
 
 namespace Paperless.Services.Services.HttpClients
 {
-    public class GenAIService
+    public class SummaryService
     {
         private readonly GenAIConfig _config;
-        private readonly ILogger<GenAIService> _logger;
+        private readonly ILogger<SummaryService> _logger;
         private readonly HttpClient _httpClient;
 
-        public GenAIService(
+        public SummaryService(
             IOptions<GenAIConfig> config,
-            ILogger<GenAIService> logger,
+            ILogger<SummaryService> logger,
             HttpClient httpClient
         ) {
             _config = config.Value;

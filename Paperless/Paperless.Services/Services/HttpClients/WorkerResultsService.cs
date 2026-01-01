@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.DTOs;
+using Paperless.Services.Models.DTOs.Payloads;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,20 +28,20 @@ namespace Paperless.Services.Services.HttpClients
             _baseUrl = new Uri(config.Value.Url);
         }
 
-        public async Task PostWorkerResultsAsync(DocumentDTO workerResult)
+        public async Task PostWorkerResultsAsync(SummaryCompletedPayload payload)
         {
             _logger.LogInformation(
                 "Sending received Worker Results for Document with ID {Id} to REST server.",
-                workerResult.Id
+                payload.Id
             );
 
             using StringContent content = new(
-                JsonSerializer.Serialize(workerResult),
+                JsonSerializer.Serialize(payload),
                 Encoding.UTF8,
                 "application/json"
             );
 
-            Uri endpoint = new Uri(_baseUrl, $"{workerResult.Id}");
+            Uri endpoint = new Uri(_baseUrl, $"{payload.Id}");
 
             using HttpResponseMessage response = await _client.PostAsync(
                 endpoint,
@@ -52,15 +53,15 @@ namespace Paperless.Services.Services.HttpClients
             {
                 _logger.LogInformation(
                     "Sent results for Document with ID {Id} to REST server successfully. OCR result length: {OcrLength}, Summary length: {SummaryLength}",
-                    workerResult.Id,
-                    workerResult.OcrResult?.Length ?? 0,
-                workerResult.SummaryResult?.Length ?? 0
+                    payload.Id,
+                    payload.OCRResult?.Length ?? 0,
+                payload.Summary?.Length ?? 0
                 );
             } else {
                 _logger.LogWarning(
                     "REST server returned non-success status {Status} for ID {Id}. Body: {Body}",
                     response.StatusCode,
-                    workerResult.Id,
+                    payload.Id,
                     jsonResponse
                 );
             }

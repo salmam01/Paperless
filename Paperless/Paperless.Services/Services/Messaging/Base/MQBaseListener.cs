@@ -12,6 +12,7 @@ namespace Paperless.Services.Services.Messaging.Base
         protected readonly ConnectionFactory _factory;
         protected IChannel? _channel;
         protected IConnection? _connection;
+        protected readonly string _exchangeName;
 
         protected MQBaseListener(
             ILogger logger,
@@ -21,6 +22,7 @@ namespace Paperless.Services.Services.Messaging.Base
             _logger = logger;
             _config = config.Value;
             _factory = factory.ConnectionFactory;
+            _exchangeName = factory.ExchangeName;
         }
 
         public async Task StartListeningAsync(
@@ -30,12 +32,8 @@ namespace Paperless.Services.Services.Messaging.Base
             _connection ??= await _factory.CreateConnectionAsync();
             _channel ??= await _connection.CreateChannelAsync();
 
+            await _channel.ExchangeDeclareAsync(_exchangeName, ExchangeType.Topic, durable: true);
             await DeclareTopologyAsync();
-            await _channel.BasicQosAsync(0, 1, false);
-            _logger.LogInformation(
-                "RabbitMQ Queue {queueName} is running and listening for messages.",
-                _config.QueueName
-            );
 
             AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += async (_, ea) =>
@@ -50,6 +48,7 @@ namespace Paperless.Services.Services.Messaging.Base
                     //  TODO: Worker needs to stop the Listener
                     return;
                 }
+
                 try
                 {
                     _logger.LogInformation(
@@ -73,7 +72,6 @@ namespace Paperless.Services.Services.Messaging.Base
                 autoAck: false,
                 consumer: consumer
             );
-
         }
 
         protected abstract Task DeclareTopologyAsync();

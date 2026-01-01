@@ -11,7 +11,7 @@ namespace Paperless.Services.Tests
     // Checking if GenAI components work together
     public class GenAIIntegrationTests
     {
-        private readonly Mock<ILogger<GenAIService>> _genAILoggerMock;
+        private readonly Mock<ILogger<SummaryService>> _genAILoggerMock;
         private readonly Mock<ILogger<WorkerResultsService>> _workerResultsLoggerMock;
         private readonly Mock<IOptions<GenAIConfig>> _genAIConfigMock;
         private readonly Mock<IOptions<RESTConfig>> _endpointsConfigMock;
@@ -20,7 +20,7 @@ namespace Paperless.Services.Tests
 
         public GenAIIntegrationTests()
         {
-            _genAILoggerMock = new Mock<ILogger<GenAIService>>();
+            _genAILoggerMock = new Mock<ILogger<SummaryService>>();
             _workerResultsLoggerMock = new Mock<ILogger<WorkerResultsService>>();
             _genAIConfigMock = new Mock<IOptions<GenAIConfig>>();
             _endpointsConfigMock = new Mock<IOptions<RESTConfig>>();
@@ -47,7 +47,7 @@ namespace Paperless.Services.Tests
         public void genai_service_uses_http_client()
         {
             HttpClient httpClient = new HttpClient();
-            GenAIService service = new GenAIService(
+            SummaryService service = new SummaryService(
                 _genAIConfigMock.Object,
                 _genAILoggerMock.Object,
                 httpClient

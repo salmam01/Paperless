@@ -6,6 +6,7 @@ using Paperless.Services.Configurations;
 using Paperless.Services.Services.FileStorage;
 using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.Messaging.Base;
+using Paperless.Services.Services.Messaging.Publishers;
 using Paperless.Services.Services.OCR;
 using Paperless.Services.Workers;
 

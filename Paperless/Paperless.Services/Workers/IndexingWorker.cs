@@ -1,5 +1,7 @@
-﻿using Paperless.Services.Models.Search;
+﻿using Paperless.Services.Models.DTOs.Payloads;
+using Paperless.Services.Models.Search;
 using Paperless.Services.Services.Messaging;
+using Paperless.Services.Services.Messaging.Listeners;
 using Paperless.Services.Services.Search;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
@@ -9,12 +11,12 @@ namespace Paperless.Services.Workers
     public class IndexingWorker : BackgroundService
     {
         private readonly ILogger _logger;
-        private readonly MQListener _mqListener;
+        private readonly IndexingListener _mqListener;
         private readonly IElasticRepository _elasticService;
 
         public IndexingWorker(
             ILogger<IndexingWorker> logger,
-            [FromKeyedServices("IndexingListener")] MQListener mqListener,
+            IndexingListener mqListener,
             IElasticRepository searchService
         ) {
             _logger = logger;
@@ -29,35 +31,64 @@ namespace Paperless.Services.Workers
             await _mqListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
         }
 
-        private async Task HandleMessageAsync(string message, BasicDeliverEventArgs ea)
+        private async Task HandleMessageAsync(BasicDeliverEventArgs ea)
         {
+            /*
             _logger.LogInformation(
                 "Processing message from queue inside Indexing Worker." +
                 "\nMessage length: {MessageLength} characters.",
-                message?.Length ?? 0
-            );
+                ea?.Length ?? 0
+            );*/
 
             try
             {
-                if (string.IsNullOrEmpty(message))
+                IndexingEventType eventType = _mqListener.HandleEventType(ea);
+                switch(eventType)
                 {
-                    _logger.LogWarning("Received empty message from queue inside Indexing Worker. Skipping processing.");
-                    return;
+                    case IndexingEventType.OcrCompleted:
+                        SummaryCompletedPayload payload = _mqListener.ProcessSummaryCompletedPayload(ea);
+                        if (payload == null || string.IsNullOrEmpty(payload.Id))
+                        {
+                            _logger.LogWarning("Received invalid message from queue inside Indexing Worker. Skipping processing.");
+                            return;
+                        }
+
+                        SearchDocument document = new SearchDocument
+                        {
+                            Id = payload.Id,
+                            Title = payload.Title,
+                            Content = payload.OCRResult,
+                            Category = payload.Category
+                        };
+
+                        _logger.LogInformation(
+                            "Document {DocumentId} content retrieved inside Indexing Worker.",
+                            document.Id
+                        );
+
+                        await _elasticService.IndexAsync(document);
+
+                        break;
+
+                    case IndexingEventType.DocumentDeleted:
+                        string id = _mqListener.ProcessDeleteDocumentPayload(ea);
+                        if (id == null || string.IsNullOrEmpty(id))
+                        {
+                            _logger.LogWarning("Received invalid message from queue inside Indexing Worker. Skipping processing.");
+                            return;
+                        }
+
+                        await _elasticService.RemoveAsync(id);
+
+                        break;
+
+                    case IndexingEventType.DocumentsDeleted:
+
+                        await _elasticService.RemoveAllAsync();
+
+                        break;
                 }
 
-                SearchDocument document = ParseMessage(message);
-                if (document == null || string.IsNullOrEmpty(document.Id))
-                {
-                    _logger.LogWarning("Received invalid message from queue inside Indexing Worker. Skipping processing.");
-                    return;
-                }
-
-                _logger.LogInformation(
-                    "Document {DocumentId} content retrieved inside Indexing Worker.",
-                    document.Id
-                );
-
-                await _elasticService.IndexAsync(document);
             }
             catch (Exception ex)
             {
@@ -69,30 +100,6 @@ namespace Paperless.Services.Workers
                 );
                 throw;
             }
-        }
-
-        private SearchDocument ParseMessage(string message)
-        {
-            Dictionary<string, string> jsonObject = JsonSerializer.Deserialize<Dictionary<string, string>>(message)
-                ?? new Dictionary<string, string>();
-
-            SearchDocument document = new();
-
-            if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("Title") || !jsonObject.ContainsKey("OcrResult"))
-            {
-                _logger.LogWarning(
-                    "Document is NULL. Skipping indexing for ElasticSearch." +
-                    "\nMessage Received: {Message}",
-                    message
-                );
-                return document;
-            }
-
-            document.Id = jsonObject["Id"];
-            document.Title = jsonObject["Title"];
-            document.Content = jsonObject["OcrResult"];
-
-            return document;
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

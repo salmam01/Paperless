@@ -8,6 +8,7 @@ namespace Paperless.Services.Services.Messaging.Base
     {
         private readonly RabbitMQConfig _config;
         public readonly ConnectionFactory ConnectionFactory;
+        public readonly string ExchangeName;
 
         public MQConnectionFactory(IOptions<RabbitMQConfig> rabbitMqConfig)
         {
@@ -18,8 +19,10 @@ namespace Paperless.Services.Services.Messaging.Base
                 HostName = _config.Host,
                 Port = _config.Port,
                 UserName = _config.User,
-                Password = _config.Password,
+                Password = _config.Password
             };
+
+            ExchangeName = _config.ExchangeName;
         }
     }
 }

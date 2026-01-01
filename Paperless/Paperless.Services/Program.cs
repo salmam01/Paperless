@@ -2,8 +2,9 @@ using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using Paperless.Services.Services.FileStorage;
 using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.Messaging.Base;
+using Paperless.Services.Services.Messaging.Listeners;
+using Paperless.Services.Services.Messaging.Publishers;
 using Paperless.Services.Services.OCR;
 using Paperless.Services.Services.Search;
 using Paperless.Services.Workers;
@@ -26,9 +27,9 @@ builder.Services.Configure<OCRConfig>(builder.Configuration.GetSection("OCR"));
 builder.Services.Configure<GenAIConfig>(builder.Configuration.GetSection("GenAI"));
 builder.Services.Configure<RabbitMQConfig>(builder.Configuration.GetSection("RabbitMQ"));
 builder.Services.Configure<ElasticSearchConfig>(builder.Configuration.GetSection("ElasticSearch"));
+builder.Services.Configure<MQPublisherConfig>(builder.Configuration.GetSection("MQPublisher"));
 
 //  Configuration for different Queues
-builder.Services.Configure<QueueConfig>("MQPublisher", builder.Configuration.GetSection("MQPublisher"));
 builder.Services.Configure<QueueConfig>("OCRQueue", builder.Configuration.GetSection("OCRQueue"));
 builder.Services.Configure<QueueConfig>("SummaryQueue", builder.Configuration.GetSection("SummaryQueue"));
 builder.Services.Configure<QueueConfig>("IndexingQueue", builder.Configuration.GetSection("IndexingQueue"));
@@ -37,19 +38,12 @@ builder.Services.Configure<QueueConfig>("IndexingQueue", builder.Configuration.G
 builder.Services.AddSingleton<MQConnectionFactory>();
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OCRService>();
-builder.Services.AddSingleton<GenAIService>();
+builder.Services.AddSingleton<SummaryService>();
 builder.Services.AddSingleton<IElasticRepository, ElasticService>();
 
-builder.Services.AddSingleton<MQPublisher>(sp =>
-{
-    ILogger<MQPublisher> logger = sp.GetRequiredService<ILogger<MQPublisher>>();
-    QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
-        .Get("MQPublisher");
+builder.Services.AddSingleton<MQPublisher>();
 
-    return new MQPublisher(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
-});
-
-builder.Services.AddSingleton<OCRListener> (sp =>
+builder.Services.AddSingleton<MQBaseListener, OCRListener> (sp =>
 {
     ILogger<OCRListener> logger = sp.GetRequiredService<ILogger<OCRListener>>();
     QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
@@ -57,30 +51,30 @@ builder.Services.AddSingleton<OCRListener> (sp =>
 
     return new OCRListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
 });
-builder.Services.AddKeyedSingleton("SummaryListener", (sp, key) =>
+builder.Services.AddSingleton<MQBaseListener, SummaryListener> (sp =>
 {
-    ILogger<MQListener> logger = sp.GetRequiredService<ILogger<MQListener>>();
+    ILogger<SummaryListener> logger = sp.GetRequiredService<ILogger<SummaryListener>>();
     QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
         .Get("SummaryQueue");
 
-    return new MQListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
+    return new SummaryListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
 });
-builder.Services.AddKeyedSingleton("IndexingListener", (sp, key) =>
+builder.Services.AddSingleton<MQBaseListener, IndexingListener> (sp =>
 {
-    ILogger<MQListener> logger = sp.GetRequiredService<ILogger<MQListener>>();
+    ILogger<IndexingListener> logger = sp.GetRequiredService<ILogger<IndexingListener>>();
     QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
         .Get("IndexingQueue");
 
-    return new MQListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
+    return new IndexingListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
 });
 
 //  HttpClients
 builder.Services.AddHttpClient<WorkerResultsService>();
-builder.Services.AddHttpClient<GenAIService>();
+builder.Services.AddHttpClient<SummaryService>();
 
 //  Workers
 builder.Services.AddHostedService<OCRWorker>();
-builder.Services.AddHostedService<GenAIWorker>();
+builder.Services.AddHostedService<SummaryWorker>();
 builder.Services.AddHostedService<IndexingWorker>();
 
 var host = builder.Build();
