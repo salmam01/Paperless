@@ -1,8 +1,6 @@
-using Paperless.Services.Models.DTOs;
 using Paperless.Services.Models.OCR;
 using Paperless.Services.Services.FileStorage;
 using Paperless.Services.Services.Messaging.Publishers;
-using Paperless.Services.Services.Messaging.Base;
 using Paperless.Services.Services.OCR;
 using RabbitMQ.Client.Events;
 using Paperless.Services.Services.Messaging.Listeners;
@@ -71,7 +69,7 @@ namespace Paperless.Services.Workers
                 CategoryList = payload.CategoryList,
             };
 
-            //  Send OCR Result to GenAIWorker through RabbitMQ
+            //  Send OCR Result to Summary Worker through RabbitMQ
             await _mqPublisher.PublishOcrResult(ocrCompletedPayload);
         }
 

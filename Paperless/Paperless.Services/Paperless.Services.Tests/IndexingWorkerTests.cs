@@ -25,8 +25,8 @@ namespace Paperless.Services.Tests
             _loggerMock = new Mock<ILogger<IndexingWorker>>();
             
             // Setup QueueConfig mock
-            Mock<IOptions<QueueConfig>> queueConfigMock = new Mock<IOptions<QueueConfig>>();
-            queueConfigMock.Setup(x => x.Value).Returns(new QueueConfig
+            Mock<IOptions<ListenerConfig>> queueConfigMock = new Mock<IOptions<ListenerConfig>>();
+            queueConfigMock.Setup(x => x.Value).Returns(new ListenerConfig
             {
                 QueueName = "indexing.queue",
                 ExchangeName = "services.fanout",

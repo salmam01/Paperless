@@ -1,10 +1,8 @@
 ﻿using Paperless.Services.Models.DTOs.Payloads;
 using Paperless.Services.Models.Search;
-using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.Messaging.Listeners;
 using Paperless.Services.Services.Search;
 using RabbitMQ.Client.Events;
-using System.Text.Json;
 
 namespace Paperless.Services.Workers
 {

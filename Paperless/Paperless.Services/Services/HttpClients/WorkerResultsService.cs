@@ -1,14 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.DTOs;
 using Paperless.Services.Models.DTOs.Payloads;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Paperless.Services.Services.HttpClients
 {

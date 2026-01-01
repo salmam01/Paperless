@@ -21,7 +21,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
 //  Configuration
-builder.Services.Configure<RESTConfig>(builder.Configuration.GetSection("Rest"));
+builder.Services.Configure<RESTConfig>(builder.Configuration.GetSection("REST"));
 builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("MinIO"));
 builder.Services.Configure<OCRConfig>(builder.Configuration.GetSection("OCR"));
 builder.Services.Configure<GenAIConfig>(builder.Configuration.GetSection("GenAI"));
@@ -30,9 +30,9 @@ builder.Services.Configure<ElasticSearchConfig>(builder.Configuration.GetSection
 builder.Services.Configure<MQPublisherConfig>(builder.Configuration.GetSection("MQPublisher"));
 
 //  Configuration for different Queues
-builder.Services.Configure<QueueConfig>("OCRQueue", builder.Configuration.GetSection("OCRQueue"));
-builder.Services.Configure<QueueConfig>("SummaryQueue", builder.Configuration.GetSection("SummaryQueue"));
-builder.Services.Configure<QueueConfig>("IndexingQueue", builder.Configuration.GetSection("IndexingQueue"));
+builder.Services.Configure<ListenerConfig>("OCRListener", builder.Configuration.GetSection("OCRListener"));
+builder.Services.Configure<ListenerConfig>("SummaryListener", builder.Configuration.GetSection("SummaryListener"));
+builder.Services.Configure<ListenerConfig>("IndexingListener", builder.Configuration.GetSection("IndexingListener"));
 
 //  Services
 builder.Services.AddSingleton<MQConnectionFactory>();
@@ -40,33 +40,12 @@ builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OCRService>();
 builder.Services.AddSingleton<SummaryService>();
 builder.Services.AddSingleton<IElasticRepository, ElasticService>();
-
 builder.Services.AddSingleton<MQPublisher>();
 
-builder.Services.AddSingleton<MQBaseListener, OCRListener> (sp =>
-{
-    ILogger<OCRListener> logger = sp.GetRequiredService<ILogger<OCRListener>>();
-    QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
-        .Get("OCRQueue");
-
-    return new OCRListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
-});
-builder.Services.AddSingleton<MQBaseListener, SummaryListener> (sp =>
-{
-    ILogger<SummaryListener> logger = sp.GetRequiredService<ILogger<SummaryListener>>();
-    QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
-        .Get("SummaryQueue");
-
-    return new SummaryListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
-});
-builder.Services.AddSingleton<MQBaseListener, IndexingListener> (sp =>
-{
-    ILogger<IndexingListener> logger = sp.GetRequiredService<ILogger<IndexingListener>>();
-    QueueConfig config = sp.GetRequiredService<IOptionsMonitor<QueueConfig>>()
-        .Get("IndexingQueue");
-
-    return new IndexingListener(logger, Options.Create(config), sp.GetRequiredService<MQConnectionFactory>());
-});
+//  Listeners
+builder.Services.AddSingleton<OCRListener>();
+builder.Services.AddSingleton<SummaryListener>();
+builder.Services.AddSingleton<IndexingListener>();
 
 //  HttpClients
 builder.Services.AddHttpClient<WorkerResultsService>();

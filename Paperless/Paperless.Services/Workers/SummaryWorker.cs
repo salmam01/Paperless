@@ -1,10 +1,8 @@
-﻿using Paperless.Services.Models.DTOs;
-using Paperless.Services.Models.DTOs.Payloads;
+﻿using Paperless.Services.Models.DTOs.Payloads;
 using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.Messaging.Listeners;
+using Paperless.Services.Services.Messaging.Publishers;
 using RabbitMQ.Client.Events;
-using System.Text.Json;
 
 namespace Paperless.Services.Workers
 {
@@ -12,17 +10,20 @@ namespace Paperless.Services.Workers
     {
         private readonly ILogger<SummaryWorker> _logger;
         private readonly SummaryListener _mqListener;
+        private readonly MQPublisher _mqPublisher;
         private readonly SummaryService _genAIService;
         private readonly WorkerResultsService _workerResultsService;
 
         public SummaryWorker(
             ILogger<SummaryWorker> logger,
             SummaryListener mqListener,
+            MQPublisher mqPublisher,
             SummaryService genAIService,
             WorkerResultsService workerResultsService
         ) {
             _logger = logger;
             _mqListener = mqListener;
+            _mqPublisher = mqPublisher;
             _genAIService = genAIService;
             _workerResultsService = workerResultsService;
         }
@@ -126,7 +127,7 @@ namespace Paperless.Services.Workers
                 );
 
                 await _workerResultsService.PostWorkerResultsAsync(summaryPayload);
-                //  TODO: summary worker has to publish summary + category result (IndexingPayload)
+                await _mqPublisher.PublishSummaryResult(summaryPayload);
             }
             catch (Exception ex)
             {

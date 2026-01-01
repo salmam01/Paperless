@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.DTOs;
 using Paperless.Services.Models.DTOs.Payloads;
 using Paperless.Services.Services.Messaging.Base;
 using RabbitMQ.Client;
@@ -9,19 +8,19 @@ using System.Text.Json;
 
 namespace Paperless.Services.Services.Messaging.Publishers
 {
+    //  TODO: can be cleaner
     public class MQPublisher
     {
         private readonly ILogger<MQPublisher> _logger;
         private readonly ConnectionFactory _connectionFactory;
-        private readonly QueueConfig _config;
+        private readonly MQPublisherConfig _config;
         private readonly string _exchangeName;
 
         public MQPublisher(
             ILogger<MQPublisher> logger,
-            IOptions<QueueConfig> config,
+            IOptions<MQPublisherConfig> config,
             MQConnectionFactory mqConnectionFactory
-        )
-        {
+        ) {
             _logger = logger;
             _config = config.Value;
             _connectionFactory = mqConnectionFactory.ConnectionFactory;
@@ -56,18 +55,21 @@ namespace Paperless.Services.Services.Messaging.Publishers
                 );
 
                 _logger.LogInformation(
-                    "Document {DocumentId} to Summary queue {QueueName} for summary generation published.",
+                    "Document {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for Summary Generation.",
                     payload.Id,
-                    _config.QueueName
+                    _exchangeName,
+                    _config.RoutingKeys[0]
                 );
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Failed to send document {DocumentId} to {QueueName}. Error: {ErrorMessage}",
+                    "Failed to publish Document {Id} to Exchange {ExchangeName} with Routing Key {RoutingKey}. " +
+                    "Error:\n{ErrorMessage}",
                     payload.Id,
-                    _config.QueueName,
+                    _exchangeName,
+                    _config.RoutingKeys[0],
                     ex.Message
                 );
             }
@@ -101,18 +103,21 @@ namespace Paperless.Services.Services.Messaging.Publishers
                 );
 
                 _logger.LogInformation(
-                    "Document {DocumentId} to Indexing queue {QueueName} for indexing published.",
+                    "Document {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for Summary Generation.",
                     payload.Id,
-                    _config.QueueName
+                    _exchangeName,
+                    _config.RoutingKeys[1]
                 );
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Failed to send document {DocumentId} to {queueName}. Error: {ErrorMessage}",
+                    "Failed to publish Document {Id} to Exchange {ExchangeName} with Routing Key {RoutingKey}. " +
+                    "Error:\n{ErrorMessage}",
                     payload.Id,
-                    _config.QueueName,
+                    _exchangeName,
+                    _config.RoutingKeys[1],
                     ex.Message
                 );
             }

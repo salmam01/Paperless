@@ -1,9 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.DTOs;
 using Paperless.Services.Models.DTOs.Payloads;
 using Paperless.Services.Services.Messaging.Base;
-using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
@@ -19,11 +17,13 @@ namespace Paperless.Services.Services.Messaging.Listeners
 
     public class IndexingListener : MQBaseListener
     {
+        private const string _configName = "IndexingListener";
+
         public IndexingListener(
             ILogger<IndexingListener> logger,
-            IOptions<QueueConfig> config,
+            IOptionsMonitor<ListenerConfig> config,
             MQConnectionFactory factory
-        ) : base(logger, config, factory) { }
+        ) : base(logger, config, factory, _configName) { }
 
         protected override async Task DeclareTopologyAsync()
         {

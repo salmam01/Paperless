@@ -8,7 +8,7 @@ namespace Paperless.Services.Services.Messaging.Base
     public abstract class MQBaseListener
     {
         protected readonly ILogger _logger;
-        protected readonly QueueConfig _config;
+        protected readonly ListenerConfig _config;
         protected readonly ConnectionFactory _factory;
         protected IChannel? _channel;
         protected IConnection? _connection;
@@ -16,11 +16,12 @@ namespace Paperless.Services.Services.Messaging.Base
 
         protected MQBaseListener(
             ILogger logger,
-            IOptions<QueueConfig> config,
-            MQConnectionFactory factory
+            IOptionsMonitor<ListenerConfig> config,
+            MQConnectionFactory factory,
+            string configName
         ) {
             _logger = logger;
-            _config = config.Value;
+            _config = config.Get(configName);
             _factory = factory.ConnectionFactory;
             _exchangeName = factory.ExchangeName;
         }

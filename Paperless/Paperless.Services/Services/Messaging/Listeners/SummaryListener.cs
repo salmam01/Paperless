@@ -10,11 +10,13 @@ namespace Paperless.Services.Services.Messaging.Listeners
 {
     public class SummaryListener : MQBaseListener
     {
+        private const string _configName = "SummaryListener";
+
         public SummaryListener(
             ILogger<SummaryListener> logger,
-            IOptions<QueueConfig> config,
+            IOptionsMonitor<ListenerConfig> config,
             MQConnectionFactory factory
-        ) : base(logger, config, factory) { }
+        ) : base(logger, config, factory, _configName) { }
 
         protected override async Task DeclareTopologyAsync()
         {

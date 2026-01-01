@@ -2,7 +2,6 @@
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.DTOs.Payloads;
 using Paperless.Services.Services.Messaging.Base;
-using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
@@ -11,11 +10,13 @@ namespace Paperless.Services.Services.Messaging.Listeners
 {
     public class OCRListener : MQBaseListener
     {
+        private const string _configName = "OCRListener";
+
         public OCRListener(
             ILogger<OCRListener> logger,
-            IOptions<QueueConfig> config,
-            MQConnectionFactory mqConnectionFactory
-        ) : base (logger, config, mqConnectionFactory) { }
+            IOptionsMonitor<ListenerConfig> config,
+            MQConnectionFactory factory
+        ) : base(logger, config, factory, _configName) { }
 
         protected override async Task DeclareTopologyAsync()
         {
