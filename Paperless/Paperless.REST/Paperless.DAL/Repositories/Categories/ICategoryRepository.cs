@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Paperless.DAL.Entities;
 
 namespace Paperless.DAL.Repositories.Categories
 {
     public interface ICategoryRepository
     {
-        Task InitializeCategories(ICollection<string> categories);
-        Task AddCategory(string name);
-        Task UpdateCategory(string name);
-        Task DeleteCategory(string name);
+        Task PopulateCategoriesAsync(IEnumerable<CategoryEntity> categories);
+        Task AddCategoryAsync(CategoryEntity category);
+        Task<IEnumerable<CategoryEntity>> GetCategoriesAsync();
+        Task<CategoryEntity> GetCategoryAsync(Guid id);
+        Task UpdateCategory(CategoryEntity category);
+        Task DeleteCategory(Guid id);
     }
 }

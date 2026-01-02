@@ -30,21 +30,19 @@ namespace Paperless.Services.Workers
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Summary Worker is starting...");
+            _logger.LogInformation(
+                "{WorkerType} Worker is starting ...",
+                "Summary"
+            );
+
             await _mqListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
         }
 
         private async Task HandleMessageAsync(BasicDeliverEventArgs ea)
         {
-            /*
-            _logger.LogInformation(
-                "Processing message from queue inside Summary Worker.\nMessage length: {MessageLength} characters.",
-                message?.Length ?? 0
-            );*/
-
             try
             {
-                //  TODO: summary payload contains category list => use that for the summary
+                //  TODO: summary payload contains category list => use that for the category
                 OCRCompletedPayload payload = _mqListener.ProcessPayload(ea);
 
                 if (payload == null || string.IsNullOrEmpty(payload.Id) || string.IsNullOrEmpty(payload.Title) || string.IsNullOrEmpty(payload.OCRResult))
@@ -143,7 +141,11 @@ namespace Paperless.Services.Workers
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("GenAI Worker is stopping...");
+            _logger.LogInformation(
+                "{WorkerType} Worker is stopping...",
+                "Summary"
+            );
+
             await _mqListener.StopListeningAsync();
             await base.StopAsync(cancellationToken);
         }

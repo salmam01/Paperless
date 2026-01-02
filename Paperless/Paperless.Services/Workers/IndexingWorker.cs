@@ -24,20 +24,17 @@ namespace Paperless.Services.Workers
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Indexing Worker is starting...");
+            _logger.LogInformation(
+                "{WorkerType} Worker is starting ...",
+                "Indexing"
+            );
+
             await _elasticService.CreateIndexIfNotExistsAsync();
             await _mqListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
         }
 
         private async Task HandleMessageAsync(BasicDeliverEventArgs ea)
         {
-            /*
-            _logger.LogInformation(
-                "Processing message from queue inside Indexing Worker." +
-                "\nMessage length: {MessageLength} characters.",
-                ea?.Length ?? 0
-            );*/
-
             try
             {
                 IndexingEventType eventType = _mqListener.HandleEventType(ea);
@@ -50,6 +47,12 @@ namespace Paperless.Services.Workers
                             _logger.LogWarning("Received invalid message from queue inside Indexing Worker. Skipping processing.");
                             return;
                         }
+
+                        _logger.LogInformation(
+                            "Processing {RequestType} request for Document with ID {Id}.",
+                            "OCR",
+                            payload.Id
+                        );
 
                         SearchDocument document = new SearchDocument
                         {
@@ -96,13 +99,16 @@ namespace Paperless.Services.Workers
                     "\nError: {ErrorMessage}",
                     ex.Message
                 );
-                throw;
             }
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Indexing Worker is stopping...");
+            _logger.LogInformation(
+                "{WorkerType} Worker is stopping...",
+                "Indexing"
+            );
+            
             await _mqListener.StopListeningAsync();
             await base.StopAsync(cancellationToken);
         }

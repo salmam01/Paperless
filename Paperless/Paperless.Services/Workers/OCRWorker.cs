@@ -34,48 +34,74 @@ namespace Paperless.Services.Workers
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             //  Stream -> Temp file -> Ghostscript -> Upload -> Delete
+            _logger.LogInformation(
+                "{WorkerType} Worker is starting ...",
+                "OCR"
+            );
+
             await _ocrListener.StartListeningAsync(HandleMessageAsync, cancellationToken);
         }
 
         private async Task HandleMessageAsync(BasicDeliverEventArgs ea)
         {
-            OCRPayload payload = _ocrListener.ProcessPayload(ea);
-
-            _logger.LogInformation(
-                "Processing OCR request for document ID: {DocumentId}.",
-                payload.Id
-            );
-
-            //  Download file (stream) from minIO
-            MemoryStream documentContent = await _storageService.DownloadDocumentAsync(payload.Id);
-            if (documentContent.Length <= 0)
-                throw new Exception("Document stream is empty.");
-
-            //  Process file to text
-            OCRResult result = _ocrService.ProcessPdf(documentContent);
-
-            _logger.LogInformation(
-                "OCR processing completed successfully. Document ID: {DocumentId}, Pages processed: {PageCount}, Content length: {ContentLength} characters.",
-                payload.Id,
-                result.Pages.Count,
-                result.PDFContent?.Length ?? 0
-            );
-
-            OCRCompletedPayload ocrCompletedPayload = new OCRCompletedPayload
+            try
             {
-                Id = payload.Id,
-                Title = _ocrService.ExtractPdfTitle(documentContent),
-                OCRResult = result.PDFContent ?? "Error processing document content.",
-                CategoryList = payload.CategoryList,
-            };
+                OCRPayload payload = _ocrListener.ProcessPayload(ea);
 
-            //  Send OCR Result to Summary Worker through RabbitMQ
-            await _mqPublisher.PublishOcrResult(ocrCompletedPayload);
+                _logger.LogInformation(
+                    "Processing {RequestType} request for Document with ID {Id}.",
+                    "OCR",
+                    payload.Id
+                );
+
+                //  Download file (stream) from MinIO
+                MemoryStream documentContent = await _storageService.DownloadDocumentAsync(payload.Id);
+                if (documentContent.Length <= 0)
+                    throw new Exception("Document stream is empty.");
+
+                //  Process file to text
+                OCRResult result = _ocrService.ProcessPdf(documentContent);
+
+                _logger.LogInformation(
+                    "{RequestType} processing completed successfully.\n" +
+                    "Document ID: {Id}, Pages processed: {PageCount}, Content length: {ContentLength} characters.",
+                    "OCR",
+                    payload.Id,
+                    result.Pages.Count,
+                    result.PDFContent?.Length ?? 0
+                );
+
+                OCRCompletedPayload ocrCompletedPayload = new OCRCompletedPayload
+                {
+                    Id = payload.Id,
+                    Title = _ocrService.ExtractPdfTitle(documentContent),
+                    OCRResult = result.PDFContent ?? "Error processing document content.",
+                    CategoryList = payload.CategoryList,
+                };
+
+                //  Send OCR Result to Summary Worker through RabbitMQ
+                await _mqPublisher.PublishOcrResult(ocrCompletedPayload);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{RequestType} processing failed inside {WorkerType} Worker." +
+                    "\nError: {ErrorMessage}",
+                    "OCR",
+                    "OCR",
+                    ex.Message
+                );
+            }
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("OCR Worker is stopping...");
+            _logger.LogInformation(
+                "{WorkerType} Worker is stopping...",
+                "OCR"
+            );
+
             await _ocrListener.StopListeningAsync();
             await base.StopAsync(cancellationToken);
         }

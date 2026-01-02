@@ -132,7 +132,7 @@ namespace Paperless.API.Controllers
 
             try
             {
-                List<Document> documents = await _documentService.SearchForDocument(query);
+                List<Document> documents = await _documentService.SearchForDocumentAsync(query);
                 List<DocumentDTO> documentDTO = _mapper.Map<List<DocumentDTO>>(documents);
 
                 _logger.LogInformation(

@@ -30,4 +30,8 @@
     <ProjectReference Include="..\Paperless.BL\Paperless.BL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Helpers\" />
+  </ItemGroup>
+
 </Project>

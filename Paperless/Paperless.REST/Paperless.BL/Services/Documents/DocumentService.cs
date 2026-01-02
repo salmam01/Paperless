@@ -4,6 +4,7 @@ using Paperless.BL.Exceptions;
 using Paperless.BL.Helpers;
 using Paperless.BL.Models.Domain;
 using Paperless.BL.Models.DTOs;
+using Paperless.BL.Services.Categories;
 using Paperless.BL.Services.Messaging;
 using Paperless.BL.Services.Search;
 using Paperless.BL.Services.Storage;
@@ -16,6 +17,7 @@ namespace Paperless.BL.Services.Documents
 {
     public class DocumentService (
         IDocumentRepository documentrepository,
+        ICategoryService categoryService,
         IDocumentSearchService searchService,
         IDocumentPublisher documentPublisher,
         IStorageService storageService,
@@ -25,6 +27,7 @@ namespace Paperless.BL.Services.Documents
     ) : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
+        private readonly ICategoryService _categoryService = categoryService;
         private readonly IDocumentSearchService _searchService = searchService;
         private readonly IDocumentPublisher _documentPublisher = documentPublisher;
         private readonly IStorageService _storageService = storageService;
@@ -75,7 +78,7 @@ namespace Paperless.BL.Services.Documents
             }
         }
 
-        public async Task<List<Document>> SearchForDocument(string query)
+        public async Task<List<Document>> SearchForDocumentAsync(string query)
         {
             _logger.LogInformation("Retrieving document by query {query} from database.", query);
 
@@ -117,12 +120,14 @@ namespace Paperless.BL.Services.Documents
             try
             {
                 AdjustFileType(document);
+                List<Category> categories = await _categoryService.GetCategoriesAsync();
 
                 if (document.Type == "PDF")
                 {
                     await _storageService.StoreDocumentAsync(document.Id, document.Type, content);
-                    await _documentPublisher.PublishDocumentAsync(document.Id);
+                    await _documentPublisher.PublishDocumentAsync(document.Id, categories);
                 }
+                //  TODO: fix logic
                 else
                 {
                     _parser.ParseDocument(document, content);

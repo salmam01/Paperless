@@ -1,10 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Paperless.BL.Models.Domain;
+using Paperless.DAL.Entities;
 using Paperless.DAL.Repositories.Categories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Paperless.BL.Services.Categories
 {
@@ -12,31 +11,53 @@ namespace Paperless.BL.Services.Categories
     {
         private readonly ILogger<CategoryService> _logger;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IMapper _mapper;
 
-        public CategoryService(ICategoryRepository categoryRepository, ILogger<CategoryService> logger)
-        {
+        public CategoryService(
+            ICategoryRepository categoryRepository, 
+            IMapper mapper,
+            ILogger<CategoryService> logger
+        ) {
             _categoryRepository = categoryRepository;
+            _mapper = mapper;
             _logger = logger;
         }
 
-        public async Task InitializeCategories(List<string> categories)
+        public async Task PopulateCategoriesAsync(List<Category> categories)
         {
-            await _categoryRepository.InitializeCategories(categories);
+            IEnumerable<CategoryEntity> entities = _mapper.Map<IEnumerable<CategoryEntity>>(categories);
+            await _categoryRepository.PopulateCategoriesAsync(entities);
         }
 
-        public async Task AddCategory(string category)
+        public async Task<List<Category>> GetCategoriesAsync()
         {
-            await _categoryRepository.AddCategory(category);
+            IEnumerable<CategoryEntity> entities = await _categoryRepository.GetCategoriesAsync();
+            List<Category> categories = _mapper.Map<List<Category>>(entities);
+            return categories;
         }
 
-        public async Task UpdateCategory(string category)
+        public async Task<Category> GetCategoryAsync(Guid id)
         {
-            await _categoryRepository.UpdateCategory(category);
+            CategoryEntity entity = await _categoryRepository.GetCategoryAsync(id);
+            Category category = _mapper.Map<Category>(entity);
+            return category;
         }
 
-        public async Task DeleteCategory(string category)
+        public async Task AddCategoryAsync(Category category)
         {
-            await _categoryRepository.DeleteCategory(category);
+            CategoryEntity entity = _mapper.Map<CategoryEntity>(category);
+            await _categoryRepository.AddCategoryAsync(entity);
+        }
+
+        public async Task UpdateCategoryAsync(Category category)
+        {
+            CategoryEntity entity = _mapper.Map<CategoryEntity>(category);
+            await _categoryRepository.UpdateCategory(entity);
+        }
+
+        public async Task DeleteCategoryAsync(Guid id)
+        {
+            await _categoryRepository.DeleteCategory(id);
         }
     }
 }

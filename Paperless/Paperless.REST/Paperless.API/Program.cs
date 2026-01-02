@@ -1,15 +1,18 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Paperless.API.DTOs;
 using Paperless.BL.Configurations;
 using Paperless.BL.Helpers;
 using Paperless.BL.Models.Domain;
+using Paperless.BL.Services.Categories;
 using Paperless.BL.Services.Documents;
 using Paperless.BL.Services.Messaging;
 using Paperless.BL.Services.Search;
 using Paperless.BL.Services.Storage;
 using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
+using Paperless.DAL.Repositories.Categories;
 using Paperless.DAL.Repositories.Documents;
 using Paperless.Services.Configurations;
 using Serilog;
@@ -31,6 +34,8 @@ MapperConfiguration mapperConfig = new(
     cfg => {
         cfg.CreateMap<DocumentDTO, Document>().ReverseMap();
         cfg.CreateMap<Document, DocumentEntity>().ReverseMap();
+        cfg.CreateMap<CategoryDTO, Category>().ReverseMap();
+        cfg.CreateMap<Category, CategoryEntity>().ReverseMap();
     }
 );
 IMapper mapper = mapperConfig.CreateMapper();
@@ -52,9 +57,12 @@ builder.Services.AddScoped<PaperlessDbContext>();
 builder.Services.AddSingleton<Parser>();
 builder.Services.AddSingleton<IStorageService, StorageService>();
 builder.Services.AddSingleton<IDocumentSearchService, DocumentSearchService>();
+builder.Services.AddSingleton<MQConnectionFactory>();
 builder.Services.AddSingleton<IDocumentPublisher, DocumentPublisher>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddSingleton(mapper);
 
 builder.Services.AddControllers();
@@ -94,7 +102,25 @@ app.MapControllers();
 
 using (IServiceScope scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<PaperlessDbContext>().Database.Migrate();
+    var db = scope.ServiceProvider.GetRequiredService<PaperlessDbContext>();
+    db.Database.Migrate();
+
+    //  Populate Database with Categories
+    ICategoryService categoryService = scope.ServiceProvider
+        .GetRequiredService<ICategoryService>();
+    CategoriesConfig categoriesConfig = scope.ServiceProvider
+        .GetRequiredService<IOptions<CategoriesConfig>>().Value;
+
+    List<Category> existing = await categoryService.GetCategoriesAsync();
+
+    if (!existing.Any())
+    {
+        var categories = categoriesConfig.Names
+            .Select(name => new Category { Name = name })
+            .ToList();
+
+        await categoryService.PopulateCategoriesAsync(categories);
+    }
 }
 
 app.Run();
