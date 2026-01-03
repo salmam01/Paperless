@@ -10,6 +10,8 @@ namespace Paperless.DAL.Entities
         //  Content
         [Required]
         public string? Name { get; set; }
+        public Guid? CategoryId { get; set; }
+        public CategoryEntity? Category { get; set; }
         [Required]
         public string? Content { get; set; }
         [Required]
@@ -26,10 +28,5 @@ namespace Paperless.DAL.Entities
         public string? Type { get; set; }
         [Required]
         public double Size { get; set; }
-
-        [Required]
-        public Guid CategoryId { get; set; }
-        [Required]
-        public CategoryEntity? Category { get; set; }
     }
 }

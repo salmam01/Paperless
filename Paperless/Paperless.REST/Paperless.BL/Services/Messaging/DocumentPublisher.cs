@@ -94,7 +94,7 @@ namespace Paperless.BL.Services.Messaging
                 );
 
                 _logger.LogInformation(
-                    "Document with ID {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for Summary Generation.",
+                    "Document with ID {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for OCR.",
                     id,
                     _exchangeName,
                     _config.RoutingKeys[0]

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Paperless.DAL.Database;
@@ -11,9 +12,11 @@ using Paperless.DAL.Database;
 namespace Paperless.DAL.Migrations
 {
     [DbContext(typeof(PaperlessDbContext))]
-    partial class PaperlessDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260103150628_AddCategoryNullable")]
+    partial class AddCategoryNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

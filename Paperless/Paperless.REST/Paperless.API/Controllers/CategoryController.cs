@@ -125,7 +125,6 @@ namespace Paperless.API.Controllers
             }
         }
 
-
         [HttpPost(Name = "PostCategory")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -147,11 +146,7 @@ namespace Paperless.API.Controllers
 
             try
             {
-                CategoryDTO categoryDTO = new CategoryDTO
-                {
-                    Id = Guid.NewGuid(),
-                    Name = name
-                };
+                CategoryDTO categoryDTO = new(Guid.NewGuid(), name);
 
                 if (categoryDTO == null)
                     return BadRequest("Empty or invalid category.");
@@ -159,14 +154,14 @@ namespace Paperless.API.Controllers
                 Category category = _mapper.Map<Category>(categoryDTO);
                 await _categoryService.AddCategoryAsync(category);
 
-                _logger.LogInformation("POST /document uploaded document with ID {Id} successfully.", categoryDTO.Id);
+                _logger.LogInformation("POST /category uploaded category with ID {Id} successfully.", categoryDTO.Id);
                 return CreatedAtAction(nameof(Get), new { id = categoryDTO.Id }, categoryDTO);
             }
             catch (ServiceException ex)
             {
                 _logger.LogError(
                     ex,
-                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "{method} /category failed in {layer} Layer due to {reason}.",
                     "POST", "Business", GetExceptionMessage(ex.Type)
                 );
                 return Problem(
@@ -179,7 +174,7 @@ namespace Paperless.API.Controllers
             {
                 _logger.LogError(
                     ex,
-                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "{method} /category failed in {layer} Layer due to {reason}.",
                     "POST",
                     "API",
                     ex.Message

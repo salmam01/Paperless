@@ -399,6 +399,7 @@ namespace Paperless.API.Controllers
             (
                 id,
                 form.FileName,
+                null,
                 "loading...",
                 "loading...",
                 $"{id}.{form.FileName}",
