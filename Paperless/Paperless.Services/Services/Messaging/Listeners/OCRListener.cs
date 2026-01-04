@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.DTOs.Payloads;
 using Paperless.Services.Services.Messaging.Base;
 using RabbitMQ.Client.Events;
 using System.Text;
-using System.Text.Json;
 
 namespace Paperless.Services.Services.Messaging.Listeners
 {
@@ -35,11 +35,22 @@ namespace Paperless.Services.Services.Messaging.Listeners
             );
         }
 
+        //  TODO: add a Parser helper class!
         public OCRPayload ProcessPayload(BasicDeliverEventArgs ea)
         {
             try
             {
                 string body = Encoding.UTF8.GetString(ea.Body.ToArray());
+                OCRPayload? payload = new();
+
+                if (string.IsNullOrWhiteSpace(body))
+                {
+                    _logger.LogWarning(
+                        "Received empty message from Message Queue {QueueName}.",
+                        _config.QueueName
+                    );
+                    return payload;
+                }
 
                 _logger.LogInformation(
                     "Received message from Message Queue {QueueName}.\nMessage:\n{message}",
@@ -47,13 +58,25 @@ namespace Paperless.Services.Services.Messaging.Listeners
                     body
                 );
 
-                OCRPayload? payload = JsonSerializer.Deserialize<OCRPayload>(
-                    body,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                );
+                JObject jsonObject = JObject.Parse(body);
+                
+                if (jsonObject.TryGetValue("Id", out JToken? idToken))
+                    payload.Id = idToken?.ToString() ?? string.Empty;
 
-                if (payload == null)
-                    throw new InvalidOperationException("Message could not be deserialized");
+                List<string> categories = [];
+
+                if (jsonObject.TryGetValue("Categories", out JToken? categoriesToken) &&
+                    categoriesToken is JArray categoriesArray)
+                {
+                    foreach (var category in categoriesArray)
+                    {
+                        var name = category["Name"]?.ToString();
+                        if (!string.IsNullOrWhiteSpace(name))
+                            categories.Add(name);
+                    }
+                }
+
+                payload.CategoryList.Categories = categories;
 
                 return payload;
             }

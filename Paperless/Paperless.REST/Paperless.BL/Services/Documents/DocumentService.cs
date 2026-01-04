@@ -212,6 +212,7 @@ namespace Paperless.BL.Services.Documents
             try
             {
                 await _storageService.DeleteDocumentsAsync();
+                await _documentPublisher.DeleteDocumentsAsync();
                 await _documentRepository.DeleteDocumentsAsync();
             }
             catch (DatabaseException ex)
@@ -236,6 +237,7 @@ namespace Paperless.BL.Services.Documents
                 Document document = _mapper.Map<Document>(entity);
 
                 await _storageService.DeleteDocumentAsync(id, document.Type);
+                await _documentPublisher.DeleteDocumentAsync(id);
                 await _documentRepository.DeleteDocumentAsync(id);
             }
             catch (DatabaseException ex)

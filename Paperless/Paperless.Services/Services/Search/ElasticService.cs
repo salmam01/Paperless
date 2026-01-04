@@ -30,7 +30,7 @@ namespace Paperless.Services.Services.Search
             {
                 await _client.Indices.CreateAsync(_config.Index);
                 _logger.LogInformation(
-                    "Creating new Index with name {indexname}.",
+                    "ElasticSearch Index {indexname} created.",
                     _config.Index
                 );
             }
@@ -38,44 +38,51 @@ namespace Paperless.Services.Services.Search
 
         public async Task<bool> IndexAsync(SearchDocument document)
         {
+            var response = await _client.IndexAsync(
+                document, 
+                idx => idx
+                        .Index(_config.Index)
+                        .OpType(OpType.Index)
+            );
+
             _logger.LogInformation(
-                "Adding new Document with ID {id} and name {title} to Index {index}.",
+                "New Document with ID {id} and name {title} added to Index {index}.",
                 document.Id,
                 document.Title,
                 _config.Index
             );
 
-            var response = await _client.IndexAsync(document, idx =>
-                idx.Index(_config.Index)
-                    .OpType(OpType.Index)
-            );
             return response.IsValidResponse;
         }
 
         public async Task<bool> RemoveAsync(string id)
         {
+            var response = await _client.DeleteAsync<SearchDocument>(
+                id, 
+                d => d.Index(_config.Index)
+            );
+
             _logger.LogInformation(
-                "Removing Document with ID {id} from Index {index}.",
+                "Document with ID {id} removed from Index {index}.",
                 id,
                 _config.Index
             );
 
-            var response = await _client.DeleteAsync(id, d =>
-                d.Index(_config.Index)
-            );
             return response.IsValidResponse;
         }
 
         public async Task<long?> RemoveAllAsync()
         {
+            var response = await _client.DeleteByQueryAsync<SearchDocument> (d => d
+                .Indices(_config.Index)
+                .Query(q => q.MatchAll())
+            );
+
             _logger.LogInformation(
-                "Removing all documents from Index {index}.",
+                "Removed all documents from Index {index}.",
                 _config.Index
             );
 
-            var response = await _client.DeleteByQueryAsync<SearchDocument> (
-                d => d.Indices(_config.Index)
-            );
             return response.IsValidResponse ? response.Deleted : default;
         }
     }

@@ -3,8 +3,10 @@ using Microsoft.Extensions.Options;
 using Paperless.BL.Configurations;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models.Domain;
+using Paperless.BL.Models.Dtos;
 using RabbitMQ.Client;
 using System.Text;
+using System.Text.Json;
 
 namespace Paperless.BL.Services.Messaging
 {
@@ -33,7 +35,21 @@ namespace Paperless.BL.Services.Messaging
                 await using IConnection connection = await _factory.CreateConnectionAsync();
                 await using IChannel channel = await connection.CreateChannelAsync();
 
-                byte[] body = Encoding.UTF8.GetBytes(id.ToString());
+                DocumentUploadPayload payload = new DocumentUploadPayload
+                {
+                    Id = id,
+                    Categories = categories
+                };
+
+                string jsonString = JsonSerializer.Serialize(
+                    payload,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = null
+                    }
+                );
+                byte[] body = Encoding.UTF8.GetBytes(jsonString);
+
                 BasicProperties properties = new BasicProperties 
                 { 
                     Persistent = true,
@@ -97,7 +113,7 @@ namespace Paperless.BL.Services.Messaging
                     "Document with ID {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for OCR.",
                     id,
                     _exchangeName,
-                    _config.RoutingKeys[0]
+                    _config.RoutingKeys[1]
                 );
 
             }
@@ -106,7 +122,7 @@ namespace Paperless.BL.Services.Messaging
                 _logger.LogError(
                     ex,
                     "{method} /document failed in {layer} Layer due to {reason}.",
-                    "POST", "Business", "publishing to RabbitMQ failing."
+                    "DELETE", "Business", "publishing to RabbitMQ failing."
                 );
                 throw new RabbitMQException($"Failed to publish document {id} to Message Queue.", ex);
             }
@@ -119,7 +135,7 @@ namespace Paperless.BL.Services.Messaging
                 await using IConnection connection = await _factory.CreateConnectionAsync();
                 await using IChannel channel = await connection.CreateChannelAsync();
 
-                byte[] body = Encoding.UTF8.GetBytes("deleteAll");
+                byte[] body = Encoding.UTF8.GetBytes("");
                 BasicProperties properties = new BasicProperties
                 {
                     Persistent = true,
@@ -140,7 +156,7 @@ namespace Paperless.BL.Services.Messaging
                 _logger.LogInformation(
                     "Document with published to Exchange {ExchangeName} with Routing Key {RoutingKey} for Summary Generation.",
                     _exchangeName,
-                    _config.RoutingKeys[0]
+                    _config.RoutingKeys[2]
                 );
 
             }
@@ -149,7 +165,7 @@ namespace Paperless.BL.Services.Messaging
                 _logger.LogError(
                     ex,
                     "{method} /document failed in {layer} Layer due to {reason}.",
-                    "POST", "Business", "publishing to RabbitMQ failing."
+                    "DELETE ALL", "Business", "publishing to RabbitMQ failing."
                 );
                 throw new RabbitMQException($"Failed to publish delete documents to Message Queue.", ex);
             }

@@ -62,11 +62,6 @@ namespace Paperless.Services.Workers
                             Category = payload.Category
                         };
 
-                        _logger.LogInformation(
-                            "Document {DocumentId} content retrieved inside Indexing Worker.",
-                            document.Id
-                        );
-
                         await _elasticService.IndexAsync(document);
 
                         break;

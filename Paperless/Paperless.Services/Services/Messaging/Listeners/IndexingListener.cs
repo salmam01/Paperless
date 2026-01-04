@@ -92,7 +92,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
                 string id = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                 _logger.LogInformation(
-                    "Received message from Message Queue {QueueName}.\nMessage:\n{message}",
+                    "Received message on {QueueName}.\nMessage:\n{message}",
                     _config.QueueName,
                     id
                 );
