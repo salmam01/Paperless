@@ -46,7 +46,7 @@ namespace Paperless.Services.Workers
                     case IndexingEventType.SummaryCompleted:
 
                         SummaryCompletedPayload payload = _mqListener.ProcessSummaryCompletedPayload(ea);
-                        if (payload == null || string.IsNullOrEmpty(payload.Id))
+                        if (payload == null || payload.DocumentId == Guid.Empty)
                         {
                             _logger.LogWarning(
                                 "Received invalid message from queue inside {WorkerType} Worker. Skipping processing.",
@@ -58,15 +58,15 @@ namespace Paperless.Services.Workers
                         _logger.LogInformation(
                             "Processing {RequestType} request for Document with ID {Id}.",
                             "Document Indexing",
-                            payload.Id
+                            payload.DocumentId
                         );
 
                         SearchDocument document = new SearchDocument
                         {
-                            Id = payload.Id,
+                            Id = payload.DocumentId.ToString(),
                             Title = payload.Title,
                             Content = payload.OCRResult,
-                            Category = payload.Category
+                            Category = payload.CategoryId.ToString()
                         };
 
                         await _elasticService.IndexAsync(document);

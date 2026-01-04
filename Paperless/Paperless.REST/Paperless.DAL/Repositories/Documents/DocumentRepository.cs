@@ -67,14 +67,15 @@ namespace Paperless.DAL.Repositories.Documents
             }
         }
 
-        public async Task UpdateDocumentContentAsync(Guid id, string content, string summary)
+        public async Task UpdateDocumentContentAsync(Guid documentId, Guid categoryId, string content, string summary)
         {
             try
             {
-                DocumentEntity? existDocument = await _context.Documents.FindAsync(id);
+                DocumentEntity? existDocument = await _context.Documents.FindAsync(documentId);
                 if (existDocument == null)
                     throw new ArgumentNullException(nameof(existDocument), "UpdateDocument: Document doesnt exist!");
 
+                existDocument.CategoryId = categoryId;
                 existDocument.Content = content;
                 existDocument.Summary = summary;
 

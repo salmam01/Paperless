@@ -2,9 +2,9 @@
 {
     public class OCRCompletedPayload
     {
-        public string Id { get; set; } = string.Empty;
+        public Guid DocumentId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string OCRResult { get; set; } = string.Empty;
-        public List<string> Categories { get; set; } = [];
+        public List<Category> Categories { get; set; } = [];
     }
 }

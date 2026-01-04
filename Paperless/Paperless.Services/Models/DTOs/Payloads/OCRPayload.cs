@@ -2,7 +2,7 @@
 {
     public class OCRPayload
     {
-        public string Id { get; set; } = string.Empty;
-        public List<string> Categories { get; set; } = [];
+        public Guid DocumentId { get; set; }
+        public List<Category> Categories { get; set; } = [];
     }
 }

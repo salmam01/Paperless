@@ -236,28 +236,31 @@ namespace Paperless.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult> PostServicesResult([FromRoute] string id, [FromBody] WorkerResultDTO result)
+        public async Task<ActionResult> PostServicesResult([FromRoute] string id, [FromBody] ServicesResultDTO payload)
         {
             _logger.LogInformation(
-                "Incoming POST /document/{id} from {ip}. Document ID: {DocumentId}, OCR result length: {OcrLength}, Summary length: {SummaryLength}",
+                "Incoming POST /document/{id} from {ip}. " +
+                "Document ID: {DocumentId}, Category: {Category}, OCR result length: {OcrLength}, Summary length: {SummaryLength}",
                 id,
                 HttpContext.Connection.RemoteIpAddress?.ToString(),
-                result?.Id ?? "Unknown",
-                result?.OcrResult?.Length ?? 0,
-                result?.SummaryResult?.Length ?? 0
+                payload?.DocumentId ?? "Unknown",
+                payload?.CategoryId ?? "Unknown",
+                payload?.OcrResult?.Length ?? 0,
+                payload?.SummaryResult?.Length ?? 0
             );
 
-            if (result == null || result.Id != id)
+            if (payload == null || payload.DocumentId != id)
             {
-                _logger.LogWarning("Invalid payload for document {DocumentId}. Expected ID: {ExpectedId}, Received ID: {ReceivedId}", id, id, result?.Id ?? "null");
+                _logger.LogWarning("Invalid payload for document {DocumentId}. Expected ID: {ExpectedId}, Received ID: {ReceivedId}", id, id, payload?.DocumentId ?? "null");
                 return BadRequest("Invalid payload");
             }
             try
             {
                 await _documentService.UpdateDocumentAsync(
-                    result.Id,
-                    result.OcrResult,
-                    result.SummaryResult
+                    payload.DocumentId,
+                    payload.CategoryId,
+                    payload.OcrResult,
+                    payload.SummaryResult
                 );
 
                 _logger.LogInformation("POST /document/{id} updated document successfully.", id);

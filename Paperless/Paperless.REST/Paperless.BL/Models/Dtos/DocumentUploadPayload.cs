@@ -4,7 +4,7 @@ namespace Paperless.BL.Models.Dtos
 {
     public class DocumentUploadPayload
     {
-        public Guid Id { get; set; }
+        public Guid DocumentId { get; set; }
         public List<Category> Categories { get; set; } = [];
     }
 }

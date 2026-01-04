@@ -167,31 +167,41 @@ namespace Paperless.BL.Services.Documents
             }
         }
 
-        public async Task UpdateDocumentAsync(string id, string content, string summary)
+        public async Task UpdateDocumentAsync(string documentId, string categoryId, string content, string summary)
         {
             _logger.LogInformation(
-                "Updating document. ID: {DocumentId}, Content length: {ContentLength} characters, Summary length: {SummaryLength} characters.",
-                id,
+                "Updating document. " +
+                "ID: {DocumentId}, Category: {Category}, Content length: {ContentLength} characters, Summary length: {SummaryLength} characters.",
+                documentId,
+                categoryId,
                 content?.Length ?? 0,
                 summary?.Length ?? 0
             );
 
             try
             {
-                if (!Guid.TryParse(id, out Guid documentId))
+                if (!Guid.TryParse(documentId, out Guid documentGuid))
                 {
                     _logger.LogError(
                         "Invalid document ID format received from queue: {DocumentIdString}",
-                        id
+                        documentId
                     );
-                    throw new ServiceException($"Invalid document ID format: {id}", ExceptionType.Validation);
+                    throw new ServiceException($"Invalid document ID format: {documentId}", ExceptionType.Validation);
                 }
 
-                await _documentRepository.UpdateDocumentContentAsync(documentId, content, summary);
+                if (!Guid.TryParse(categoryId, out Guid categoryGuid))
+                {
+                    _logger.LogError(
+                        "Invalid document ID format received from queue: {DocumentIdString}",
+                        categoryId
+                    );
+                    throw new ServiceException($"Invalid document ID format: {categoryId}", ExceptionType.Validation);
+                }
+
+                await _documentRepository.UpdateDocumentContentAsync(documentGuid, categoryGuid, content, summary);
                 _logger.LogInformation(
-                    "Document {DocumentId} summary updated in database. Summary length: {SummaryLength}",
-                    id,
-                    summary.Length
+                    "Document {DocumentId} summary updated in database.",
+                    documentId
                 );
             }
             catch (DatabaseException ex)
@@ -199,7 +209,7 @@ namespace Paperless.BL.Services.Documents
                 _logger.LogError(
                     ex,
                     "Failed to update document {DocumentId} summary in database.",
-                    id
+                    documentId
                 );
                 throw new ServiceException("Could not update document summary.", ExceptionType.Internal, ex);
             }

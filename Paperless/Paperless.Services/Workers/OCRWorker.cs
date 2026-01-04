@@ -52,21 +52,21 @@ namespace Paperless.Services.Workers
                 _logger.LogInformation(
                     "Processing {RequestType} request for Document with ID {Id}.",
                     "OCR",
-                    payload.Id
+                    payload.DocumentId
                 );
 
                 //  Download file (stream) and title from MinIO
-                MemoryStream documentContent = await _storageService.DownloadDocumentAsync(payload.Id);
+                MemoryStream documentContent = await _storageService.DownloadDocumentAsync(payload.DocumentId.ToString());
                 if (documentContent.Length <= 0)
                     throw new Exception("Document stream is empty.");
-                string title = await _storageService.GetDocumentTitleAsync(payload.Id);
+                string title = await _storageService.GetDocumentTitleAsync(payload.DocumentId.ToString());
 
                 //  Process file to text using OCR
                 OCRResult result = _ocrService.ProcessPdf(documentContent);
 
                 OCRCompletedPayload ocrCompletedPayload = new OCRCompletedPayload
                 {
-                    Id = payload.Id,
+                    DocumentId = payload.DocumentId,
                     Title = title,
                     OCRResult = result.PDFContent ?? "Error processing document content.",
                     Categories = payload.Categories
@@ -76,7 +76,7 @@ namespace Paperless.Services.Workers
                     "{RequestType} processing completed successfully.\n" +
                     "Document ID: {Id}, Title: {Title}, Pages processed: {PageCount}, Content length: {ContentLength} characters.",
                     "OCR",
-                    ocrCompletedPayload.Id,
+                    ocrCompletedPayload.DocumentId,
                     ocrCompletedPayload.Title,
                     result.Pages.Count,
                     result.PDFContent?.Length ?? 0

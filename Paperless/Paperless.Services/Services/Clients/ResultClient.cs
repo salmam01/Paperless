@@ -26,7 +26,7 @@ namespace Paperless.Services.Services.Clients
         {
             _logger.LogInformation(
                 "Sending received Worker Results for Document with ID {Id} to REST server.",
-                payload.Id
+                payload.DocumentId
             );
 
             using StringContent content = new(
@@ -35,7 +35,7 @@ namespace Paperless.Services.Services.Clients
                 "application/json"
             );
 
-            Uri endpoint = new Uri(_baseUrl, $"{payload.Id}");
+            Uri endpoint = new Uri(_baseUrl, $"{payload.DocumentId}");
 
             using HttpResponseMessage response = await _client.PostAsync(
                 endpoint,
@@ -47,15 +47,15 @@ namespace Paperless.Services.Services.Clients
             {
                 _logger.LogInformation(
                     "Sent results for Document with ID {Id} to REST server successfully. OCR result length: {OcrLength}, Summary length: {SummaryLength}",
-                    payload.Id,
+                    payload.DocumentId,
                     payload.OCRResult?.Length ?? 0,
-                payload.Summary?.Length ?? 0
+                    payload.Summary?.Length ?? 0
                 );
             } else {
                 _logger.LogWarning(
                     "REST server returned non-success status {Status} for ID {Id}. Body: {Body}",
                     response.StatusCode,
-                    payload.Id,
+                    payload.DocumentId,
                     jsonResponse
                 );
             }

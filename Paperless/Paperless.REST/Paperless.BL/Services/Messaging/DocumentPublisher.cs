@@ -37,7 +37,7 @@ namespace Paperless.BL.Services.Messaging
 
                 DocumentUploadPayload payload = new DocumentUploadPayload
                 {
-                    Id = id,
+                    DocumentId = id,
                     Categories = categories
                 };
 

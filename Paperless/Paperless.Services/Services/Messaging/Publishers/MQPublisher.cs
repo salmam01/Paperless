@@ -56,7 +56,7 @@ namespace Paperless.Services.Services.Messaging.Publishers
 
                 _logger.LogInformation(
                     "Document {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for {Reason}.",
-                    payload.Id,
+                    payload.DocumentId,
                     _exchangeName,
                     _config.RoutingKeys[0],
                     "Summary Generation"
@@ -68,7 +68,7 @@ namespace Paperless.Services.Services.Messaging.Publishers
                     ex,
                     "Failed to publish Document {Id} to Exchange {ExchangeName} with Routing Key {RoutingKey}. " +
                     "Error:\n{ErrorMessage}",
-                    payload.Id,
+                    payload.DocumentId,
                     _exchangeName,
                     _config.RoutingKeys[0],
                     ex.Message
@@ -105,7 +105,7 @@ namespace Paperless.Services.Services.Messaging.Publishers
 
                 _logger.LogInformation(
                     "Document {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for {Reason}.",
-                    payload.Id,
+                    payload.DocumentId,
                     _exchangeName,
                     _config.RoutingKeys[1],
                     "Document Indexing"
@@ -117,7 +117,7 @@ namespace Paperless.Services.Services.Messaging.Publishers
                     ex,
                     "Failed to publish Document {Id} to Exchange {ExchangeName} with Routing Key {RoutingKey}. " +
                     "Error:\n{ErrorMessage}",
-                    payload.Id,
+                    payload.DocumentId,
                     _exchangeName,
                     _config.RoutingKeys[1],
                     ex.Message

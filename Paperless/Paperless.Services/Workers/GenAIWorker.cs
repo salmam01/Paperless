@@ -43,14 +43,14 @@ namespace Paperless.Services.Workers
             try
             {
                 //  Deserialize incoming payload
-                //  TODO: OCRCompletedPayload contains category list => use that for the category
+                //  TODO: OCRCompletedPayload contains category list => use that for summary worker to get the category
                 OCRCompletedPayload payload = _mqListener.ProcessPayload(ea);
 
-                if (payload == null || 
-                    string.IsNullOrEmpty(payload.Id) || 
+                if (payload == null ||
+                    payload.DocumentId == Guid.Empty || 
                     string.IsNullOrEmpty(payload.Title) || 
                     string.IsNullOrEmpty(payload.OCRResult) ||
-                    !payload.Categories.Any()
+                    payload.Categories.Count == 0
                 ) {
                     _logger.LogWarning(
                         "Received invalid message from queue inside {WorkerType} Worker. Skipping processing.",
@@ -63,7 +63,7 @@ namespace Paperless.Services.Workers
                     "Processing {RequestType} request for Document with ID {Id}. " +
                     "OCR result length: {OcrLength} characters.",
                     "Summary",
-                    payload.Id,
+                    payload.DocumentId,
                     payload.OCRResult?.Length ?? 0
                 );
                 
@@ -82,7 +82,7 @@ namespace Paperless.Services.Workers
                         "Document {DocumentId} has insufficient content for summary generation." +
                         "\nContent length: {ContentLength} characters (minimum: {MinLength})." +
                         "\nSetting default summary message.",
-                        payload.Id,
+                        payload.DocumentId,
                         trimmedContent.Length,
                         MIN_CONTENT_LENGTH
                     );
@@ -100,7 +100,7 @@ namespace Paperless.Services.Workers
                         _logger.LogWarning(
                             argEx,
                             "Document {DocumentId} failed content validation for summary generation. Setting default summary.\nError: {ErrorMessage}",
-                            payload.Id,
+                            payload.DocumentId,
                             argEx.Message
                         );
                         summary = "No summary available - Document doesn't contain enough readable text..";                    }
@@ -110,7 +110,7 @@ namespace Paperless.Services.Workers
                         _logger.LogError(
                             apiEx,
                             "Failed to generate summary via API for document {DocumentId}. Setting default summary.\nError: {ErrorMessage}",
-                            payload.Id,
+                            payload.DocumentId,
                             apiEx.Message
                         );
                         summary = "No summary available: Error generating summary.";
@@ -119,9 +119,9 @@ namespace Paperless.Services.Workers
 
                 SummaryCompletedPayload summaryPayload = new SummaryCompletedPayload
                 {
-                    Id = payload.Id,
+                    DocumentId = payload.DocumentId,
                     Title = payload.Title,
-                    Category = string.Empty, // TODO: update this!
+                    CategoryId = payload.Categories[0].Id, // TODO: update this!
                     OCRResult = payload.OCRResult,
                     Summary = summary
                 };
@@ -130,7 +130,7 @@ namespace Paperless.Services.Workers
                     "Successfully processed summary for document {DocumentId}." +
                     "\nSummary length: {SummaryLength}" +
                     "\n*** Summary ***\n{Summary}",
-                    payload.Id,
+                    payload.DocumentId,
                     summary.Length,
                     summary
                 );

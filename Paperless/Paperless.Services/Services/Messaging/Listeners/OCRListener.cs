@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.DTOs.Payloads;
 using Paperless.Services.Services.Messaging.Base;
 using RabbitMQ.Client.Events;
 using System.Text;
+using System.Text.Json;
 
 namespace Paperless.Services.Services.Messaging.Listeners
 {
@@ -58,20 +58,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
                     body.Length
                 );
 
-                JObject jsonObject = JObject.Parse(body);
-                
-                if (jsonObject.TryGetValue("Id", out JToken? idToken))
-                    payload.Id = idToken?.ToString() ?? string.Empty;
-
-                if (jsonObject["Categories"] is JArray categoriesArray)
-                {
-                    foreach (var category in categoriesArray)
-                    {
-                        var name = category["Name"]?.ToString();
-                        if (!string.IsNullOrWhiteSpace(name))
-                            payload.Categories.Add(name);
-                    }
-                }
+                payload = JsonSerializer.Deserialize<OCRPayload>(body);
 
                 return payload;
             }
