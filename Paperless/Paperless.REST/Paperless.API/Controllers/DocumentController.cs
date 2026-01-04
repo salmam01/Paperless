@@ -246,7 +246,7 @@ namespace Paperless.API.Controllers
                 payload?.DocumentId ?? "Unknown",
                 payload?.CategoryId ?? "Unknown",
                 payload?.OcrResult?.Length ?? 0,
-                payload?.SummaryResult?.Length ?? 0
+                payload?.Summary?.Length ?? 0
             );
 
             if (payload == null || payload.DocumentId != id)
@@ -260,7 +260,7 @@ namespace Paperless.API.Controllers
                     payload.DocumentId,
                     payload.CategoryId,
                     payload.OcrResult,
-                    payload.SummaryResult
+                    payload.Summary
                 );
 
                 _logger.LogInformation("POST /document/{id} updated document successfully.", id);

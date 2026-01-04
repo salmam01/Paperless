@@ -121,7 +121,7 @@ namespace Paperless.Services.Workers
                 {
                     DocumentId = payload.DocumentId,
                     Title = payload.Title,
-                    CategoryId = payload.Categories[0].Id, // TODO: update this!
+                    CategoryId = payload.Categories[0].Id, // TODO: update this! (PLACEHOLDER)
                     OCRResult = payload.OCRResult,
                     Summary = summary
                 };
