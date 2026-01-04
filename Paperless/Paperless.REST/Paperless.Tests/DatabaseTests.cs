@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Paperless.DAL.Database;
 using Paperless.DAL.Entities;
-using Paperless.DAL.Repositories;
+using Paperless.DAL.Repositories.Documents;
 
 namespace Paperless.Tests;
 

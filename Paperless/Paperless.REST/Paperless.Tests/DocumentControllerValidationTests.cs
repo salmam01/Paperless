@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Paperless.API.Controllers;
-using Paperless.BL.Services;
 using Microsoft.Extensions.Options;
 using Paperless.BL.Configurations;
 using Paperless.BL.Services.Messaging;
+using Paperless.BL.Services.Documents;
 
 namespace Paperless.Tests;
 
@@ -28,11 +28,13 @@ public class DocumentControllerValidationTests
         return controller;
     }
 
+    /*
     public DocumentControllerValidationTests()
     {
         RabbitMQConfig cfg = new RabbitMQConfig { Host = "localhost", Port = 5672, User = "guest", Password = "guest", QueueName = "test" };
         _publisher = new DocumentPublisher(Options.Create(cfg), Mock.Of<ILogger<DocumentPublisher>>());
     }
+    */
 
     [Fact]
     public async Task Delete_InvalidGuid_ReturnsBadRequest()

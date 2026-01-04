@@ -5,6 +5,7 @@ namespace Paperless.BL.Models.Domain
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public string? Name { get; set; }
+        public Guid? CategoryId { get; set; }
         public string? Content { get; set; }
         public string? Summary { get; set; }
         public string? FilePath { get; set; }
@@ -13,10 +14,20 @@ namespace Paperless.BL.Models.Domain
         public double Size { get; set; }
 
         public Document() { }
-        public Document(Guid id, string name, string content, string summary, string filePath, DateTime creationDate, string type, double size)
-        {
+        public Document(
+            Guid id, 
+            string name,
+            Guid? categoryId,
+            string content, 
+            string summary, 
+            string filePath, 
+            DateTime creationDate, 
+            string type, 
+            double size
+        ) {
             Id = id;
             Name = name;
+            CategoryId = categoryId;
             Content = content;
             Summary = summary;
             FilePath = filePath;

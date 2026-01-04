@@ -2,6 +2,7 @@
 using Minio;
 using Minio.DataModel.Args;
 using Paperless.Services.Configurations;
+using System.IO;
 
 namespace Paperless.Services.Services.FileStorage
 {
@@ -54,6 +55,20 @@ namespace Paperless.Services.Services.FileStorage
                 stream.Length
             );
             return stream;
+        }
+
+        public async Task<string> GetDocumentTitleAsync(string id)
+        {
+            var documentStat = await _minIO.StatObjectAsync(
+                new StatObjectArgs()
+                    .WithBucket(_bucketName)
+                    .WithObject($"{id}.pdf")
+            );
+
+            if (documentStat.MetaData.TryGetValue("title", out string? title))
+                return title;
+
+            return "Untitled";
         }
 
         private async Task<bool> CheckIfBucketExists()

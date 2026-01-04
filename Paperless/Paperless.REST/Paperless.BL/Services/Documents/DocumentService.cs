@@ -4,18 +4,20 @@ using Paperless.BL.Exceptions;
 using Paperless.BL.Helpers;
 using Paperless.BL.Models.Domain;
 using Paperless.BL.Models.DTOs;
+using Paperless.BL.Services.Categories;
 using Paperless.BL.Services.Messaging;
 using Paperless.BL.Services.Search;
 using Paperless.BL.Services.Storage;
 using Paperless.DAL.Entities;
 using Paperless.DAL.Exceptions;
-using Paperless.DAL.Repositories;
+using Paperless.DAL.Repositories.Documents;
 
 
-namespace Paperless.BL.Services
+namespace Paperless.BL.Services.Documents
 {
     public class DocumentService (
         IDocumentRepository documentrepository,
+        ICategoryService categoryService,
         IDocumentSearchService searchService,
         IDocumentPublisher documentPublisher,
         IStorageService storageService,
@@ -25,6 +27,7 @@ namespace Paperless.BL.Services
     ) : IDocumentService
     {
         private readonly IDocumentRepository _documentRepository = documentrepository;
+        private readonly ICategoryService _categoryService = categoryService;
         private readonly IDocumentSearchService _searchService = searchService;
         private readonly IDocumentPublisher _documentPublisher = documentPublisher;
         private readonly IStorageService _storageService = storageService;
@@ -75,7 +78,7 @@ namespace Paperless.BL.Services
             }
         }
 
-        public async Task<List<Document>> SearchForDocument(string query)
+        public async Task<List<Document>> SearchForDocumentAsync(string query)
         {
             _logger.LogInformation("Retrieving document by query {query} from database.", query);
 
@@ -117,16 +120,18 @@ namespace Paperless.BL.Services
             try
             {
                 AdjustFileType(document);
+                List<Category> categories = await _categoryService.GetCategoriesAsync();
 
                 if (document.Type == "PDF")
                 {
-                    await _storageService.StoreDocumentAsync(document.Id, document.Type, content);
-                    await _documentPublisher.PublishDocumentAsync(document.Id);
+                    await _storageService.StoreDocumentAsync(document, content);
+                    await _documentPublisher.PublishDocumentAsync(document.Id, categories);
                 }
+                //  TODO: fix logic
                 else
                 {
                     _parser.ParseDocument(document, content);
-                    await _storageService.StoreDocumentAsync(document.Id, document.Type, content);
+                    await _storageService.StoreDocumentAsync(document, content);
                 }
 
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
@@ -162,31 +167,41 @@ namespace Paperless.BL.Services
             }
         }
 
-        public async Task UpdateDocumentAsync(string id, string content, string summary)
+        public async Task UpdateDocumentAsync(string documentId, string categoryId, string content, string summary)
         {
             _logger.LogInformation(
-                "Updating document. ID: {DocumentId}, Content length: {ContentLength} characters, Summary length: {SummaryLength} characters.",
-                id,
+                "Updating document. " +
+                "ID: {DocumentId}, Category: {Category}, Content length: {ContentLength} characters, Summary length: {SummaryLength} characters.",
+                documentId,
+                categoryId,
                 content?.Length ?? 0,
                 summary?.Length ?? 0
             );
 
             try
             {
-                if (!Guid.TryParse(id, out Guid documentId))
+                if (!Guid.TryParse(documentId, out Guid documentGuid))
                 {
                     _logger.LogError(
                         "Invalid document ID format received from queue: {DocumentIdString}",
-                        id
+                        documentId
                     );
-                    throw new ServiceException($"Invalid document ID format: {id}", ExceptionType.Validation);
+                    throw new ServiceException($"Invalid document ID format: {documentId}", ExceptionType.Validation);
                 }
 
-                await _documentRepository.UpdateDocumentContentAsync(documentId, content, summary);
+                if (!Guid.TryParse(categoryId, out Guid categoryGuid))
+                {
+                    _logger.LogError(
+                        "Invalid document ID format received from queue: {DocumentIdString}",
+                        categoryId
+                    );
+                    throw new ServiceException($"Invalid document ID format: {categoryId}", ExceptionType.Validation);
+                }
+
+                await _documentRepository.UpdateDocumentContentAsync(documentGuid, categoryGuid, content, summary);
                 _logger.LogInformation(
-                    "Document {DocumentId} summary updated in database. Summary length: {SummaryLength}",
-                    id,
-                    summary.Length
+                    "Document {DocumentId} summary updated in database.",
+                    documentId
                 );
             }
             catch (DatabaseException ex)
@@ -194,7 +209,7 @@ namespace Paperless.BL.Services
                 _logger.LogError(
                     ex,
                     "Failed to update document {DocumentId} summary in database.",
-                    id
+                    documentId
                 );
                 throw new ServiceException("Could not update document summary.", ExceptionType.Internal, ex);
             }
@@ -207,6 +222,7 @@ namespace Paperless.BL.Services
             try
             {
                 await _storageService.DeleteDocumentsAsync();
+                await _documentPublisher.DeleteDocumentsAsync();
                 await _documentRepository.DeleteDocumentsAsync();
             }
             catch (DatabaseException ex)
@@ -231,6 +247,7 @@ namespace Paperless.BL.Services
                 Document document = _mapper.Map<Document>(entity);
 
                 await _storageService.DeleteDocumentAsync(id, document.Type);
+                await _documentPublisher.DeleteDocumentAsync(id);
                 await _documentRepository.DeleteDocumentAsync(id);
             }
             catch (DatabaseException ex)

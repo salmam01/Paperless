@@ -4,6 +4,7 @@
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
+        public Guid? CategoryId { get; set; }
         public string Content { get; set; }
         public string Summary { get; set; }
         public string FilePath { get; set; }
@@ -13,10 +14,20 @@
 
         public DocumentDTO() { }
 
-        public DocumentDTO(Guid id, string name, string content, string summary, string filePath, DateTime creationDate, string type, double size)
-        {
+        public DocumentDTO(
+            Guid id, 
+            string name, 
+            Guid? categoryId, 
+            string content, 
+            string summary, 
+            string filePath,
+            DateTime creationDate, 
+            string type, 
+            double size
+        ) {
             Id = id;
             Name = name;
+            CategoryId = categoryId;
             Content = content;
             Summary = summary;
             FilePath = filePath;

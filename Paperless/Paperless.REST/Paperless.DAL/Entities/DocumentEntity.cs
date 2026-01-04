@@ -2,7 +2,6 @@
 
 namespace Paperless.DAL.Entities
 {
-    //  TODO: Document should be stored somewhere on the filesystem (with reference to ID) in later sprints
     public class DocumentEntity
     {
         [Key]
@@ -11,8 +10,10 @@ namespace Paperless.DAL.Entities
         //  Content
         [Required]
         public string? Name { get; set; }
+        public Guid? CategoryId { get; set; }
+        public CategoryEntity? Category { get; set; }
         [Required]
-        public string? Content { get; set; } // temporary, should not be stored in db
+        public string? Content { get; set; }
         [Required]
         public string? Summary { get; set; }
 
@@ -20,7 +21,7 @@ namespace Paperless.DAL.Entities
         [Required]
         public string? FilePath { get; set; }
 
-        //  Meta data
+        //  Meta Data
         [Required]
         public DateTime CreationDate { get; set; }
         [Required]

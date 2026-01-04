@@ -148,16 +148,5 @@ namespace Paperless.Services.Services.OCR
 
             return images;
         }
-
-        
-        public string ExtractPdfTitle(MemoryStream documentContent)
-        {
-            documentContent.Position = 0;
-            using PdfReader reader = new(documentContent);
-            using PdfDocument pdfDocument = new(reader);
-            var info = pdfDocument.GetDocumentInfo();
-
-            return info.GetTitle() ?? "Untitled";
-        }
     }
 }

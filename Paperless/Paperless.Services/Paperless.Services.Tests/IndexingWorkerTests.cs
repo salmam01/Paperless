@@ -5,11 +5,12 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.Search;
-using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.Search;
 using Paperless.Services.Workers;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
+using Paperless.Services.Services.Messaging.Base;
 
 namespace Paperless.Services.Tests
 {
@@ -24,8 +25,8 @@ namespace Paperless.Services.Tests
             _loggerMock = new Mock<ILogger<IndexingWorker>>();
             
             // Setup QueueConfig mock
-            Mock<IOptions<QueueConfig>> queueConfigMock = new Mock<IOptions<QueueConfig>>();
-            queueConfigMock.Setup(x => x.Value).Returns(new QueueConfig
+            Mock<IOptions<ListenerConfig>> queueConfigMock = new Mock<IOptions<ListenerConfig>>();
+            queueConfigMock.Setup(x => x.Value).Returns(new ListenerConfig
             {
                 QueueName = "indexing.queue",
                 ExchangeName = "services.fanout",

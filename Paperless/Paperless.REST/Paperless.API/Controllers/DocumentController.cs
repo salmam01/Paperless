@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Paperless.API.DTOs;
 using Paperless.BL.Exceptions;
 using Paperless.BL.Models.Domain;
-using Paperless.BL.Services;
+using Paperless.BL.Services.Documents;
 
 namespace Paperless.API.Controllers
 {
@@ -132,7 +132,7 @@ namespace Paperless.API.Controllers
 
             try
             {
-                List<Document> documents = await _documentService.SearchForDocument(query);
+                List<Document> documents = await _documentService.SearchForDocumentAsync(query);
                 List<DocumentDTO> documentDTO = _mapper.Map<List<DocumentDTO>>(documents);
 
                 _logger.LogInformation(
@@ -236,28 +236,31 @@ namespace Paperless.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult> PostServicesResult([FromRoute] string id, [FromBody] WorkerResultDTO result)
+        public async Task<ActionResult> PostServicesResult([FromRoute] string id, [FromBody] ServicesResultDTO payload)
         {
             _logger.LogInformation(
-                "Incoming POST /document/{id} from {ip}. Document ID: {DocumentId}, OCR result length: {OcrLength}, Summary length: {SummaryLength}",
+                "Incoming POST /document/{id} from {ip}. " +
+                "Document ID: {DocumentId}, Category: {Category}, OCR result length: {OcrLength}, Summary length: {SummaryLength}",
                 id,
                 HttpContext.Connection.RemoteIpAddress?.ToString(),
-                result?.Id ?? "Unknown",
-                result?.OcrResult?.Length ?? 0,
-                result?.SummaryResult?.Length ?? 0
+                payload?.DocumentId ?? "Unknown",
+                payload?.CategoryId ?? "Unknown",
+                payload?.OcrResult?.Length ?? 0,
+                payload?.Summary?.Length ?? 0
             );
 
-            if (result == null || result.Id != id)
+            if (payload == null || payload.DocumentId != id)
             {
-                _logger.LogWarning("Invalid payload for document {DocumentId}. Expected ID: {ExpectedId}, Received ID: {ReceivedId}", id, id, result?.Id ?? "null");
+                _logger.LogWarning("Invalid payload for document {DocumentId}. Expected ID: {ExpectedId}, Received ID: {ReceivedId}", id, id, payload?.DocumentId ?? "null");
                 return BadRequest("Invalid payload");
             }
             try
             {
                 await _documentService.UpdateDocumentAsync(
-                    result.Id,
-                    result.OcrResult,
-                    result.SummaryResult
+                    payload.DocumentId,
+                    payload.CategoryId,
+                    payload.OcrResult,
+                    payload.Summary
                 );
 
                 _logger.LogInformation("POST /document/{id} updated document successfully.", id);
@@ -399,6 +402,7 @@ namespace Paperless.API.Controllers
             (
                 id,
                 form.FileName,
+                null,
                 "loading...",
                 "loading...",
                 $"{id}.{form.FileName}",

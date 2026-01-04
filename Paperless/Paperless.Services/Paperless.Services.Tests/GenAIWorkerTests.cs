@@ -4,8 +4,9 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.DTOs;
-using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.Clients;
+using Paperless.Services.Services.Messaging;
+using Paperless.Services.Services.Messaging.Base;
 using Paperless.Services.Workers;
 
 namespace Paperless.Services.Tests
@@ -14,16 +15,16 @@ namespace Paperless.Services.Tests
     {
         private readonly Mock<ILogger<GenAIWorker>> _loggerMock;
         private readonly Mock<MQListener> _mqListenerMock;
-        private readonly Mock<GenAIService> _genAIServiceMock;
-        private readonly Mock<WorkerResultsService> _workerResultsServiceMock;
+        private readonly Mock<SummaryService> _genAIServiceMock;
+        private readonly Mock<ResultClient> _workerResultsServiceMock;
 
         public GenAIWorkerTests()
         {
             _loggerMock = new Mock<ILogger<GenAIWorker>>();
             
             // Setup QueueConfig mock
-            Mock<IOptions<QueueConfig>> queueConfigMock = new Mock<IOptions<QueueConfig>>();
-            queueConfigMock.Setup(x => x.Value).Returns(new QueueConfig
+            Mock<IOptions<ListenerConfig>> queueConfigMock = new Mock<IOptions<ListenerConfig>>();
+            queueConfigMock.Setup(x => x.Value).Returns(new ListenerConfig
             {
                 QueueName = "summary.queue",
                 ExchangeName = "services.fanout",
@@ -59,9 +60,9 @@ namespace Paperless.Services.Tests
                 TimeoutSeconds = 30
             });
             
-            _genAIServiceMock = new Mock<GenAIService>(
+            _genAIServiceMock = new Mock<SummaryService>(
                 genAIConfigMock.Object,
-                Mock.Of<ILogger<GenAIService>>(),
+                Mock.Of<ILogger<SummaryService>>(),
                 new HttpClient()
             );
             
@@ -72,8 +73,8 @@ namespace Paperless.Services.Tests
                 Url = "https://localhost:5001/api/documents/"
             });
             
-            _workerResultsServiceMock = new Mock<WorkerResultsService>(
-                Mock.Of<ILogger<WorkerResultsService>>(),
+            _workerResultsServiceMock = new Mock<ResultClient>(
+                Mock.Of<ILogger<ResultClient>>(),
                 new HttpClient(),
                 endpointsConfigMock.Object
             );
@@ -82,7 +83,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void can_create_worker()
         {
-            GenAIWorker worker = new GenAIWorker(
+            GenAIWorker worker = new SummaryWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _genAIServiceMock.Object,
@@ -95,7 +96,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void worker_gets_created_successfully()
         {
-            GenAIWorker worker = new GenAIWorker(
+            GenAIWorker worker = new SummaryWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _genAIServiceMock.Object,
@@ -108,7 +109,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void is_a_background_service()
         {
-            GenAIWorker worker = new GenAIWorker(
+            GenAIWorker worker = new SummaryWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _genAIServiceMock.Object,
@@ -122,7 +123,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void handles_empty_message()
         {
-            GenAIWorker worker = new GenAIWorker(
+            GenAIWorker worker = new SummaryWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _genAIServiceMock.Object,
@@ -134,7 +135,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void handles_invalid_json_message()
         {
-            GenAIWorker worker = new GenAIWorker(
+            GenAIWorker worker = new SummaryWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _genAIServiceMock.Object,
@@ -147,7 +148,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void handles_message_without_id()
         {
-            GenAIWorker worker = new GenAIWorker(
+            GenAIWorker worker = new SummaryWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _genAIServiceMock.Object,
@@ -160,7 +161,7 @@ namespace Paperless.Services.Tests
         [Fact]
         public void handles_message_without_ocr_result()
         {
-            GenAIWorker worker = new GenAIWorker(
+            GenAIWorker worker = new SummaryWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
                 _genAIServiceMock.Object,

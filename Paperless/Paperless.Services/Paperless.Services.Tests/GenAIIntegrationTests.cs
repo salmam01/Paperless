@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.DTOs;
-using Paperless.Services.Services.HttpClients;
+using Paperless.Services.Services.Clients;
 
 namespace Paperless.Services.Tests
 {
@@ -11,8 +11,8 @@ namespace Paperless.Services.Tests
     // Checking if GenAI components work together
     public class GenAIIntegrationTests
     {
-        private readonly Mock<ILogger<GenAIService>> _genAILoggerMock;
-        private readonly Mock<ILogger<WorkerResultsService>> _workerResultsLoggerMock;
+        private readonly Mock<ILogger<SummaryService>> _genAILoggerMock;
+        private readonly Mock<ILogger<ResultClient>> _workerResultsLoggerMock;
         private readonly Mock<IOptions<GenAIConfig>> _genAIConfigMock;
         private readonly Mock<IOptions<RESTConfig>> _endpointsConfigMock;
         private readonly GenAIConfig _testGenAIConfig;
@@ -20,8 +20,8 @@ namespace Paperless.Services.Tests
 
         public GenAIIntegrationTests()
         {
-            _genAILoggerMock = new Mock<ILogger<GenAIService>>();
-            _workerResultsLoggerMock = new Mock<ILogger<WorkerResultsService>>();
+            _genAILoggerMock = new Mock<ILogger<SummaryService>>();
+            _workerResultsLoggerMock = new Mock<ILogger<ResultClient>>();
             _genAIConfigMock = new Mock<IOptions<GenAIConfig>>();
             _endpointsConfigMock = new Mock<IOptions<RESTConfig>>();
 
@@ -47,7 +47,7 @@ namespace Paperless.Services.Tests
         public void genai_service_uses_http_client()
         {
             HttpClient httpClient = new HttpClient();
-            GenAIService service = new GenAIService(
+            SummaryService service = new SummaryService(
                 _genAIConfigMock.Object,
                 _genAILoggerMock.Object,
                 httpClient
@@ -61,7 +61,7 @@ namespace Paperless.Services.Tests
         public void worker_results_service_uses_http_client()
         {
             HttpClient httpClient = new HttpClient();
-            WorkerResultsService service = new WorkerResultsService(
+            ResultClient service = new ResultClient(
                 _workerResultsLoggerMock.Object, httpClient,
                 _endpointsConfigMock.Object
             );

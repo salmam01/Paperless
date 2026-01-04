@@ -1,76 +1,88 @@
-﻿using Paperless.Services.Models.DTOs;
-using Paperless.Services.Services.HttpClients;
-using Paperless.Services.Services.MessageQueues;
+﻿using Paperless.Services.Models.DTOs.Payloads;
+using Paperless.Services.Services.Clients;
+using Paperless.Services.Services.Messaging.Listeners;
+using Paperless.Services.Services.Messaging.Publishers;
 using RabbitMQ.Client.Events;
-using System.Text.Json;
 
 namespace Paperless.Services.Workers
 {
     public class GenAIWorker : BackgroundService
     {
         private readonly ILogger<GenAIWorker> _logger;
-        private readonly MQListener _mqListener;
-        private readonly GenAIService _genAIService;
-        private readonly WorkerResultsService _workerResultsService;
+        private readonly GenAIListener _mqListener;
+        private readonly MQPublisher _mqPublisher;
+        private readonly SummaryService _genAIService;
+        private readonly ResultClient _workerResultsService;
 
         public GenAIWorker(
             ILogger<GenAIWorker> logger,
-            [FromKeyedServices("SummaryListener")] MQListener mqListener,
-            GenAIService genAIService,
-            WorkerResultsService workerResultsService
+            GenAIListener mqListener,
+            MQPublisher mqPublisher,
+            SummaryService genAIService,
+            ResultClient workerResultsService
         ) {
             _logger = logger;
             _mqListener = mqListener;
+            _mqPublisher = mqPublisher;
             _genAIService = genAIService;
             _workerResultsService = workerResultsService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("GenAI Worker is starting...");
+            _logger.LogInformation(
+                "{WorkerType} Worker is starting ...",
+                "Summary"
+            );
+
             await _mqListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
         }
 
-        private async Task HandleMessageAsync(string message, BasicDeliverEventArgs ea)
+        private async Task HandleMessageAsync(BasicDeliverEventArgs ea)
         {
-            _logger.LogInformation(
-                "Processing message from queue inside GenAI Worker.\nMessage length: {MessageLength} characters.",
-                message?.Length ?? 0
-            );
-
             try
             {
-                if (string.IsNullOrEmpty(message))
-                {
-                    _logger.LogWarning("Received empty message from queue inside GenAI Worker. Skipping processing.");
-                    return;
-                }
+                //  Deserialize incoming payload
+                //  TODO: OCRCompletedPayload contains category list => use that for summary worker to get the category
+                OCRCompletedPayload payload = _mqListener.ProcessPayload(ea);
 
-                DocumentDTO document = ParseMessage(message);
-                if (document == null || string.IsNullOrEmpty(document.Id))
-                {
-                    _logger.LogWarning("Received invalid message from queue inside GenAI Worker. Skipping processing.");
+                if (payload == null ||
+                    payload.DocumentId == Guid.Empty || 
+                    string.IsNullOrEmpty(payload.Title) || 
+                    string.IsNullOrEmpty(payload.OCRResult) ||
+                    payload.Categories.Count == 0
+                ) {
+                    _logger.LogWarning(
+                        "Received invalid message from queue inside {WorkerType} Worker. Skipping processing.",
+                        "Summary"
+                    );
                     return;
                 }
 
                 _logger.LogInformation(
-                    "Document {DocumentId} content retrieved.\nOCR result length: {OcrLength} characters.",
-                    document.Id,
-                    document.OcrResult?.Length ?? 0
+                    "Processing {RequestType} request for Document with ID {Id}. " +
+                    "OCR result length: {OcrLength} characters.",
+                    "Summary",
+                    payload.DocumentId,
+                    payload.OCRResult?.Length ?? 0
                 );
                 
-                // Check if OCR result has meaningful content (minimum 50 characters after trimming)
+                //  TODO: this step should be in a helper method or class
+                //  Check if OCR result has meaningful content (minimum 50 characters after trimming)
                 const int MIN_CONTENT_LENGTH = 50;
-                string trimmedContent = document.OcrResult?.Trim() ?? string.Empty;
+                string trimmedContent = payload.OCRResult?.Trim() ?? string.Empty;
                 
                 string summary;
+                //  TODO: AI selects a category from the list based on the generated summary
+                string category;
+
                 if (string.IsNullOrWhiteSpace(trimmedContent) || trimmedContent.Length < MIN_CONTENT_LENGTH)
                 {
                     _logger.LogWarning(
                         "Document {DocumentId} has insufficient content for summary generation." +
                         "\nContent length: {ContentLength} characters (minimum: {MinLength})." +
                         "\nSetting default summary message.",
-                        document.Id,
+                        payload.DocumentId,
                         trimmedContent.Length,
                         MIN_CONTENT_LENGTH
                     );
@@ -80,7 +92,7 @@ namespace Paperless.Services.Workers
                 {
                     try
                     {
-                        summary = await _genAIService.GenerateSummaryAsync(document.OcrResult);
+                        summary = await _genAIService.GenerateSummaryAsync(payload.OCRResult);
                     }
                     catch (ArgumentException argEx)
                     {
@@ -88,7 +100,7 @@ namespace Paperless.Services.Workers
                         _logger.LogWarning(
                             argEx,
                             "Document {DocumentId} failed content validation for summary generation. Setting default summary.\nError: {ErrorMessage}",
-                            document.Id,
+                            payload.DocumentId,
                             argEx.Message
                         );
                         summary = "No summary available - Document doesn't contain enough readable text..";                    }
@@ -98,36 +110,40 @@ namespace Paperless.Services.Workers
                         _logger.LogError(
                             apiEx,
                             "Failed to generate summary via API for document {DocumentId}. Setting default summary.\nError: {ErrorMessage}",
-                            document.Id,
+                            payload.DocumentId,
                             apiEx.Message
                         );
                         summary = "No summary available: Error generating summary.";
                     }
                 }
 
-                DocumentDTO workerResultDto = new DocumentDTO
+                SummaryCompletedPayload summaryPayload = new SummaryCompletedPayload
                 {
-                    Id = document.Id,
-                    OcrResult = document.OcrResult,
-                    SummaryResult = summary
+                    DocumentId = payload.DocumentId,
+                    Title = payload.Title,
+                    CategoryId = payload.Categories[0].Id, // TODO: update this! (PLACEHOLDER)
+                    OCRResult = payload.OCRResult,
+                    Summary = summary
                 };
 
                 _logger.LogInformation(
                     "Successfully processed summary for document {DocumentId}." +
                     "\nSummary length: {SummaryLength}" +
                     "\n*** Summary ***\n{Summary}",
-                    document.Id,
+                    payload.DocumentId,
                     summary.Length,
                     summary
                 );
 
-                await _workerResultsService.PostWorkerResultsAsync(workerResultDto);
+                //  Send OCR, Summary and Category results to REST server and IndexingWorker
+                await _workerResultsService.PostWorkerResultsAsync(summaryPayload);
+                await _mqPublisher.PublishSummaryResult(summaryPayload);
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Failed to process document inside GenAI Worker." +
+                    "Failed to process document inside Summary Worker." +
                     "\nError: {ErrorMessage}",
                     ex.Message
                 );
@@ -135,34 +151,13 @@ namespace Paperless.Services.Workers
             }
         }
 
-        //  Add a helper class
-        private DocumentDTO ParseMessage(string message)
-        {
-            Dictionary<string, string> jsonObject = JsonSerializer.Deserialize<Dictionary<string, string>>(message)
-                ?? new Dictionary<string, string>();
-
-            DocumentDTO document = new();
-
-            if (jsonObject == null || !jsonObject.ContainsKey("Id") || !jsonObject.ContainsKey("Title") || !jsonObject.ContainsKey("OcrResult"))
-            {
-                _logger.LogWarning(
-                    "Document is NULL. Skipping summary generation." +
-                    "\nMessage: {Message}",
-                    message
-                );
-                return document;
-            } 
-
-            document.Id = jsonObject["Id"];
-            document.Title = jsonObject["Title"];
-            document.OcrResult = jsonObject["OcrResult"];
-
-            return document;
-        }
-
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("GenAI Worker is stopping...");
+            _logger.LogInformation(
+                "{WorkerType} Worker is stopping...",
+                "Summary"
+            );
+
             await _mqListener.StopListeningAsync();
             await base.StopAsync(cancellationToken);
         }

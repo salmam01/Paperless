@@ -4,7 +4,9 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Services.FileStorage;
-using Paperless.Services.Services.MessageQueues;
+using Paperless.Services.Services.Messaging;
+using Paperless.Services.Services.Messaging.Base;
+using Paperless.Services.Services.Messaging.Publishers;
 using Paperless.Services.Services.OCR;
 using Paperless.Services.Workers;
 
@@ -23,8 +25,8 @@ namespace Paperless.Services.Tests
             _loggerMock = new Mock<ILogger<OCRWorker>>();
             
             // Setup QueueConfig mock
-            Mock<IOptions<QueueConfig>> queueConfigMock = new Mock<IOptions<QueueConfig>>();
-            queueConfigMock.Setup(x => x.Value).Returns(new QueueConfig
+            Mock<IOptions<ListenerConfig>> queueConfigMock = new Mock<IOptions<ListenerConfig>>();
+            queueConfigMock.Setup(x => x.Value).Returns(new ListenerConfig
             {
                 QueueName = "ocr.queue",
                 ExchangeName = "services.fanout",
