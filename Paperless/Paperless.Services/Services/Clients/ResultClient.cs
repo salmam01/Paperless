@@ -4,16 +4,16 @@ using Paperless.Services.Models.DTOs.Payloads;
 using System.Text;
 using System.Text.Json;
 
-namespace Paperless.Services.Services.HttpClients
+namespace Paperless.Services.Services.Clients
 {
-    public class WorkerResultsService
+    public class ResultClient
     {
-        private readonly ILogger<WorkerResultsService> _logger;
+        private readonly ILogger<ResultClient> _logger;
         private readonly HttpClient _client;
         private readonly Uri _baseUrl;
 
-        public WorkerResultsService(
-            ILogger<WorkerResultsService> logger,
+        public ResultClient(
+            ILogger<ResultClient> logger,
             HttpClient client, 
             IOptions<RESTConfig> config
         ) {

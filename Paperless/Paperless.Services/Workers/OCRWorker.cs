@@ -46,6 +46,7 @@ namespace Paperless.Services.Workers
         {
             try
             {
+                //  Deserialize incoming payload
                 OCRPayload payload = _ocrListener.ProcessPayload(ea);
 
                 _logger.LogInformation(
@@ -59,25 +60,27 @@ namespace Paperless.Services.Workers
                 if (documentContent.Length <= 0)
                     throw new Exception("Document stream is empty.");
 
-                //  Process file to text
+                //  Process file to text using OCR
                 OCRResult result = _ocrService.ProcessPdf(documentContent);
-
-                _logger.LogInformation(
-                    "{RequestType} processing completed successfully.\n" +
-                    "Document ID: {Id}, Pages processed: {PageCount}, Content length: {ContentLength} characters.",
-                    "OCR",
-                    payload.Id,
-                    result.Pages.Count,
-                    result.PDFContent?.Length ?? 0
-                );
+                string title = _ocrService.ExtractPdfTitle(documentContent);
 
                 OCRCompletedPayload ocrCompletedPayload = new OCRCompletedPayload
                 {
                     Id = payload.Id,
-                    Title = _ocrService.ExtractPdfTitle(documentContent),
+                    Title = title,
                     OCRResult = result.PDFContent ?? "Error processing document content.",
-                    CategoryList = payload.CategoryList,
+                    Categories = payload.Categories
                 };
+
+                _logger.LogInformation(
+                    "{RequestType} processing completed successfully.\n" +
+                    "Document ID: {Id}, Title: {Title}, Pages processed: {PageCount}, Content length: {ContentLength} characters.",
+                    "OCR",
+                    ocrCompletedPayload.Id,
+                    ocrCompletedPayload.Title,
+                    result.Pages.Count,
+                    result.PDFContent?.Length ?? 0
+                );
 
                 //  Send OCR Result to Summary Worker through RabbitMQ
                 await _mqPublisher.PublishOcrResult(ocrCompletedPayload);

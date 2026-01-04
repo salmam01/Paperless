@@ -46,7 +46,7 @@ namespace Paperless.Services.Services.Search
             );
 
             _logger.LogInformation(
-                "New Document with ID {id} and name {title} added to Index {index}.",
+                "New Document with ID {id} and name {Title} added to Index {Index}.",
                 document.Id,
                 document.Title,
                 _config.Index
@@ -58,12 +58,12 @@ namespace Paperless.Services.Services.Search
         public async Task<bool> RemoveAsync(string id)
         {
             var response = await _client.DeleteAsync<SearchDocument>(
-                id, 
+                id,
                 d => d.Index(_config.Index)
             );
 
             _logger.LogInformation(
-                "Document with ID {id} removed from Index {index}.",
+                "Document with ID {Id} removed from Index {Index}.",
                 id,
                 _config.Index
             );
@@ -79,7 +79,7 @@ namespace Paperless.Services.Services.Search
             );
 
             _logger.LogInformation(
-                "Removed all documents from Index {index}.",
+                "Removed all documents from Index {Index}.",
                 _config.Index
             );
 

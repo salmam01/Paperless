@@ -10,7 +10,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
 {
     public enum IndexingEventType
     {
-        OcrCompleted,
+        SummaryCompleted,
         DocumentDeleted,
         DocumentsDeleted
     }
@@ -39,7 +39,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[2]);
 
             _logger.LogInformation(
-                "Declared topology for queue {QueueName}.",
+                "Declared topology for {QueueName}.",
                 _config.QueueName
             );
         }
@@ -47,13 +47,13 @@ namespace Paperless.Services.Services.Messaging.Listeners
         public IndexingEventType HandleEventType(BasicDeliverEventArgs ea)
         {
             if (ea.RoutingKey == _config.RoutingKeys[0])
-                return IndexingEventType.OcrCompleted;
+                return IndexingEventType.SummaryCompleted;
             if (ea.RoutingKey == _config.RoutingKeys[1])
                 return IndexingEventType.DocumentDeleted;
             if (ea.RoutingKey == _config.RoutingKeys[2])
                 return IndexingEventType.DocumentsDeleted;
 
-            throw new InvalidOperationException($"Unknown routing key: {ea.RoutingKey}");
+            throw new InvalidOperationException($"Unknown Routing Key: {ea.RoutingKey}");
         }
 
         public SummaryCompletedPayload ProcessSummaryCompletedPayload(BasicDeliverEventArgs ea)
@@ -63,9 +63,9 @@ namespace Paperless.Services.Services.Messaging.Listeners
                 string body = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                 _logger.LogInformation(
-                    "Received message from Message Queue {QueueName}.\nMessage:\n{message}",
+                    "Deserializing message on {QueueName}. Message Length: {Length}",
                     _config.QueueName,
-                    body
+                    body.Length
                 );
 
                 SummaryCompletedPayload? payload = JsonSerializer.Deserialize<SummaryCompletedPayload>(
@@ -80,7 +80,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to parse message from queue {QueueName}", _config.QueueName);
+                _logger.LogError(ex, "Failed to parse message from {QueueName}", _config.QueueName);
                 throw;
             }
         }
@@ -89,22 +89,22 @@ namespace Paperless.Services.Services.Messaging.Listeners
         {
             try
             {
-                string id = Encoding.UTF8.GetString(ea.Body.ToArray());
+                string body = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                 _logger.LogInformation(
-                    "Received message on {QueueName}.\nMessage:\n{message}",
+                    "Deserializing message on {QueueName}. Message Length: {Length}",
                     _config.QueueName,
-                    id
+                    body.Length
                 );
 
-                if (id == null || string.IsNullOrEmpty(id))
+                if (body == null || string.IsNullOrEmpty(body))
                     throw new InvalidOperationException("Message could not be deserialized");
 
-                return id;
+                return body;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to parse message from queue {QueueName}", _config.QueueName);
+                _logger.LogError(ex, "Failed to parse message from {QueueName}", _config.QueueName);
                 throw;
             }
         }

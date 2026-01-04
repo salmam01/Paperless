@@ -5,6 +5,6 @@
         public string Id { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string OCRResult { get; set; } = string.Empty;
-        public CategoryList CategoryList { get; set; } = new();
+        public List<string> Categories { get; set; } = [];
     }
 }

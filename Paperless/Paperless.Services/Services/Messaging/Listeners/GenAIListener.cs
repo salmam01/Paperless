@@ -8,12 +8,12 @@ using System.Text.Json;
 
 namespace Paperless.Services.Services.Messaging.Listeners
 {
-    public class SummaryListener : MQBaseListener
+    public class GenAIListener : MQBaseListener
     {
         private const string _configName = "SummaryListener";
 
-        public SummaryListener(
-            ILogger<SummaryListener> logger,
+        public GenAIListener(
+            ILogger<GenAIListener> logger,
             IOptionsMonitor<ListenerConfig> config,
             MQConnectionFactory factory
         ) : base(logger, config, factory, _configName) { }
@@ -30,7 +30,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[0]);
 
             _logger.LogInformation(
-                "Declared topology for queue {QueueName}.",
+                "Declared topology for {QueueName}.",
                 _config.QueueName
             );
         }
@@ -42,9 +42,9 @@ namespace Paperless.Services.Services.Messaging.Listeners
                 string body = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                 _logger.LogInformation(
-                    "Received message from Message Queue {QueueName}.\nMessage:\n{message}",
+                    "Deserializing message on {QueueName}. Message Length: {Length}",
                     _config.QueueName,
-                    body
+                    body.Length
                 );
 
                 OCRCompletedPayload? payload = JsonSerializer.Deserialize<OCRCompletedPayload>(

@@ -55,10 +55,11 @@ namespace Paperless.Services.Services.Messaging.Publishers
                 );
 
                 _logger.LogInformation(
-                    "Document {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for Summary Generation.",
+                    "Document {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for {Reason}.",
                     payload.Id,
                     _exchangeName,
-                    _config.RoutingKeys[0]
+                    _config.RoutingKeys[0],
+                    "Summary Generation"
                 );
             }
             catch (Exception ex)
@@ -103,10 +104,11 @@ namespace Paperless.Services.Services.Messaging.Publishers
                 );
 
                 _logger.LogInformation(
-                    "Document {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for Summary Generation.",
+                    "Document {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for {Reason}.",
                     payload.Id,
                     _exchangeName,
-                    _config.RoutingKeys[1]
+                    _config.RoutingKeys[1],
+                    "Document Indexing"
                 );
             }
             catch (Exception ex)

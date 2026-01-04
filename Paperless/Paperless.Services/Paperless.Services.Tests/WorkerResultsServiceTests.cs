@@ -3,19 +3,19 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Models.DTOs;
-using Paperless.Services.Services.HttpClients;
+using Paperless.Services.Services.Clients;
 
 namespace Paperless.Services.Tests
 {
     public class WorkerResultsServiceTests
     {
-        private readonly Mock<ILogger<WorkerResultsService>> _loggerMock;
+        private readonly Mock<ILogger<ResultClient>> _loggerMock;
         private readonly Mock<IOptions<RESTConfig>> _configMock;
         private readonly RESTConfig _testConfig;
 
         public WorkerResultsServiceTests()
         {
-            _loggerMock = new Mock<ILogger<WorkerResultsService>>();
+            _loggerMock = new Mock<ILogger<ResultClient>>();
             _configMock = new Mock<IOptions<RESTConfig>>();
             
             _testConfig = new RESTConfig
@@ -30,7 +30,7 @@ namespace Paperless.Services.Tests
         public void can_create_service()
         {
             HttpClient httpClient = new HttpClient();
-            WorkerResultsService service = new WorkerResultsService(
+            ResultClient service = new ResultClient(
                 _loggerMock.Object, httpClient, _configMock.Object
             );
             Assert.NotNull(service);

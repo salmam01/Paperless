@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
-using Paperless.Services.Services.HttpClients;
+using Paperless.Services.Services.Clients;
 
 namespace Paperless.Services.Tests
 {

@@ -1,25 +1,25 @@
 ﻿using Paperless.Services.Models.DTOs.Payloads;
-using Paperless.Services.Services.HttpClients;
+using Paperless.Services.Services.Clients;
 using Paperless.Services.Services.Messaging.Listeners;
 using Paperless.Services.Services.Messaging.Publishers;
 using RabbitMQ.Client.Events;
 
 namespace Paperless.Services.Workers
 {
-    public class SummaryWorker : BackgroundService
+    public class GenAIWorker : BackgroundService
     {
-        private readonly ILogger<SummaryWorker> _logger;
-        private readonly SummaryListener _mqListener;
+        private readonly ILogger<GenAIWorker> _logger;
+        private readonly GenAIListener _mqListener;
         private readonly MQPublisher _mqPublisher;
         private readonly SummaryService _genAIService;
-        private readonly WorkerResultsService _workerResultsService;
+        private readonly ResultClient _workerResultsService;
 
-        public SummaryWorker(
-            ILogger<SummaryWorker> logger,
-            SummaryListener mqListener,
+        public GenAIWorker(
+            ILogger<GenAIWorker> logger,
+            GenAIListener mqListener,
             MQPublisher mqPublisher,
             SummaryService genAIService,
-            WorkerResultsService workerResultsService
+            ResultClient workerResultsService
         ) {
             _logger = logger;
             _mqListener = mqListener;
@@ -42,27 +42,38 @@ namespace Paperless.Services.Workers
         {
             try
             {
-                //  TODO: summary payload contains category list => use that for the category
+                //  Deserialize incoming payload
+                //  TODO: OCRCompletedPayload contains category list => use that for the category
                 OCRCompletedPayload payload = _mqListener.ProcessPayload(ea);
 
-                if (payload == null || string.IsNullOrEmpty(payload.Id) || string.IsNullOrEmpty(payload.Title) || string.IsNullOrEmpty(payload.OCRResult))
-                {
-                    _logger.LogWarning("Received invalid message from queue inside Summary Worker. Skipping processing.");
+                if (payload == null || 
+                    string.IsNullOrEmpty(payload.Id) || 
+                    string.IsNullOrEmpty(payload.Title) || 
+                    string.IsNullOrEmpty(payload.OCRResult) ||
+                    !payload.Categories.Any()
+                ) {
+                    _logger.LogWarning(
+                        "Received invalid message from queue inside {WorkerType} Worker. Skipping processing.",
+                        "Summary"
+                    );
                     return;
                 }
 
                 _logger.LogInformation(
-                    "Document {DocumentId} content retrieved.\nOCR result length: {OcrLength} characters.",
+                    "Processing {RequestType} request for Document with ID {Id}. " +
+                    "OCR result length: {OcrLength} characters.",
+                    "Summary",
                     payload.Id,
                     payload.OCRResult?.Length ?? 0
                 );
                 
-                // Check if OCR result has meaningful content (minimum 50 characters after trimming)
+                //  TODO: this step should be in a helper method or class
+                //  Check if OCR result has meaningful content (minimum 50 characters after trimming)
                 const int MIN_CONTENT_LENGTH = 50;
                 string trimmedContent = payload.OCRResult?.Trim() ?? string.Empty;
                 
                 string summary;
-                //  TODO: AI selects a category from the list based on the summary
+                //  TODO: AI selects a category from the list based on the generated summary
                 string category;
 
                 if (string.IsNullOrWhiteSpace(trimmedContent) || trimmedContent.Length < MIN_CONTENT_LENGTH)
@@ -124,6 +135,7 @@ namespace Paperless.Services.Workers
                     summary
                 );
 
+                //  Send OCR, Summary and Category results to REST server and IndexingWorker
                 await _workerResultsService.PostWorkerResultsAsync(summaryPayload);
                 await _mqPublisher.PublishSummaryResult(summaryPayload);
             }

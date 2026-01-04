@@ -37,20 +37,27 @@ namespace Paperless.Services.Workers
         {
             try
             {
+                //  Get the incoming event type
                 IndexingEventType eventType = _mqListener.HandleEventType(ea);
+                
                 switch(eventType)
                 {
-                    case IndexingEventType.OcrCompleted:
+                    //  Store the OCR, summary and category results in ElasticSearch
+                    case IndexingEventType.SummaryCompleted:
+
                         SummaryCompletedPayload payload = _mqListener.ProcessSummaryCompletedPayload(ea);
                         if (payload == null || string.IsNullOrEmpty(payload.Id))
                         {
-                            _logger.LogWarning("Received invalid message from queue inside Indexing Worker. Skipping processing.");
+                            _logger.LogWarning(
+                                "Received invalid message from queue inside {WorkerType} Worker. Skipping processing.",
+                                "Indexing"
+                            );
                             return;
                         }
 
                         _logger.LogInformation(
                             "Processing {RequestType} request for Document with ID {Id}.",
-                            "OCR",
+                            "Document Indexing",
                             payload.Id
                         );
 
@@ -66,19 +73,36 @@ namespace Paperless.Services.Workers
 
                         break;
 
+                    //  Delete the document by ID
                     case IndexingEventType.DocumentDeleted:
+
                         string id = _mqListener.ProcessDeleteDocumentPayload(ea);
                         if (id == null || string.IsNullOrEmpty(id))
                         {
-                            _logger.LogWarning("Received invalid message from queue inside Indexing Worker. Skipping processing.");
+                            _logger.LogWarning(
+                                "Received invalid message from queue inside {WorkerType} Worker. Skipping processing.",
+                                "Indexing"
+                            );
                             return;
                         }
+
+                        _logger.LogInformation(
+                            "Processing {RequestType} request for Document with ID {Id}.",
+                            "Remove Document",
+                            id
+                        );
 
                         await _elasticService.RemoveAsync(id);
 
                         break;
 
+                    //  Delete all documents inside the index
                     case IndexingEventType.DocumentsDeleted:
+
+                        _logger.LogInformation(
+                            "Processing {RequestType} request.",
+                            "Remove All Documents"
+                        );
 
                         await _elasticService.RemoveAllAsync();
 
@@ -90,8 +114,9 @@ namespace Paperless.Services.Workers
             {
                 _logger.LogError(
                     ex,
-                    "Failed to process document inside Indexing Worker." +
+                    "Failed to process document inside {WorkerType} Worker." +
                     "\nError: {ErrorMessage}",
+                    "Indexing",
                     ex.Message
                 );
             }

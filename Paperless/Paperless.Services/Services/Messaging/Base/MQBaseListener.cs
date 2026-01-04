@@ -53,9 +53,8 @@ namespace Paperless.Services.Services.Messaging.Base
                 try
                 {
                     _logger.LogInformation(
-                        "Received message on queue {QueueName} (deliveryTag={DeliveryTag})",
-                        _config.QueueName,
-                        ea.DeliveryTag
+                        "Received message on {QueueName}",
+                        _config.QueueName
                     );
 
                     await onMessageReceived(ea);

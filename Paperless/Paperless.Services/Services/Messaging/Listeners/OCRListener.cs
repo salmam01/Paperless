@@ -30,7 +30,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[0]);
 
             _logger.LogInformation(
-                "Declared topology for queue {QueueName}.",
+                "Declared topology for {QueueName}.",
                 _config.QueueName
             );
         }
@@ -46,16 +46,16 @@ namespace Paperless.Services.Services.Messaging.Listeners
                 if (string.IsNullOrWhiteSpace(body))
                 {
                     _logger.LogWarning(
-                        "Received empty message from Message Queue {QueueName}.",
+                        "Received empty message on {QueueName}.",
                         _config.QueueName
                     );
                     return payload;
                 }
 
                 _logger.LogInformation(
-                    "Received message from Message Queue {QueueName}.\nMessage:\n{message}",
+                    "Deserializing message on {QueueName}. Message Length: {Length}",
                     _config.QueueName,
-                    body
+                    body.Length
                 );
 
                 JObject jsonObject = JObject.Parse(body);
@@ -63,26 +63,21 @@ namespace Paperless.Services.Services.Messaging.Listeners
                 if (jsonObject.TryGetValue("Id", out JToken? idToken))
                     payload.Id = idToken?.ToString() ?? string.Empty;
 
-                List<string> categories = [];
-
-                if (jsonObject.TryGetValue("Categories", out JToken? categoriesToken) &&
-                    categoriesToken is JArray categoriesArray)
+                if (jsonObject["Categories"] is JArray categoriesArray)
                 {
                     foreach (var category in categoriesArray)
                     {
                         var name = category["Name"]?.ToString();
                         if (!string.IsNullOrWhiteSpace(name))
-                            categories.Add(name);
+                            payload.Categories.Add(name);
                     }
                 }
-
-                payload.CategoryList.Categories = categories;
 
                 return payload;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to parse message from queue {QueueName}", _config.QueueName);
+                _logger.LogError(ex, "Failed to parse message on {QueueName}", _config.QueueName);
                 throw;
             }
         }

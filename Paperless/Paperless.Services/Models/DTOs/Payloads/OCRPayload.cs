@@ -3,6 +3,6 @@
     public class OCRPayload
     {
         public string Id { get; set; } = string.Empty;
-        public CategoryList CategoryList { get; set; } = new();
+        public List<string> Categories { get; set; } = [];
     }
 }

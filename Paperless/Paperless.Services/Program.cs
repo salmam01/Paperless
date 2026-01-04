@@ -1,7 +1,6 @@
-using Microsoft.Extensions.Options;
 using Paperless.Services.Configurations;
 using Paperless.Services.Services.FileStorage;
-using Paperless.Services.Services.HttpClients;
+using Paperless.Services.Services.Clients;
 using Paperless.Services.Services.Messaging.Base;
 using Paperless.Services.Services.Messaging.Listeners;
 using Paperless.Services.Services.Messaging.Publishers;
@@ -44,16 +43,16 @@ builder.Services.AddSingleton<MQPublisher>();
 
 //  Listeners
 builder.Services.AddSingleton<OCRListener>();
-builder.Services.AddSingleton<SummaryListener>();
+builder.Services.AddSingleton<GenAIListener>();
 builder.Services.AddSingleton<IndexingListener>();
 
 //  HttpClients
-builder.Services.AddHttpClient<WorkerResultsService>();
+builder.Services.AddHttpClient<ResultClient>();
 builder.Services.AddHttpClient<SummaryService>();
 
 //  Workers
 builder.Services.AddHostedService<OCRWorker>();
-builder.Services.AddHostedService<SummaryWorker>();
+builder.Services.AddHostedService<GenAIWorker>();
 builder.Services.AddHostedService<IndexingWorker>();
 
 var host = builder.Build();
