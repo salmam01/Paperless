@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
 using Paperless.BL.Exceptions;
+using Paperless.BL.Models.Domain;
 using Paperless.Services.Configurations;
 
 namespace Paperless.BL.Services.Storage
@@ -38,26 +39,34 @@ namespace Paperless.BL.Services.Storage
             }
         }
 
-        public async Task StoreDocumentAsync(Guid id, string type, Stream content)
+        public async Task StoreDocumentAsync(Document document, Stream content)
         {
             try
             {
                 await CreateBucketIfNotExistsAsync(_bucketName);
 
-                string ft = type.ToLowerInvariant();
+                if (document == null)
+                    throw new InvalidOperationException("Document is Null");
+                
+                string type = document?.Type?.ToLowerInvariant() ?? "Unknown";
 
                 await _minIO.PutObjectAsync(
                     new PutObjectArgs()
                         .WithBucket(_bucketName)
-                        .WithObject($"{id}.{ft}")
+                        .WithObject($"{document.Id}.{type}")
                         .WithStreamData(content)
                         .WithObjectSize(content.Length)
-                        .WithContentType($"application/{ft}") 
+                        .WithContentType($"application/{type}")
+                        .WithHeaders(new Dictionary<string, string>
+                        {
+                            { "x-amz-meta-title", document.Name ?? "Untitled" }
+                        })
                 );
 
                 _logger.LogInformation(
-                    "Uploaded document with ID {id} to MinIO Bucket {BucketName} successfully.", 
-                    id,
+                    "Uploaded document with ID {Id} and Title {Title} to MinIO Bucket {BucketName} successfully.", 
+                    document.Id,
+                    document.Name,
                     _bucketName
                 );
             }
@@ -67,7 +76,7 @@ namespace Paperless.BL.Services.Storage
                     "{method} /document failed in {layer} Layer due to {reason}.",
                     "POST", "Business", "publishing to MinIO failing."
                 );
-                throw new MinIOException($"Failed to publish document {id} to Storage.", ex);
+                throw new MinIOException($"Failed to publish document {document.Id} to Storage.", ex);
             }
         }
 

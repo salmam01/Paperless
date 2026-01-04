@@ -55,14 +55,14 @@ namespace Paperless.Services.Workers
                     payload.Id
                 );
 
-                //  Download file (stream) from MinIO
+                //  Download file (stream) and title from MinIO
                 MemoryStream documentContent = await _storageService.DownloadDocumentAsync(payload.Id);
                 if (documentContent.Length <= 0)
                     throw new Exception("Document stream is empty.");
+                string title = await _storageService.GetDocumentTitleAsync(payload.Id);
 
                 //  Process file to text using OCR
                 OCRResult result = _ocrService.ProcessPdf(documentContent);
-                string title = _ocrService.ExtractPdfTitle(documentContent);
 
                 OCRCompletedPayload ocrCompletedPayload = new OCRCompletedPayload
                 {

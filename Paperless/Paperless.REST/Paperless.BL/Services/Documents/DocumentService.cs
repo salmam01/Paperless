@@ -124,14 +124,14 @@ namespace Paperless.BL.Services.Documents
 
                 if (document.Type == "PDF")
                 {
-                    await _storageService.StoreDocumentAsync(document.Id, document.Type, content);
+                    await _storageService.StoreDocumentAsync(document, content);
                     await _documentPublisher.PublishDocumentAsync(document.Id, categories);
                 }
                 //  TODO: fix logic
                 else
                 {
                     _parser.ParseDocument(document, content);
-                    await _storageService.StoreDocumentAsync(document.Id, document.Type, content);
+                    await _storageService.StoreDocumentAsync(document, content);
                 }
 
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
