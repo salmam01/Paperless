@@ -43,7 +43,6 @@ namespace Paperless.Services.Workers
             try
             {
                 //  Deserialize incoming payload
-                //  TODO: OCRCompletedPayload contains category list => use that for summary worker to get the category
                 OCRCompletedPayload payload = _mqListener.ProcessPayload(ea);
 
                 if (payload == null ||
@@ -61,38 +60,56 @@ namespace Paperless.Services.Workers
 
                 _logger.LogInformation(
                     "Processing {RequestType} request for Document with ID {Id}. " +
-                    "OCR result length: {OcrLength} characters.",
+                    "OCR result length: {OcrLength} characters. " +
+                    "Available categories: {CategoryCount}",
                     "Summary",
                     payload.DocumentId,
-                    payload.OCRResult?.Length ?? 0
+                    payload.OCRResult?.Length ?? 0,
+                    payload.Categories.Count
                 );
                 
-                //  TODO: this step should be in a helper method or class
                 //  Check if OCR result has meaningful content (minimum 50 characters after trimming)
                 const int MIN_CONTENT_LENGTH = 50;
                 string trimmedContent = payload.OCRResult?.Trim() ?? string.Empty;
                 
                 string summary;
-                //  TODO: AI selects a category from the list based on the generated summary
-                string category;
+                Guid selectedCategoryId;
 
-                if (string.IsNullOrWhiteSpace(trimmedContent) || trimmedContent.Length < MIN_CONTENT_LENGTH)
+                if (!SummaryService.IsContentValid(trimmedContent, MIN_CONTENT_LENGTH))
                 {
                     _logger.LogWarning(
                         "Document {DocumentId} has insufficient content for summary generation." +
                         "\nContent length: {ContentLength} characters (minimum: {MinLength})." +
-                        "\nSetting default summary message.",
+                        "\nSetting default summary message and using first category.",
                         payload.DocumentId,
                         trimmedContent.Length,
                         MIN_CONTENT_LENGTH
                     );
                     summary = "No summary available: Document doesn't contain enough readable text.";
+                    selectedCategoryId = payload.Categories[0].Id;
                 }
                 else
                 {
                     try
                     {
+                        // Generate summary first
                         summary = await _genAIService.GenerateSummaryAsync(payload.OCRResult);
+                        
+                        // Then select category based on the generated summary
+                        try
+                        {
+                            selectedCategoryId = await _genAIService.SelectCategoryAsync(summary, payload.Categories);
+                        }
+                        catch (Exception categoryEx)
+                        {
+                            _logger.LogWarning(
+                                categoryEx,
+                                "Failed to select category via AI for document {DocumentId}. Using first category as fallback.\nError: {ErrorMessage}",
+                                payload.DocumentId,
+                                categoryEx.Message
+                            );
+                            selectedCategoryId = payload.Categories[0].Id;
+                        }
                     }
                     catch (ArgumentException argEx)
                     {
@@ -103,7 +120,9 @@ namespace Paperless.Services.Workers
                             payload.DocumentId,
                             argEx.Message
                         );
-                        summary = "No summary available - Document doesn't contain enough readable text..";                    }
+                        summary = "No summary available - Document doesn't contain enough readable text..";
+                        selectedCategoryId = payload.Categories[0].Id;
+                    }
                     catch (Exception apiEx)
                     {
                         // API call failed - set default summary to prevent message rejection
@@ -114,6 +133,7 @@ namespace Paperless.Services.Workers
                             apiEx.Message
                         );
                         summary = "No summary available: Error generating summary.";
+                        selectedCategoryId = payload.Categories[0].Id;
                     }
                 }
 
@@ -121,7 +141,7 @@ namespace Paperless.Services.Workers
                 {
                     DocumentId = payload.DocumentId,
                     Title = payload.Title,
-                    CategoryId = payload.Categories[0].Id, // TODO: update this! (PLACEHOLDER)
+                    CategoryId = selectedCategoryId,
                     OCRResult = payload.OCRResult,
                     Summary = summary
                 };
@@ -129,9 +149,11 @@ namespace Paperless.Services.Workers
                 _logger.LogInformation(
                     "Successfully processed summary for document {DocumentId}." +
                     "\nSummary length: {SummaryLength}" +
+                    "\nSelected Category ID: {CategoryId}" +
                     "\n*** Summary ***\n{Summary}",
                     payload.DocumentId,
                     summary.Length,
+                    selectedCategoryId,
                     summary
                 );
 

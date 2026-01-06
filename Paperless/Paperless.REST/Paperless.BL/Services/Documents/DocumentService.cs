@@ -127,11 +127,12 @@ namespace Paperless.BL.Services.Documents
                     await _storageService.StoreDocumentAsync(document, content);
                     await _documentPublisher.PublishDocumentAsync(document.Id, categories);
                 }
-                //  TODO: fix logic
                 else
                 {
                     _parser.ParseDocument(document, content);
                     await _storageService.StoreDocumentAsync(document, content);
+                    // Auch für DOCX und andere Dateitypen Message senden, damit OCR und Summary generiert werden
+                    await _documentPublisher.PublishDocumentAsync(document.Id, categories);
                 }
 
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);

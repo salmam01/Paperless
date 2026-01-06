@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import type { DocumentDto } from './dto/documentDto'
+import type { CategoryDto } from './dto/categoryDto'
 import { getDocuments, getDocument, getSearchResult, deleteDocument, deleteDocuments, postDocument } from './services/documentService'
+import { getCategories } from './services/categoryService'
 import { DocumentsGrid } from './components/DocumentsGrid'
 import { DocumentDetails } from './components/DocumentDetails'
 import { Searchbar } from './components/Searchbar'
 import { UploadPanel } from './components/UploadPanel'
+import { CategoryManagement } from './components/CategoryManagement'
 
 function App() {
   const [documents, setDocuments] = useState<DocumentDto[]>([]);
@@ -15,11 +18,24 @@ function App() {
   //const [showSearchbar, setShowSearchbar] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showUploadPanel, setShowUploadPanel] = useState(false);
+  const [showCategoryManagement, setShowCategoryManagement] = useState(false);
   const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: 'error' | 'success' | 'info'}>>([]);
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDocuments();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+    }
+  };
 
   const addNotification = (message: string, type: 'error' | 'success' | 'info' = 'error') => {
     const id = Date.now().toString();
@@ -75,12 +91,21 @@ function App() {
     setSelectedId(null);
     setSelectedDocument(null);
     setShowUploadPanel(false);
+    setShowCategoryManagement(false);
   };
 
   const handleShowUpload = () => {
     setSelectedId(null);
     setSelectedDocument(null);
     setShowUploadPanel(true);
+    setShowCategoryManagement(false);
+  };
+
+  const handleShowCategoryManagement = () => {
+    setSelectedId(null);
+    setSelectedDocument(null);
+    setShowUploadPanel(false);
+    setShowCategoryManagement(true);
   };
 
   //  for button, later
@@ -101,6 +126,18 @@ function App() {
     }
   }
 
+  const handleCategoryFilter = async (categoryId: string | null) => {
+    setSelectedCategoryFilter(categoryId);
+    if (categoryId) {
+      // Filter existing documents
+      const allDocs = await getDocuments();
+      const filtered = allDocs.filter(doc => doc.categoryId === categoryId);
+      setDocuments(filtered);
+    } else {
+      await fetchDocuments();
+    }
+  }
+
   const handleDelete = async (id: string) => {
     try {
       await deleteDocument(id);
@@ -112,8 +149,7 @@ function App() {
       addNotification(errorMessage, 'error');
     }
   };
-//Später:hier cleanen nicht vergessen, da wiederholen sich die catch blöcke
-  const handleUpload = async (file: File) => {
+  const handleUpload = async (file: File, categoryId?: string | null) => {
     try {
       if (!file) return;
 
@@ -123,13 +159,19 @@ function App() {
           fileName: file.name,
           fileSize: file.size,
           fileType: file.type,
-          lastModified: file.lastModified
+          lastModified: file.lastModified,
+          categoryId: categoryId
         });
       }
 
       setLoading(true);
       const formData = new FormData();
       formData.append("form", file);
+      
+      // Add category IDs if provided
+      if (categoryId) {
+        formData.append("categoryIds", categoryId);
+      }
 
       await postDocument(formData);
       addNotification('Document uploaded successfully', 'success');
@@ -191,6 +233,41 @@ function App() {
               handleSearch(val);
             }}/>
           <div className="documents-toolbar">
+            <button onClick={handleShowCategoryManagement} disabled={loading}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 7h16M4 12h16M4 17h16"/>
+              </svg>
+              Categories
+            </button>
+            <div className="category-filter-toolbar">
+              <button
+                className={`category-filter-btn ${selectedCategoryFilter === null ? 'active' : ''}`}
+                onClick={() => handleCategoryFilter(null)}
+                disabled={loading}
+                title="All Categories"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="16"/>
+                  <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                All
+              </button>
+              {categories.map(category => (
+                <button
+                  key={category.id}
+                  className={`category-filter-btn ${selectedCategoryFilter === category.id ? 'active' : ''}`}
+                  onClick={() => handleCategoryFilter(category.id)}
+                  disabled={loading}
+                  title={`Filter by ${category.name}`}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                  </svg>
+                  {category.name}
+                </button>
+              ))}
+            </div>
             <button onClick={handleShowUpload} disabled={loading}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -232,6 +309,17 @@ function App() {
           {showUploadPanel && (
             <div className="upload-section">
               <UploadPanel loading={loading} onUploaded={handleUpload} onBack={handleBack} />
+            </div>
+          )}
+          {showCategoryManagement && (
+            <div className="category-section">
+              <div className="category-panel">
+                <div className="category-panel-header">
+                  <h2>Category Management</h2>
+                  <button className="category-panel-close" onClick={handleBack} aria-label="Close">×</button>
+                </div>
+                <CategoryManagement showCreateForm={true} />
+              </div>
             </div>
           )}
           <div className={`documents-layout ${selectedDocument ? 'with-panel' : ''}`}>

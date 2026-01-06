@@ -1,6 +1,6 @@
 import type { DocumentDto } from "../dto/documentDto";
 
-const apiUrl = 'http://localhost:8080/api/Document'
+const apiUrl = 'http://localhost:8080/api/document'
 
 export async function getDocuments(): Promise<DocumentDto[]> {
     const response = await fetch(apiUrl)
