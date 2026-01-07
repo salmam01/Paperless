@@ -1,25 +1,31 @@
-import type { DocumentDto } from "../dto/documentDto";
+import type { DocumentDto } from "../dto/DocumentDto";
 
 const apiUrl = 'http://localhost:8080/api/document'
 
 export async function getDocuments(): Promise<DocumentDto[]> {
     const response = await fetch(apiUrl)
 
-    if (!response.ok) throw new Error('Failed to fetch documents');
+    if (!response.ok) 
+        throw new Error('Failed to fetch documents');
+    
     return await response.json();
 }
 
 export async function getDocument(id: string): Promise<DocumentDto> {
     const response = await fetch(`${apiUrl}/${id}`)
 
-    if (!response.ok) throw new Error(`Failed to fetch document with ID: ${id}`);
+    if (!response.ok) 
+        throw new Error(`Failed to fetch document with ID: ${id}`);
+
     return await response.json();
 }
 
 export async function getSearchResult(query: string): Promise<DocumentDto[]> {
     const response = await fetch(`${apiUrl}/search/${query}`)
 
-    if (!response.ok) throw new Error(`Failed searching for ${query}`);
+    if (!response.ok) 
+        throw new Error(`Failed searching for ${query}`);
+    
     return await response.json();
 }
 
@@ -30,8 +36,22 @@ export async function postDocument(document: FormData): Promise<DocumentDto> {
         body: document,
     });
 
-    if (!response.ok) throw new Error('Failed to send document');
+    if (!response.ok) 
+        throw new Error('Failed to send document');
+
     return await response.json();
+}
+
+export async function putDocumentCategory(documentId: string, categoryId: string): Promise<void> {
+    const putUrl = `${apiUrl}/${documentId}/category`
+    const response = await fetch(putUrl,{
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoryId)
+    })
+
+    if (!response.ok) 
+        throw new Error (`Failed to update document category.`);
 }
 
 export async function deleteDocuments(): Promise<void> {
@@ -39,7 +59,8 @@ export async function deleteDocuments(): Promise<void> {
         method: 'DELETE'
     });
 
-    if (!response.ok) throw new Error('Failed to delete documents')
+    if (!response.ok) 
+        throw new Error('Failed to delete documents')
 }
 
 export async function deleteDocument(id: string): Promise<void> {
@@ -47,5 +68,6 @@ export async function deleteDocument(id: string): Promise<void> {
         method: 'DELETE'
     });
 
-    if (!response.ok) throw new Error(`Failed to delete document with ID: ${id}`)
+    if (!response.ok) 
+        throw new Error(`Failed to delete document with ID: ${id}`)
 }

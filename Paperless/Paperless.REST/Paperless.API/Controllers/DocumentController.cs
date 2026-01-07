@@ -298,6 +298,87 @@ namespace Paperless.API.Controllers
             }
         }
 
+        [HttpPost("{documentId}/category", Name = "PutDocumentCategory")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> PutDocumentCategory(
+            string documentId, 
+            [FromBody] string categoryId
+        ) {
+
+            if (string.IsNullOrEmpty(documentId) || string.IsNullOrEmpty(categoryId)) 
+            {
+                _logger.LogWarning("PUT /document/id/category failed due to empty or invalid ID.");
+                return BadRequest("Empty or invalid ID.");
+            }
+
+            if (!Guid.TryParse(documentId, out Guid documentGuid))
+            {
+                _logger.LogWarning(
+                    "PUT /document/{id}/category failed due to an invalid document ID.",
+                    documentId
+                );
+                return BadRequest("Invalid document ID.");
+            }
+
+            if (!Guid.TryParse(categoryId, out Guid categoryGuid))
+            {
+                _logger.LogWarning(
+                    "PUT /document/{id}/category failed due to an invalid category ID.",
+                    documentId
+                );
+                return BadRequest("Invalid category ID.");
+            }
+
+            _logger.LogInformation(
+                "Incoming PUT /document/{id}/category from {ip}.",
+                HttpContext.Connection.RemoteIpAddress?.ToString(),
+                documentId
+            );
+
+            try
+            {
+                await _documentService.UpdateDocumentCategoryAsync(documentGuid, categoryGuid);
+
+                _logger.LogInformation(
+                    "PUT /document/{id}/category updated category with ID {id} successfully.", 
+                    documentId,
+                    categoryId
+                );
+
+                return Ok();
+            }
+            catch (ServiceException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /category failed in {layer} Layer due to {reason}.",
+                    "PUT", "Business", GetExceptionMessage(ex.Type)
+                );
+                return Problem(
+                    detail: ex.Message,
+                    statusCode: GetHttpStatusCode(ex.Type),
+                    title: GetExceptionMessage(ex.Type)
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /category failed in {layer} Layer due to {reason}.",
+                    "PUT",
+                    "API",
+                    ex.Message
+                );
+                return Problem(
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "Internal Server Error"
+                );
+            }
+        }
+
         [HttpDelete(Name = "DeleteDocument")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

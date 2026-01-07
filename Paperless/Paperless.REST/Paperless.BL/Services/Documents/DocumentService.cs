@@ -216,6 +216,38 @@ namespace Paperless.BL.Services.Documents
             }
         }
 
+        public async Task UpdateDocumentCategoryAsync(Guid documentId, Guid categoryId)
+        {
+            _logger.LogInformation(
+                "Updating document category." +
+                "Document ID: {DocumentId}, Category ID: {Category}",
+                documentId,
+                categoryId
+            );
+
+            try
+            {
+                var category = await _categoryService.GetCategoryAsync(categoryId);
+                if (category == null)
+                    throw new ServiceException("Could not update document summary.", ExceptionType.Internal);
+
+                await _documentRepository.UpdateDocumentCategoryAsync(documentId, categoryId);
+                _logger.LogInformation(
+                    "Document {DocumentId} category updated in database.",
+                    documentId
+                );
+            }
+            catch (DatabaseException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to update document {DocumentId} summary in database.",
+                    documentId
+                );
+                throw new ServiceException("Could not update document category.", ExceptionType.Internal, ex);
+            }
+        }
+
         public async Task DeleteDocumentsAsync()
         {
             _logger.LogInformation("Deleting all documents from database and storage.");

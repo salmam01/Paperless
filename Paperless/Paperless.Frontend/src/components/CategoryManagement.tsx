@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import type { CategoryDto } from '../dto/categoryDto';
-import { getCategories, createCategory } from '../services/categoryService';
+import { getCategories, createCategory, deleteCategory } from '../services/CategoryService';
+import type { CategoryDto } from '../dto/CategoryDto';
 
 interface Props {
     onCategorySelect?: (categoryId: string | null) => void;
     selectedCategoryId?: string | null;
+    onCategoryDelete?: (categoryId: string) => void;
     showCreateForm?: boolean;
     compact?: boolean;
 }
 
-export function CategoryManagement({ onCategorySelect, selectedCategoryId, showCreateForm = true, compact = false }: Props) {
+export function CategoryManagement({ onCategorySelect, selectedCategoryId, onCategoryDelete, showCreateForm = true, compact = false }: Props) {
     const [categories, setCategories] = useState<CategoryDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [newCategoryName, setNewCategoryName] = useState('');
@@ -51,6 +52,17 @@ export function CategoryManagement({ onCategorySelect, selectedCategoryId, showC
             setIsCreating(false);
         }
     };
+
+const handleDeleteCategory = async (id: string) => {
+    try {
+        await deleteCategory(id);
+        setCategories(prev => prev.filter(cat => cat.id !== id));
+        onCategoryDelete?.(id);
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to delete category';
+        setError(errorMessage);
+    }
+};
 
     if (compact) {
         return (
@@ -211,17 +223,40 @@ export function CategoryManagement({ onCategorySelect, selectedCategoryId, showC
                             </button>
                         )}
                         {categories.map(category => (
-                            <button
-                                key={category.id}
-                                type="button"
-                                className={`category-item ${selectedCategoryId === category.id ? 'selected' : ''}`}
-                                onClick={() => onCategorySelect?.(category.id)}
-                            >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                                </svg>
-                                <span>{category.name}</span>
-                            </button>
+                            <div key={category.id} className="category-item-wrapper">
+                                <button
+                                    type="button"
+                                    className={`category-item ${selectedCategoryId === category.id ? 'selected' : ''}`}
+                                    onClick={() => onCategorySelect?.(category.id)}
+                                >
+                                    <span>{category.name}</span>
+                                </button>
+
+                                <button
+                                    className="card-action-button card-action-button--delete"
+                                    aria-label="Delete category"
+                                    title="Delete"
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category.id); }}
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <polyline points="3 6 5 6 21 6" />
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                        <path d="M10 11v6" />
+                                        <path d="M14 11v6" />
+                                        <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+                                    </svg>
+                                </button>
+                            </div>
                         ))}
                     </div>
                 )}

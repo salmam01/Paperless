@@ -11,14 +11,14 @@ namespace Paperless.Services.Workers
         private readonly ILogger<GenAIWorker> _logger;
         private readonly GenAIListener _mqListener;
         private readonly MQPublisher _mqPublisher;
-        private readonly SummaryService _genAIService;
+        private readonly GenAIService _genAIService;
         private readonly ResultClient _workerResultsService;
 
         public GenAIWorker(
             ILogger<GenAIWorker> logger,
             GenAIListener mqListener,
             MQPublisher mqPublisher,
-            SummaryService genAIService,
+            GenAIService genAIService,
             ResultClient workerResultsService
         ) {
             _logger = logger;
@@ -75,7 +75,7 @@ namespace Paperless.Services.Workers
                 string summary;
                 Guid selectedCategoryId;
 
-                if (!SummaryService.IsContentValid(trimmedContent, MIN_CONTENT_LENGTH))
+                if (!GenAIService.IsContentValid(trimmedContent, MIN_CONTENT_LENGTH))
                 {
                     _logger.LogWarning(
                         "Document {DocumentId} has insufficient content for summary generation." +
@@ -137,11 +137,17 @@ namespace Paperless.Services.Workers
                     }
                 }
 
+                var selectedCategory = payload.Categories
+                    .FirstOrDefault(c => c.Id == selectedCategoryId);
+
+                string categoryName = selectedCategory?.Name ?? string.Empty;
+
                 SummaryCompletedPayload summaryPayload = new SummaryCompletedPayload
                 {
                     DocumentId = payload.DocumentId,
                     Title = payload.Title,
                     CategoryId = selectedCategoryId,
+                    CategoryName = categoryName,
                     OCRResult = payload.OCRResult,
                     Summary = summary
                 };

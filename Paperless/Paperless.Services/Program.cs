@@ -37,7 +37,7 @@ builder.Services.Configure<ListenerConfig>("IndexingListener", builder.Configura
 builder.Services.AddSingleton<MQConnectionFactory>();
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OCRService>();
-builder.Services.AddSingleton<SummaryService>();
+builder.Services.AddSingleton<GenAIService>();
 builder.Services.AddSingleton<IElasticRepository, ElasticService>();
 builder.Services.AddSingleton<MQPublisher>();
 
@@ -48,7 +48,7 @@ builder.Services.AddSingleton<IndexingListener>();
 
 //  HttpClients
 builder.Services.AddHttpClient<ResultClient>();
-builder.Services.AddHttpClient<SummaryService>();
+builder.Services.AddHttpClient<GenAIService>();
 
 //  Workers
 builder.Services.AddHostedService<OCRWorker>();

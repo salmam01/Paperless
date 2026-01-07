@@ -90,6 +90,27 @@ namespace Paperless.DAL.Repositories.Documents
             }
         }
 
+        public async Task UpdateDocumentCategoryAsync(Guid documentId, Guid categoryId)
+        {
+            try
+            {
+                DocumentEntity? existDocument = await _context.Documents.FindAsync(documentId);
+                if (existDocument == null)
+                    throw new ArgumentNullException(nameof(existDocument), "UpdateDocument: Document doesnt exist!");
+
+                existDocument.CategoryId = categoryId;
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                if (IsDatabaseException(ex))
+                    throw new DatabaseException("An Error occurred while updating a Document.", ex);
+                else
+                    throw;
+            }
+        }
+
+
         public async Task DeleteDocumentsAsync()
         {
             try

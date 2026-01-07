@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { DocumentDto } from "../dto/documentDto";
-import { getCategory } from '../services/categoryService';
-import type { CategoryDto } from '../dto/categoryDto';
+import type { DocumentDto } from "../dto/DocumentDto";
+import { getCategory } from '../services/CategoryService';
+import type { CategoryDto } from '../dto/CategoryDto';
 
 interface Props {
     document: DocumentDto;

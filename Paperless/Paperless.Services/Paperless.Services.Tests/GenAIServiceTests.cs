@@ -8,13 +8,13 @@ namespace Paperless.Services.Tests
 {
     public class GenAIServiceTests
     {
-        private readonly Mock<ILogger<SummaryService>> _loggerMock;
+        private readonly Mock<ILogger<GenAIService>> _loggerMock;
         private readonly Mock<IOptions<GenAIConfig>> _configMock;
         private readonly GenAIConfig _testConfig;
 
         public GenAIServiceTests()
         {
-            _loggerMock = new Mock<ILogger<SummaryService>>();
+            _loggerMock = new Mock<ILogger<GenAIService>>();
             _configMock = new Mock<IOptions<GenAIConfig>>();
             
             _testConfig = new GenAIConfig
@@ -33,7 +33,7 @@ namespace Paperless.Services.Tests
         public void can_create_service()
         {
             HttpClient httpClient = new HttpClient();
-            SummaryService service = new SummaryService(_configMock.Object, _loggerMock.Object, httpClient);
+            GenAIService service = new GenAIService(_configMock.Object, _loggerMock.Object, httpClient);
             Assert.NotNull(service);
         }
 
@@ -41,7 +41,7 @@ namespace Paperless.Services.Tests
         public async Task throws_when_document_content_is_empty()
         {
             HttpClient httpClient = new HttpClient();
-            SummaryService service = new SummaryService(_configMock.Object, _loggerMock.Object, httpClient);
+            GenAIService service = new GenAIService(_configMock.Object, _loggerMock.Object, httpClient);
             
             await Assert.ThrowsAsync<ArgumentException>(async () => 
                 await service.GenerateSummaryAsync(string.Empty));
@@ -51,7 +51,7 @@ namespace Paperless.Services.Tests
         public async Task throws_when_document_content_is_null()
         {
             HttpClient httpClient = new HttpClient();
-            SummaryService service = new SummaryService(_configMock.Object, _loggerMock.Object, httpClient);
+            GenAIService service = new GenAIService(_configMock.Object, _loggerMock.Object, httpClient);
             
             await Assert.ThrowsAsync<ArgumentException>(async () => 
                 await service.GenerateSummaryAsync(null!));
@@ -61,7 +61,7 @@ namespace Paperless.Services.Tests
         public async Task throws_when_document_content_is_whitespace()
         {
             HttpClient httpClient = new HttpClient();
-            SummaryService service = new SummaryService(_configMock.Object, _loggerMock.Object, httpClient);
+            GenAIService service = new GenAIService(_configMock.Object, _loggerMock.Object, httpClient);
             
             await Assert.ThrowsAsync<ArgumentException>(async () => 
                 await service.GenerateSummaryAsync("   "));
@@ -83,7 +83,7 @@ namespace Paperless.Services.Tests
         public void sets_http_client_timeout()
         {
             HttpClient httpClient = new HttpClient();
-            SummaryService service = new SummaryService(_configMock.Object, _loggerMock.Object, httpClient);
+            GenAIService service = new GenAIService(_configMock.Object, _loggerMock.Object, httpClient);
             
             Assert.Equal(TimeSpan.FromSeconds(30), httpClient.Timeout);
         }
