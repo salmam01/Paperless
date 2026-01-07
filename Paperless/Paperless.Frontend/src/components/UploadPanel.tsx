@@ -1,9 +1,10 @@
 import { useState, useRef, type ChangeEvent, type DragEvent } from "react";
 import { validateFile, formatFileSize, clearFileInput, ACCEPTED_FILE_TYPES } from "../utils/uploadUtils";
+import { CategoryManagement } from "./CategoryManagement";
 
 interface Props {
     loading: boolean;
-    onUploaded: (file: File) => void;
+    onUploaded: (file: File, categoryId?: string | null) => void;
     onBack?: () => void;
 }
 
@@ -11,6 +12,7 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
     const [file, setFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     function handleFileSelect(selectedFile: File) {
@@ -52,9 +54,10 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
 
     function handleUpload() {
         if (file) {
-            onUploaded(file);
+            onUploaded(file, selectedCategoryId);
             setFile(null);
             setError(null);
+            setSelectedCategoryId(null);
             clearFileInput(fileInputRef);
         }
     }
@@ -62,6 +65,7 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
     function handleRemoveFile() {
         setFile(null);
         setError(null);
+        setSelectedCategoryId(null);
         clearFileInput(fileInputRef);
     }
 
@@ -143,6 +147,15 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
                         {error}
                     </div>
                 )}
+                
+                <div className="upload-category-section">
+                    <CategoryManagement 
+                        onCategorySelect={setSelectedCategoryId}
+                        selectedCategoryId={selectedCategoryId}
+                        showCreateForm={true}
+                        compact={true}
+                    />
+                </div>
                 
                 <div className="upload-actions-panel">
                     <button 

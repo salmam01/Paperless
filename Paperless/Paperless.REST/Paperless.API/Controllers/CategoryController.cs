@@ -129,7 +129,7 @@ namespace Paperless.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<CategoryDTO>> Post(string name)
+        public async Task<ActionResult<CategoryDTO>> Post([FromBody] string name)
         {
 
             if (string.IsNullOrEmpty(name))
@@ -187,6 +187,54 @@ namespace Paperless.API.Controllers
             }
         }
 
+        [HttpDelete("{id}", Name = "DeleteCategoryById")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> Delete(string id)
+        {
+            _logger.LogInformation(
+                "Incoming DELETE /category/{id} from {ip}.",
+                id,
+                HttpContext.Connection.RemoteIpAddress?.ToString()
+            );
+
+            try
+            {
+                if (!Guid.TryParse(id, out Guid guid))
+                    return BadRequest("Invalid ID");
+
+                await _categoryService.DeleteCategoryAsync(guid);
+                _logger.LogInformation("DELETE /category/{id} deleted category successfully.", id);
+                return Ok();
+            }
+            catch (ServiceException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /category/{id} failed in {layer} Layer due to {reason}.",
+                    "DELETE", id, "Business", GetExceptionMessage(ex.Type)
+                );
+                return Problem(
+                    detail: ex.Message,
+                    statusCode: GetHttpStatusCode(ex.Type),
+                    title: GetExceptionMessage(ex.Type)
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /category/{id} failed in {layer} Layer due to {reason}.",
+                    "DELETE", id, "API", ex.Message
+                );
+                return Problem(
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "Internal Server Error"
+                );
+            }
+        }
 
         private int GetHttpStatusCode(ExceptionType type)
         {

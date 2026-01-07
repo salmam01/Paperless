@@ -37,7 +37,7 @@ namespace Paperless.BL.Services.Search
                 .Query(q => q
                     .MultiMatch(m => m
                         .Query(query)
-                        .Fields(new[] { "title", "content" })
+                        .Fields(new[] { "title", "content", "category" })
                         .Fuzziness("AUTO")
                     )
                 )
