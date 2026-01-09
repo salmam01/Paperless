@@ -66,7 +66,7 @@ namespace Paperless.Services.Workers
                             Id = payload.DocumentId.ToString(),
                             Title = payload.Title,
                             Content = payload.OCRResult,
-                            Category = payload.CategoryId.ToString()
+                            Category = payload.CategoryName.ToString()
                         };
 
                         await _elasticService.IndexAsync(document);

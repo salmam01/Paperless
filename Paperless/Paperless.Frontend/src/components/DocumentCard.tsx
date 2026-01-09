@@ -1,4 +1,4 @@
-import type { DocumentDto } from "../dto/documentDto";
+import type { DocumentDto } from "../dto/DocumentDto";
 
 interface Props {
     document: DocumentDto;

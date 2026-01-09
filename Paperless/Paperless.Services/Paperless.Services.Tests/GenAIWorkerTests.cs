@@ -15,7 +15,7 @@ namespace Paperless.Services.Tests
     {
         private readonly Mock<ILogger<GenAIWorker>> _loggerMock;
         private readonly Mock<MQListener> _mqListenerMock;
-        private readonly Mock<SummaryService> _genAIServiceMock;
+        private readonly Mock<GenAIService> _genAIServiceMock;
         private readonly Mock<ResultClient> _workerResultsServiceMock;
 
         public GenAIWorkerTests()
@@ -60,9 +60,9 @@ namespace Paperless.Services.Tests
                 TimeoutSeconds = 30
             });
             
-            _genAIServiceMock = new Mock<SummaryService>(
+            _genAIServiceMock = new Mock<GenAIService>(
                 genAIConfigMock.Object,
-                Mock.Of<ILogger<SummaryService>>(),
+                Mock.Of<ILogger<GenAIService>>(),
                 new HttpClient()
             );
             
