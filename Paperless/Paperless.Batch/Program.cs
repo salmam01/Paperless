@@ -13,6 +13,8 @@ Log.Logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
+string basePath = AppContext.BaseDirectory;
+
 builder.Services.Configure<AccessDataConfiguration>(
     builder.Configuration.GetSection("AccessData")
 );
@@ -23,11 +25,7 @@ builder.Services.Configure<JobConfiguration>(
 builder.Services.AddQuartz();
 builder.Services.AddQuartzHostedService();
 builder.Services.ConfigureOptions<AccessDataJobSetup>();
-
-
-string basePath = AppContext.BaseDirectory;
-
-
+builder.Services.AddSingleton<AccessDataBatchProcessor>();
 
 var host = builder.Build();
 host.Run();
