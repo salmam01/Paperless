@@ -30,7 +30,30 @@ namespace Paperless.Services.Services.Messaging.Base
             Func<BasicDeliverEventArgs, Task> onMessageReceived,
             CancellationToken cancellationToken
         ) {
-            _connection ??= await _factory.CreateConnectionAsync();
+            const int maxRetries = 10;
+            const int delayMs = 3000; // 3 seconds
+
+            int attempt = 0;
+            while (_connection == null && attempt < maxRetries)
+            {
+                try
+                {
+                    _connection ??= await _factory.CreateConnectionAsync();
+                }
+                catch (RabbitMQ.Client.Exceptions.BrokerUnreachableException ex)
+                {
+                    attempt++;
+                    _logger.LogWarning(ex, "Attempt {Attempt}/{MaxRetries} - RabbitMQ not ready, retrying in {Delay}ms", attempt, maxRetries, delayMs);
+                    await Task.Delay(delayMs, cancellationToken);
+                }
+            }
+
+            if (_connection == null)
+            {
+                _logger.LogCritical("Failed to connect to RabbitMQ after {MaxRetries} attempts", maxRetries);
+                throw new InvalidOperationException("Could not connect to RabbitMQ");
+            }
+
             _channel ??= await _connection.CreateChannelAsync();
 
             await _channel.ExchangeDeclareAsync(_exchangeName, ExchangeType.Topic, durable: true);
