@@ -1,5 +1,5 @@
 import { useState, useRef, type ChangeEvent, type DragEvent } from "react";
-import { validateFile, formatFileSize, clearFileInput, ACCEPTED_FILE_TYPES } from "../utils/uploadUtils";
+import { validateFile, formatFileSize, clearFileInput, ACCEPTED_FILE_TYPES } from "../utils/UploadUtils";
 import { CategoryManagement } from "./CategoryManagement";
 
 interface Props {

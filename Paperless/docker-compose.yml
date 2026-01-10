@@ -1,7 +1,7 @@
 services:
   # PostgreSQL Database
   paperless-db:
-    image: postgres:latest
+    image: postgres:16-alpine
     container_name: paperless-db
     environment:
       POSTGRES_USER: swen3
@@ -53,6 +53,7 @@ services:
       - paperless-network
     command: server /data --console-address ":9090"
 
+  # ElasticSearch for full-text & fuzzy Search
   paperless-elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.2.2
     container_name: paperless-elasticsearch
@@ -67,6 +68,7 @@ services:
     networks:
       - paperless-network
 
+  # ElasticSearch UI
   paperless-kibana:
     image: docker.elastic.co/kibana/kibana:9.2.2
     container_name: paperless-kibana
@@ -77,11 +79,11 @@ services:
     networks:
       - paperless-network
 
-  # Backend
+  # REST Server (API, BL, DAL)
   paperless-rest:
     build:
-      context: ./Paperless.REST
-      dockerfile: REST.Dockerfile
+      context: .
+      dockerfile: Paperless.REST/REST.Dockerfile
     container_name: paperless-rest
     ports:
       - "8080:8080"
@@ -108,7 +110,7 @@ services:
     networks:
       - paperless-network
 
-  # Paperless Services with Workers
+  # Services with Workers
   paperless-services:
     build:
       context: .
@@ -126,7 +128,7 @@ services:
     networks:
       - paperless-network
 
-  # Paperless Batch Processing
+  # Batch Processing
   paperless-batch:
     build:
       context: .
