@@ -12,8 +12,8 @@ using Paperless.DAL.Database;
 namespace Paperless.DAL.Migrations
 {
     [DbContext(typeof(PaperlessDbContext))]
-    [Migration("20260103115041_AddCategories")]
-    partial class AddCategories
+    [Migration("20260110140736_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,13 +40,35 @@ namespace Paperless.DAL.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("Paperless.DAL.Entities.DailyAccessLogs", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AccessCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("AccessDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentId");
+
+                    b.ToTable("DailyAccessLogs");
+                });
+
             modelBuilder.Entity("Paperless.DAL.Entities.DocumentEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CategoryId")
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Content")
@@ -82,13 +104,23 @@ namespace Paperless.DAL.Migrations
                     b.ToTable("Documents");
                 });
 
+            modelBuilder.Entity("Paperless.DAL.Entities.DailyAccessLogs", b =>
+                {
+                    b.HasOne("Paperless.DAL.Entities.DocumentEntity", "Document")
+                        .WithMany("DailyAccessLogs")
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Document");
+                });
+
             modelBuilder.Entity("Paperless.DAL.Entities.DocumentEntity", b =>
                 {
                     b.HasOne("Paperless.DAL.Entities.CategoryEntity", "Category")
                         .WithMany("Documents")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Category");
                 });
@@ -96,6 +128,11 @@ namespace Paperless.DAL.Migrations
             modelBuilder.Entity("Paperless.DAL.Entities.CategoryEntity", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("Paperless.DAL.Entities.DocumentEntity", b =>
+                {
+                    b.Navigation("DailyAccessLogs");
                 });
 #pragma warning restore 612, 618
         }

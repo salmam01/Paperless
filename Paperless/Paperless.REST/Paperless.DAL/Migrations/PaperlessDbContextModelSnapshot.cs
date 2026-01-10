@@ -37,6 +37,28 @@ namespace Paperless.DAL.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("Paperless.DAL.Entities.DailyAccessLogs", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AccessCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("AccessDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentId");
+
+                    b.ToTable("DailyAccessLogs");
+                });
+
             modelBuilder.Entity("Paperless.DAL.Entities.DocumentEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -79,6 +101,17 @@ namespace Paperless.DAL.Migrations
                     b.ToTable("Documents");
                 });
 
+            modelBuilder.Entity("Paperless.DAL.Entities.DailyAccessLogs", b =>
+                {
+                    b.HasOne("Paperless.DAL.Entities.DocumentEntity", "Document")
+                        .WithMany("DailyAccessLogs")
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Document");
+                });
+
             modelBuilder.Entity("Paperless.DAL.Entities.DocumentEntity", b =>
                 {
                     b.HasOne("Paperless.DAL.Entities.CategoryEntity", "Category")
@@ -92,6 +125,11 @@ namespace Paperless.DAL.Migrations
             modelBuilder.Entity("Paperless.DAL.Entities.CategoryEntity", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("Paperless.DAL.Entities.DocumentEntity", b =>
+                {
+                    b.Navigation("DailyAccessLogs");
                 });
 #pragma warning restore 612, 618
         }
