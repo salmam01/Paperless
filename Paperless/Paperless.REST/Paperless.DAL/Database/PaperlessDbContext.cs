@@ -7,6 +7,7 @@ namespace Paperless.DAL.Database
     {
         public DbSet<DocumentEntity> Documents { get; set; }
         public DbSet<CategoryEntity> Categories { get; set; }
+        public DbSet<DailyAccessLogs> DailyAccessLogs { get; set; }
 
         public PaperlessDbContext(DbContextOptions<PaperlessDbContext> options)
             : base(options) { }
@@ -22,6 +23,12 @@ namespace Paperless.DAL.Database
                 .WithMany(c => c.Documents)
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<DailyAccessLogs>()
+                .HasOne(a => a.Document)
+                .WithMany(d => d.DailyAccessLogs)
+                .HasForeignKey(a => a.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
