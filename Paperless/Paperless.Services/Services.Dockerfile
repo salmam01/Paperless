@@ -11,7 +11,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Environment variable for Tesseract data
-ENV TESSDATA_PREFIX=/app
+ENV TESSDATA_PREFIX=/app/tessdata
 
 # Symlinks for .NET Tesseract Wrapper
 RUN ln -s /usr/lib/x86_64-linux-gnu/libdl.so.2 /usr/lib/x86_64-linux-gnu/libdl.so
@@ -55,8 +55,8 @@ COPY --from=publish /app/publish .
 # Copy Tesseract DE + EN traineddata directly into the image
 RUN mkdir -p /app/tessdata \
     && apt-get update && apt-get install -y curl \
-    && curl -L -o /app/tessdata/de.traineddata https://github.com/tesseract-ocr/tessdata/raw/main/de.traineddata \
-    && curl -L -o /app/tessdata/en.traineddata https://github.com/tesseract-ocr/tessdata/raw/main/en.traineddata \
+    && curl -L -o /app/tessdata/deu.traineddata https://github.com/tesseract-ocr/tessdata/raw/main/deu.traineddata \
+    && curl -L -o /app/tessdata/eng.traineddata https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata \
     && apt-get remove -y curl \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
