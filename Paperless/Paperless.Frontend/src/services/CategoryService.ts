@@ -1,4 +1,4 @@
-import type { CategoryDto } from "../dto/CategoryDto";
+﻿import type { CategoryDto } from "../dto/CategoryDto";
 
 const apiUrl = 'http://localhost:8080/api/category'
 
@@ -31,6 +31,19 @@ export async function createCategory(name: string): Promise<CategoryDto> {
 
     if (!response.ok) 
         throw new Error (`Failed to create category.`);
+    
+    return await response.json();
+}
+
+export async function updateCategory(id: string, name: string): Promise<CategoryDto> {
+    const response = await fetch(`${apiUrl}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(name)
+    });
+
+    if (!response.ok) 
+        throw new Error(`Failed to update category with ID: ${id}`);
     
     return await response.json();
 }
