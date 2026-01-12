@@ -19,6 +19,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showUploadPanel, setShowUploadPanel] = useState(false);
   const [showCategoryManagement, setShowCategoryManagement] = useState(false);
+  const [showCategoryFilterPanel, setShowCategoryFilterPanel] = useState(false);
   const [notifications, setNotifications] = useState<Array<{ id: string, message: string, type: 'error' | 'success' | 'info' }>>([]);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
@@ -226,48 +227,7 @@ function App() {
 
         <div className="documents-section">
           <h2>Documents ({documents.length})</h2>
-          <Searchbar
-            query={searchQuery}
-            onChange={(val) => {
-              setSearchQuery(val);
-              handleSearch(val);
-            }} />
-          <div className="documents-toolbar">
-            <button onClick={handleShowCategoryManagement} disabled={loading}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 7h16M4 12h16M4 17h16" />
-              </svg>
-              Categories
-            </button>
-            <div className="category-filter-toolbar">
-              <button
-                className={`category-filter-btn ${selectedCategoryFilter === null ? 'active' : ''}`}
-                onClick={() => handleCategoryFilter(null)}
-                disabled={loading}
-                title="All Categories"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="16" />
-                  <line x1="8" y1="12" x2="16" y2="12" />
-                </svg>
-                All
-              </button>
-              {categories.map(category => (
-                <button
-                  key={category.id}
-                  className={`category-filter-btn ${selectedCategoryFilter === category.id ? 'active' : ''}`}
-                  onClick={() => handleCategoryFilter(category.id)}
-                  disabled={loading}
-                  title={`Filter by ${category.name}`}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                  </svg>
-                  {category.name}
-                </button>
-              ))}
-            </div>
+          <div className="documents-action-buttons">
             <button onClick={handleShowUpload} disabled={loading}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -306,6 +266,79 @@ function App() {
               )}
             </button>
           </div>
+          <Searchbar
+            query={searchQuery}
+            onChange={(val) => {
+              setSearchQuery(val);
+              handleSearch(val);
+            }} />
+          <div className="documents-toolbar">
+            <button onClick={handleShowCategoryManagement} disabled={loading}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+              Categories
+            </button>
+            <button 
+              onClick={() => setShowCategoryFilterPanel(!showCategoryFilterPanel)} 
+              disabled={loading}
+              className="category-filter-toggle"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              </svg>
+              Filter
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ transform: showCategoryFilterPanel ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          {/* Sidebar Panel: Category-Filter */}
+          <div className={`category-filter-sidebar ${showCategoryFilterPanel ? 'open' : ''}`}>
+            <div className="category-filter-panel">
+              <h3>Filter by Category</h3>
+              <div className="category-filter-buttons">
+                <button
+                  className={`category-filter-btn ${selectedCategoryFilter === null ? 'active' : ''}`}
+                  onClick={() => handleCategoryFilter(null)}
+                  disabled={loading}
+                  title="All Categories"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                  </svg>
+                  All
+                </button>
+                {categories.map(category => (
+                  <button
+                    key={category.id}
+                    className={`category-filter-btn ${selectedCategoryFilter === category.id ? 'active' : ''}`}
+                    onClick={() => handleCategoryFilter(category.id)}
+                    disabled={loading}
+                    title={`Filter by ${category.name}`}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                    </svg>
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
           {showUploadPanel && (
             <div className="upload-section">
               <UploadPanel loading={loading} onUploaded={handleUpload} onBack={handleBack} />
@@ -336,7 +369,16 @@ function App() {
             </div>
             {selectedDocument && (
               <aside className="details-panel">
-                <DocumentDetails document={selectedDocument} onBack={handleBack} />
+                <DocumentDetails 
+                  document={selectedDocument} 
+                  onBack={handleBack}
+                  onCategoryUpdate={async () => {
+                    await fetchDocuments();
+                    if (selectedDocument.id) {
+                      await fetchDocument(selectedDocument.id);
+                    }
+                  }}
+                />
               </aside>
             )}
           </div>
