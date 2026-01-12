@@ -66,6 +66,47 @@
   opacity: 0.9;
 }
 
+/* Action buttons between Documents title and Searchbar */
+.documents-action-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 0 auto 1.5rem auto;
+  max-width: 100%;
+  width: 100%;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+.documents-action-buttons button {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.documents-action-buttons button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
+}
+
+.documents-action-buttons button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Searchbar Styling */
 .searchbar-section {
   position: relative;
@@ -219,6 +260,60 @@
 
 .category-filter-btn svg {
   flex-shrink: 0;
+}
+
+.category-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Category Filter Sidebar */
+.category-filter-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 280px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 100;
+  padding-top: 120px;
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.category-filter-sidebar.open {
+  transform: translateX(0);
+}
+
+.category-filter-panel {
+  padding: 1.5rem;
+}
+
+.category-filter-panel h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.category-filter-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.category-filter-buttons .category-filter-btn {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
 }
 
 /* Upload Component  */
@@ -868,6 +963,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  color: #fff;
+}
+
+.card-action-button svg {
+  color: #fff;
+  stroke: #fff;
 }
 
 .card-action-button:hover {
@@ -1098,11 +1199,7 @@
 }
 
 .category-list-section {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 1rem;
-  backdrop-filter: blur(8px);
+  width: 100%;
 }
 
 .category-list-section h3 {
@@ -1313,6 +1410,13 @@
   gap: 8px;
 }
 
+.category-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
 .category-item {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -1327,12 +1431,58 @@
   text-align: left;
   font-size: 1rem;
   font-family: inherit;
+  flex: 1;
+}
+
+.category-item-wrapper .card-action-button {
+  flex-shrink: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-edit-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.category-edit-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.category-edit-input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.card-action-button--edit:hover {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.card-action-button--save:hover {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.card-action-button--cancel:hover {
+  background: rgba(239, 68, 68, 0.3);
 }
 
 .category-item:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.35);
-  transform: translateX(4px);
 }
 
 .category-item.selected {
@@ -1572,6 +1722,28 @@
   backdrop-filter: blur(5px);
 }
 
+/* Category Badge oben in Document Cards */
+.document-category-badge-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(5px);
+  margin-bottom: 0.75rem;
+  align-self: flex-start;
+}
+
+.document-category-badge-top svg {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
 .document-header-right {
   display: flex;
   align-items: center;
@@ -1593,11 +1765,91 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(5px);
   margin-bottom: 12px;
+  position: relative;
 }
 
 .document-category-badge svg {
   width: 16px;
   height: 16px;
+}
+
+.category-edit-icon {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.category-edit-icon:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.1);
+}
+
+.document-category-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.category-select-edit {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.category-select-edit:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.category-select-edit option {
+  background: #764ba2;
+  color: #fff;
+}
+
+.category-save-btn,
+.category-cancel-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.category-save-btn:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.category-cancel-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.category-save-btn:disabled,
+.category-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /*
