@@ -5,7 +5,7 @@ export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 // Upload-Utility-Function
 export function validateFile(file: File): string | null {
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    
+
     // Debug-Logging : txt files
     if (fileExtension === '.txt') {
         console.log('TXT-Datei erkannt:', {
@@ -16,15 +16,15 @@ export function validateFile(file: File): string | null {
             acceptedTypes: ACCEPTED_FILE_TYPES
         });
     }
-    
+
     if (!ACCEPTED_FILE_TYPES.includes(fileExtension)) {
         return `Dateityp ${fileExtension} wird nicht unterstützt. Erlaubte Formate: ${ACCEPTED_FILE_TYPES.join(', ')}`;
     }
-    
+
     if (file.size > MAX_FILE_SIZE) {
         return `Datei ist zu groß. Maximum: ${Math.round(MAX_FILE_SIZE / 1024 / 1024)}MB`;
     }
-    
+
     return null;
 }
 
@@ -32,12 +32,16 @@ export function validateFile(file: File): string | null {
 export function getFileTypeFromFileName(fileName: string): string {
     if (!fileName) return 'Unknown';
     const extension = fileName.split('.').pop()?.toLowerCase();
-    
+
     switch (extension) {
-        case 'pdf': return 'PDF';
-        case 'docx': return 'DOCX';
-        case 'txt': return 'TXT';
-        default: return 'Unknown';
+        case 'pdf':
+            return 'PDF';
+        case 'docx':
+            return 'DOCX';
+        case 'txt':
+            return 'TXT';
+        default:
+            return 'Unknown';
     }
 }
 
