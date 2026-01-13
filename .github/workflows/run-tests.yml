@@ -1,0 +1,50 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1 Checkout repository
+      - uses: actions/checkout@v4
+
+      # 2 Setup .NET 8
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # 3 Setup Docker for Testcontainers (PostgreSQL)
+      - name: Ensure Docker is running
+        run: |
+          sudo systemctl start docker || true
+          docker --version
+
+      # 4 Cache NuGet packages for faster restore
+      - uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      # 5 Run Unit (REST) Tests
+      - name: Run Unit Tests
+        working-directory: Paperless/Tests/UnitTests/Paperless.REST.Tests
+        run: dotnet test --configuration Release --verbosity normal
+
+      # 6 Run Integration Tests
+      - name: Run Integration Tests
+        working-directory: Paperless/Tests/IntegrationTests/Paperless.REST.IntegrationTests
+        run: dotnet test --configuration Release --verbosity normal
+
+      # 7 Run Services Tests
+      - name: Run Services Tests
+        working-directory: Paperless/Tests/UnitTests/Paperless.Services.Tests
+        run: dotnet test --configuration Release --verbosity normal

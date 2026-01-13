@@ -129,3 +129,6 @@ using (IServiceScope scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Make Program class accessible for WebApplicationFactory in integration tests
+public partial class Program { }
