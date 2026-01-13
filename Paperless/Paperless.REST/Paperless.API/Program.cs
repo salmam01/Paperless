@@ -19,9 +19,14 @@ using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-//  Load configuration from appsettings.json
+// Load local configuration (overrides appsettings.json)
+builder.Configuration
+    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
+//  Load configuration from appsettings.json and appsettings.Local.json
 IConfiguration config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", false, true)
+    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
     .Build();
 
 //  Logger configuration

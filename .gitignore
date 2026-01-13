@@ -433,3 +433,5 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# Local configuration files with sensitive data
+**/appsettings.Local.json

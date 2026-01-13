@@ -11,6 +11,10 @@ using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+// Load local configuration (overrides appsettings.json)
+builder.Configuration
+    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 //  Serilog configuration
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
