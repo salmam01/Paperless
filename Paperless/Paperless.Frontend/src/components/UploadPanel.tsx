@@ -1,6 +1,6 @@
-import { useState, useRef, type ChangeEvent, type DragEvent } from "react";
-import { validateFile, formatFileSize, clearFileInput, ACCEPTED_FILE_TYPES } from "../utils/UploadUtils";
-import { CategoryManagement } from "./CategoryManagement";
+import {type ChangeEvent, type DragEvent, useRef, useState} from "react";
+import {ACCEPTED_FILE_TYPES, clearFileInput, formatFileSize, validateFile} from "../utils/UploadUtils";
+import {CategoryManagement} from "./CategoryManagement";
 
 interface Props {
     loading: boolean;
@@ -8,7 +8,7 @@ interface Props {
     onBack?: () => void;
 }
 
-export function UploadPanel({ loading, onUploaded, onBack }: Props) {
+export function UploadPanel({loading, onUploaded, onBack}: Props) {
     const [file, setFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
             setError(validationError);
             return;
         }
-        
+
         setError(null);
         setFile(selectedFile);
     }
@@ -45,7 +45,7 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
     function handleDrop(e: DragEvent<HTMLDivElement>) {
         e.preventDefault();
         setIsDragOver(false);
-        
+
         const droppedFiles = e.dataTransfer.files;
         if (droppedFiles.length > 0) {
             handleFileSelect(droppedFiles[0]);
@@ -75,28 +75,29 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
                 <h2 className="document-details-title">Upload Document</h2>
                 <button className="document-details-close" onClick={onBack} aria-label="Close">×</button>
             </div>
-            
+
             <div className="upload-panel-content">
-                <div 
+                <div
                     className={`upload-dropzone ${isDragOver ? 'drag-over' : ''} ${file ? 'has-file' : ''}`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
                 >
-                    <input 
+                    <input
                         ref={fileInputRef}
-                        type="file" 
-                        name="document" 
+                        type="file"
+                        name="document"
                         onChange={handleFileChange}
                         accept={ACCEPTED_FILE_TYPES.join(',')}
-                        style={{ display: 'none' }}
+                        style={{display: 'none'}}
                     />
-                    
+
                     {!file ? (
                         <div className="upload-content">
                             <div className="upload-icon">
-                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                     strokeWidth="2">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                                     <polyline points="17 8 12 3 7 8"/>
                                     <line x1="12" y1="3" x2="12" y2="15"/>
@@ -106,13 +107,14 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
                             <p>or click to choose</p>
                             <div className="upload-formats">
                                 <small>Supported file formats: PDF, DOCX, TXT</small>
-                                <small style={{ display: 'block', marginTop: '8px' }}>Maximum File Size: 1 GB</small>
+                                <small style={{display: 'block', marginTop: '8px'}}>Maximum File Size: 1 GB</small>
                             </div>
                         </div>
                     ) : (
                         <div className="file-preview">
                             <div className="file-icon">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                     strokeWidth="2">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                                     <polyline points="14,2 14,8 20,8"/>
                                 </svg>
@@ -121,14 +123,15 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
                                 <h4>{file.name}</h4>
                                 <p>{formatFileSize(file.size)}</p>
                             </div>
-                            <button 
+                            <button
                                 className="remove-file-btn"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     handleRemoveFile();
                                 }}
                             >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                     strokeWidth="2">
                                     <line x1="18" y1="6" x2="6" y2="18"/>
                                     <line x1="6" y1="6" x2="18" y2="18"/>
                                 </svg>
@@ -136,10 +139,11 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
                         </div>
                     )}
                 </div>
-                
+
                 {error && (
                     <div className="upload-error">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             strokeWidth="2">
                             <circle cx="12" cy="12" r="10"/>
                             <line x1="15" y1="9" x2="9" y2="15"/>
                             <line x1="9" y1="9" x2="15" y2="15"/>
@@ -147,18 +151,18 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
                         {error}
                     </div>
                 )}
-                
+
                 <div className="upload-category-section">
-                    <CategoryManagement 
+                    <CategoryManagement
                         onCategorySelect={setSelectedCategoryId}
                         selectedCategoryId={selectedCategoryId}
                         showCreateForm={true}
                         compact={true}
                     />
                 </div>
-                
+
                 <div className="upload-actions-panel">
-                    <button 
+                    <button
                         className="upload-btn-panel"
                         onClick={handleUpload}
                         disabled={!file || loading}
@@ -166,16 +170,20 @@ export function UploadPanel({ loading, onUploaded, onBack }: Props) {
                         {loading ? (
                             <>
                                 <svg className="spinner" width="18" height="18" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="31.416" strokeDashoffset="31.416">
-                                        <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
-                                        <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"
+                                            strokeDasharray="31.416" strokeDashoffset="31.416">
+                                        <animate attributeName="stroke-dasharray" dur="2s"
+                                                 values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                                        <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416"
+                                                 repeatCount="indefinite"/>
                                     </circle>
                                 </svg>
                                 Uploading...
                             </>
                         ) : (
                             <>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                     strokeWidth="2">
                                     <polyline points="20 6 9 17 4 12"/>
                                 </svg>
                                 Upload

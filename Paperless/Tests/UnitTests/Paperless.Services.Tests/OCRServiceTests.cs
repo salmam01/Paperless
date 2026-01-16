@@ -63,7 +63,7 @@ namespace Paperless.Services.Tests
                 // whatever
             }
             
-            // check if it actually logged - actual log message is "Converting PDF stream to images"
+            // check if it actually logged 
             _loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
@@ -98,7 +98,7 @@ namespace Paperless.Services.Tests
                 // as expected
             }
 
-            // check if log was called - actual log message is "Processing PDF for OCR" or "Converting PDF stream to images"
+            // check if log was called 
             _loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,

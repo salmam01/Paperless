@@ -75,8 +75,7 @@ namespace Paperless.Services.Tests
                 _loggerMock.Object,
                 _configMock.Object
             );
-
-            // line 66
+            
             // If Elasticsearch isnt available, it may throw an exception,  is acceptable
             try
             {
@@ -85,8 +84,6 @@ namespace Paperless.Services.Tests
             }
             catch (Exception)
             {
-                // If Elasticsearch isnt running, the method may throw an exception
-                // acceptable - this test verifies the method signature is correct
                 Assert.True(true);
             }
         }
@@ -99,7 +96,6 @@ namespace Paperless.Services.Tests
                 _configMock.Object
             );
 
-            // Returns long? (may be null without Elasticsearch)
             long? result = await service.RemoveAllAsync();
             Assert.True(result == null || result is long);
         }
@@ -111,8 +107,6 @@ namespace Paperless.Services.Tests
                 _loggerMock.Object,
                 _configMock.Object
             );
-
-            // Shouldnt throw (may fail without Elasticsearch, but method should be callable)
             await service.CreateIndexIfNotExistsAsync();
         }
     }

@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.DTOs;
+using Paperless.Services.Models.DTOs.Payloads;
 using Paperless.Services.Services.Clients;
 
 namespace Paperless.Services.Tests
@@ -17,7 +17,6 @@ namespace Paperless.Services.Tests
         {
             _loggerMock = new Mock<ILogger<ResultClient>>();
             _configMock = new Mock<IOptions<RESTConfig>>();
-            
             _testConfig = new RESTConfig
             {
                 Url = "https://localhost:5001/api/documents/"
@@ -45,28 +44,39 @@ namespace Paperless.Services.Tests
         
 
         [Fact]
-        public void creates_worker_result_dto()
+        public void creates_summary_completed_payload()
         {
-            DocumentDTO dto = new DocumentDTO
+            Guid docId = Guid.NewGuid();
+            Guid catId = Guid.NewGuid();
+            SummaryCompletedPayload payload = new SummaryCompletedPayload
             {
-                Id = "doc-123",
-                OcrResult = "Extracted text from document",
-                SummaryResult = "This is a summary of the document"
+                DocumentId = docId,
+                Title = "Test Document",
+                CategoryId = catId,
+                CategoryName = "Test Category",
+                OCRResult = "Extracted text from document",
+                Summary = "This is a summary of the document"
             };
 
-            Assert.Equal("doc-123", dto.Id);
-            Assert.Equal("Extracted text from document", dto.OcrResult);
-            Assert.Equal("This is a summary of the document", dto.SummaryResult);
+            Assert.Equal(docId, payload.DocumentId);
+            Assert.Equal("Test Document", payload.Title);
+            Assert.Equal(catId, payload.CategoryId);
+            Assert.Equal("Test Category", payload.CategoryName);
+            Assert.Equal("Extracted text from document", payload.OCRResult);
+            Assert.Equal("This is a summary of the document", payload.Summary);
         }
 
         [Fact]
-        public void worker_result_dto_has_default_values()
+        public void summary_completed_payload_has_default_values()
         {
-            DocumentDTO dto = new DocumentDTO();
+            SummaryCompletedPayload payload = new SummaryCompletedPayload();
 
-            Assert.Equal(string.Empty, dto.Id);
-            Assert.Equal(string.Empty, dto.OcrResult);
-            Assert.Equal(string.Empty, dto.SummaryResult);
+            Assert.Equal(Guid.Empty, payload.DocumentId);
+            Assert.Equal(string.Empty, payload.Title);
+            Assert.Equal(Guid.Empty, payload.CategoryId);
+            Assert.Equal(string.Empty, payload.CategoryName);
+            Assert.Equal(string.Empty, payload.OCRResult);
+            Assert.Equal(string.Empty, payload.Summary);
         }
     }
 }

@@ -19,9 +19,14 @@ using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-//  Load configuration from appsettings.json
+// Load local configuration (overrides appsettings.json)
+builder.Configuration
+    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
+//  Load configuration from appsettings.json and appsettings.Local.json
 IConfiguration config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", false, true)
+    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
     .Build();
 
 //  Logger configuration
@@ -53,7 +58,6 @@ builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("MinIO"
 builder.Services.Configure<ElasticSearchConfig>(builder.Configuration.GetSection("ElasticSearch"));
 builder.Services.Configure<CategoriesConfig>(builder.Configuration.GetSection("Categories"));
 builder.Services.Configure<MQPublisherConfig>(builder.Configuration.GetSection("MQPublisher"));
-//builder.Services.AddScoped<PaperlessDbContext>();
 
 builder.Services.AddDbContext<PaperlessDbContext>(optionsbuilder =>
     optionsbuilder.UseNpgsql(builder.Configuration["ConnectionString"])
@@ -129,3 +133,6 @@ using (IServiceScope scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Make Program class accessible for WebApplicationFactory in integration tests
+public partial class Program { }

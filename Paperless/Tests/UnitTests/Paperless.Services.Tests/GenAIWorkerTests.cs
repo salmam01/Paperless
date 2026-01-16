@@ -3,10 +3,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
-using Paperless.Services.Models.DTOs;
 using Paperless.Services.Services.Clients;
-using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.Messaging.Base;
+using Paperless.Services.Services.Messaging.Listeners;
+using Paperless.Services.Services.Messaging.Publishers;
 using Paperless.Services.Workers;
 
 namespace Paperless.Services.Tests
@@ -14,7 +14,8 @@ namespace Paperless.Services.Tests
     public class GenAIWorkerTests
     {
         private readonly Mock<ILogger<GenAIWorker>> _loggerMock;
-        private readonly Mock<MQListener> _mqListenerMock;
+        private readonly Mock<GenAIListener> _mqListenerMock;
+        private readonly Mock<MQPublisher> _mqPublisherMock;
         private readonly Mock<GenAIService> _genAIServiceMock;
         private readonly Mock<ResultClient> _workerResultsServiceMock;
 
@@ -22,34 +23,48 @@ namespace Paperless.Services.Tests
         {
             _loggerMock = new Mock<ILogger<GenAIWorker>>();
             
-            // Setup QueueConfig mock
-            Mock<IOptions<ListenerConfig>> queueConfigMock = new Mock<IOptions<ListenerConfig>>();
-            queueConfigMock.Setup(x => x.Value).Returns(new ListenerConfig
+            // Setup ListenerConfig mock
+            Mock<IOptionsMonitor<ListenerConfig>> listenerConfigMock = new Mock<IOptionsMonitor<ListenerConfig>>();
+            listenerConfigMock.Setup(x => x.Get("SummaryListener")).Returns(new ListenerConfig
             {
                 QueueName = "summary.queue",
-                ExchangeName = "services.fanout",
-                MaxRetries = 3
+                MaxRetries = 3,
+                RoutingKeys = new List<string> { "summary.completed" }
             });
             
-            // Setup RabbitMQConfig mock
+            // RabbitMQConfig 
             Mock<IOptions<RabbitMQConfig>> rabbitMqConfigMock = new Mock<IOptions<RabbitMQConfig>>();
             rabbitMqConfigMock.Setup(x => x.Value).Returns(new RabbitMQConfig
             {
                 Host = "localhost",
                 Port = 5672,
                 User = "guest",
-                Password = "guest"
+                Password = "guest",
+                ExchangeName = "services.fanout"
             });
             
             MQConnectionFactory mqConnectionFactory = new MQConnectionFactory(rabbitMqConfigMock.Object);
             
-            _mqListenerMock = new Mock<MQListener>(
-                Mock.Of<ILogger<MQListener>>(), 
-                queueConfigMock.Object,
+            _mqListenerMock = new Mock<GenAIListener>(
+                Mock.Of<ILogger<GenAIListener>>(), 
+                listenerConfigMock.Object,
                 mqConnectionFactory
             );
             
-            // Setup GenAIConfig mock
+            // Setup MQPublisher 
+            Mock<IOptions<MQPublisherConfig>> publisherConfigMock = new Mock<IOptions<MQPublisherConfig>>();
+            publisherConfigMock.Setup(x => x.Value).Returns(new MQPublisherConfig
+            {
+                RoutingKeys = new List<string> { "ocr.completed", "summary.completed" }
+            });
+            
+            _mqPublisherMock = new Mock<MQPublisher>(
+                Mock.Of<ILogger<MQPublisher>>(),
+                publisherConfigMock.Object,
+                mqConnectionFactory
+            );
+            
+            // GenAIConfig 
             Mock<IOptions<GenAIConfig>> genAIConfigMock = new Mock<IOptions<GenAIConfig>>();
             genAIConfigMock.Setup(x => x.Value).Returns(new GenAIConfig
             {
@@ -66,9 +81,9 @@ namespace Paperless.Services.Tests
                 new HttpClient()
             );
             
-            // Setup EndpointsConfig mock
-            Mock<IOptions<RESTConfig>> endpointsConfigMock = new Mock<IOptions<RESTConfig>>();
-            endpointsConfigMock.Setup(x => x.Value).Returns(new RESTConfig
+            // Setup RESTConfig 
+            Mock<IOptions<RESTConfig>> restConfigMock = new Mock<IOptions<RESTConfig>>();
+            restConfigMock.Setup(x => x.Value).Returns(new RESTConfig
             {
                 Url = "https://localhost:5001/api/documents/"
             });
@@ -76,16 +91,17 @@ namespace Paperless.Services.Tests
             _workerResultsServiceMock = new Mock<ResultClient>(
                 Mock.Of<ILogger<ResultClient>>(),
                 new HttpClient(),
-                endpointsConfigMock.Object
+                restConfigMock.Object
             );
         }
 
         [Fact]
         public void can_create_worker()
         {
-            GenAIWorker worker = new SummaryWorker(
+            GenAIWorker worker = new GenAIWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
+                _mqPublisherMock.Object,
                 _genAIServiceMock.Object,
                 _workerResultsServiceMock.Object
             );
@@ -96,9 +112,10 @@ namespace Paperless.Services.Tests
         [Fact]
         public void worker_gets_created_successfully()
         {
-            GenAIWorker worker = new SummaryWorker(
+            GenAIWorker worker = new GenAIWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
+                _mqPublisherMock.Object,
                 _genAIServiceMock.Object,
                 _workerResultsServiceMock.Object
             );
@@ -109,80 +126,16 @@ namespace Paperless.Services.Tests
         [Fact]
         public void is_a_background_service()
         {
-            GenAIWorker worker = new SummaryWorker(
+            GenAIWorker worker = new GenAIWorker(
                 _loggerMock.Object,
                 _mqListenerMock.Object,
+                _mqPublisherMock.Object,
                 _genAIServiceMock.Object,
                 _workerResultsServiceMock.Object
             );
 
             Assert.NotNull(worker);
             Assert.IsAssignableFrom<BackgroundService>(worker);
-        }
-
-        [Fact]
-        public void handles_empty_message()
-        {
-            GenAIWorker worker = new SummaryWorker(
-                _loggerMock.Object,
-                _mqListenerMock.Object,
-                _genAIServiceMock.Object,
-                _workerResultsServiceMock.Object
-            );
-            Assert.NotNull(worker);
-        }
-
-        [Fact]
-        public void handles_invalid_json_message()
-        {
-            GenAIWorker worker = new SummaryWorker(
-                _loggerMock.Object,
-                _mqListenerMock.Object,
-                _genAIServiceMock.Object,
-                _workerResultsServiceMock.Object
-            );
-
-            Assert.NotNull(worker);
-        }
-
-        [Fact]
-        public void handles_message_without_id()
-        {
-            GenAIWorker worker = new SummaryWorker(
-                _loggerMock.Object,
-                _mqListenerMock.Object,
-                _genAIServiceMock.Object,
-                _workerResultsServiceMock.Object
-            );
-
-            Assert.NotNull(worker);
-        }
-
-        [Fact]
-        public void handles_message_without_ocr_result()
-        {
-            GenAIWorker worker = new SummaryWorker(
-                _loggerMock.Object,
-                _mqListenerMock.Object,
-                _genAIServiceMock.Object,
-                _workerResultsServiceMock.Object
-            );
-            Assert.NotNull(worker);
-        }
-
-        [Fact]
-        public void creates_worker_result_dto_correctly()
-        {
-            DocumentDTO dto = new DocumentDTO
-            {
-                Id = "test-id",
-                OcrResult = "test ocr content",
-                SummaryResult = "test summary"
-            };
-
-            Assert.Equal("test-id", dto.Id);
-            Assert.Equal("test ocr content", dto.OcrResult);
-            Assert.Equal("test summary", dto.SummaryResult);
         }
     }
 }

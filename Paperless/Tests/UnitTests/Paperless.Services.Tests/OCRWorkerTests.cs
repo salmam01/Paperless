@@ -4,8 +4,8 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Paperless.Services.Configurations;
 using Paperless.Services.Services.FileStorage;
-using Paperless.Services.Services.Messaging;
 using Paperless.Services.Services.Messaging.Base;
+using Paperless.Services.Services.Messaging.Listeners;
 using Paperless.Services.Services.Messaging.Publishers;
 using Paperless.Services.Services.OCR;
 using Paperless.Services.Workers;
@@ -15,51 +15,59 @@ namespace Paperless.Services.Tests
     public class OCRWorkerTests
     {
         private readonly Mock<ILogger<OCRWorker>> _loggerMock;
-        private readonly Mock<MQListener> _mqListenerMock;
+        private readonly Mock<OCRListener> _ocrListenerMock;
         private readonly Mock<MQPublisher> _mqPublisherMock;
-        private readonly StorageService _storageService;
-        private readonly OCRService _ocrService;
+        private readonly Mock<StorageService> _storageServiceMock;
+        private readonly Mock<OCRService> _ocrServiceMock;
 
         public OCRWorkerTests()
         {
             _loggerMock = new Mock<ILogger<OCRWorker>>();
             
-            // Setup QueueConfig mock
-            Mock<IOptions<ListenerConfig>> queueConfigMock = new Mock<IOptions<ListenerConfig>>();
-            queueConfigMock.Setup(x => x.Value).Returns(new ListenerConfig
+            // ListenerConfig 
+            Mock<IOptionsMonitor<ListenerConfig>> listenerConfigMock = new Mock<IOptionsMonitor<ListenerConfig>>();
+            listenerConfigMock.Setup(x => x.Get("OCRListener")).Returns(new ListenerConfig
             {
                 QueueName = "ocr.queue",
-                ExchangeName = "services.fanout",
-                MaxRetries = 3
+                MaxRetries = 3,
+                RoutingKeys = new List<string> { "ocr.completed" }
             });
             
-            // Setup RabbitMQConfig mock
+            //RabbitMQConfig 
             Mock<IOptions<RabbitMQConfig>> rabbitMqConfigMock = new Mock<IOptions<RabbitMQConfig>>();
             rabbitMqConfigMock.Setup(x => x.Value).Returns(new RabbitMQConfig
             {
                 Host = "localhost",
                 Port = 5672,
                 User = "guest",
-                Password = "guest"
+                Password = "guest",
+                ExchangeName = "services.fanout"
             });
             
             MQConnectionFactory mqConnectionFactory = new MQConnectionFactory(rabbitMqConfigMock.Object);
             
-            _mqListenerMock = new Mock<MQListener>(
-                Mock.Of<ILogger<MQListener>>(), 
-                queueConfigMock.Object,
+            _ocrListenerMock = new Mock<OCRListener>(
+                Mock.Of<ILogger<OCRListener>>(), 
+                listenerConfigMock.Object,
                 mqConnectionFactory
             );
             
+            // Setup MQPublisher 
+            Mock<IOptions<MQPublisherConfig>> publisherConfigMock = new Mock<IOptions<MQPublisherConfig>>();
+            publisherConfigMock.Setup(x => x.Value).Returns(new MQPublisherConfig
+            {
+                RoutingKeys = new List<string> { "ocr.completed", "summary.completed" }
+            });
+            
             _mqPublisherMock = new Mock<MQPublisher>(
-                Mock.Of<ILogger<MQPublisher>>(), 
-                queueConfigMock.Object,
+                Mock.Of<ILogger<MQPublisher>>(),
+                publisherConfigMock.Object,
                 mqConnectionFactory
             );
 
-            // real instances with mocked dependencies
-            Mock<IOptions<MinIOConfig>> minIoConfigMock = new Mock<IOptions<Configurations.MinIOConfig>>();
-            minIoConfigMock.Setup(x => x.Value).Returns(new Configurations.MinIOConfig
+            // MinIOConfig setup
+            Mock<IOptions<MinIOConfig>> minIoConfigMock = new Mock<IOptions<MinIOConfig>>();
+            minIoConfigMock.Setup(x => x.Value).Returns(new MinIOConfig
             {
                 Endpoint = "localhost:9000",
                 Username = "minioadmin",
@@ -67,15 +75,16 @@ namespace Paperless.Services.Tests
                 BucketName = "test-bucket"
             });
 
-            Mock<IOptions<OCRConfig>> ocrConfigMock = new Mock<IOptions<OCRConfig>>();
-            ocrConfigMock.Setup(x => x.Value).Returns(new OCRConfig());
-
-            _storageService = new StorageService(
+            _storageServiceMock = new Mock<StorageService>(
                 minIoConfigMock.Object,
                 Mock.Of<ILogger<StorageService>>()
             );
 
-            _ocrService = new OCRService(
+            // OCRConfig 
+            Mock<IOptions<OCRConfig>> ocrConfigMock = new Mock<IOptions<OCRConfig>>();
+            ocrConfigMock.Setup(x => x.Value).Returns(new OCRConfig());
+
+            _ocrServiceMock = new Mock<OCRService>(
                 ocrConfigMock.Object,
                 Mock.Of<ILogger<OCRService>>()
             );
@@ -86,10 +95,10 @@ namespace Paperless.Services.Tests
         {
             OCRWorker worker = new OCRWorker(
                 _loggerMock.Object,
-                _mqListenerMock.Object,
+                _ocrListenerMock.Object,
                 _mqPublisherMock.Object,
-                _storageService,
-                _ocrService
+                _storageServiceMock.Object,
+                _ocrServiceMock.Object
             );
 
             Assert.NotNull(worker);
@@ -100,10 +109,10 @@ namespace Paperless.Services.Tests
         {
             OCRWorker worker = new OCRWorker(
                 _loggerMock.Object,
-                _mqListenerMock.Object,
+                _ocrListenerMock.Object,
                 _mqPublisherMock.Object,
-                _storageService,
-                _ocrService
+                _storageServiceMock.Object,
+                _ocrServiceMock.Object
             );
             // shouldn't crash
             Assert.NotNull(worker);
@@ -114,10 +123,10 @@ namespace Paperless.Services.Tests
         {
             OCRWorker worker = new OCRWorker(
                 _loggerMock.Object,
-                _mqListenerMock.Object,
+                _ocrListenerMock.Object,
                 _mqPublisherMock.Object,
-                _storageService,
-                _ocrService
+                _storageServiceMock.Object,
+                _ocrServiceMock.Object
             );
 
             Assert.NotNull(worker);
