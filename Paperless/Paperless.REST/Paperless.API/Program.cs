@@ -58,7 +58,6 @@ builder.Services.Configure<MinIOConfig>(builder.Configuration.GetSection("MinIO"
 builder.Services.Configure<ElasticSearchConfig>(builder.Configuration.GetSection("ElasticSearch"));
 builder.Services.Configure<CategoriesConfig>(builder.Configuration.GetSection("Categories"));
 builder.Services.Configure<MQPublisherConfig>(builder.Configuration.GetSection("MQPublisher"));
-//builder.Services.AddScoped<PaperlessDbContext>();
 
 builder.Services.AddDbContext<PaperlessDbContext>(optionsbuilder =>
     optionsbuilder.UseNpgsql(builder.Configuration["ConnectionString"])
