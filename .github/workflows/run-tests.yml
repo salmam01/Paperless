@@ -36,18 +36,18 @@ jobs:
 
       # 5 Clean build artifacts to ensure fresh build
       - name: Clean solution
-        working-directory: Paperless
-        run: dotnet clean --configuration Release
+        working-directory: Paperless/Paperless.REST
+        run: dotnet clean Paperless.Rest.sln --configuration Release
 
       # 6 Restore dependencies
       - name: Restore dependencies
-        working-directory: Paperless
-        run: dotnet restore
+        working-directory: Paperless/Paperless.REST
+        run: dotnet restore Paperless.Rest.sln
 
       # 7 Build solution to ensure all projects compile correctly
       - name: Build solution
-        working-directory: Paperless
-        run: dotnet build --configuration Release --no-incremental
+        working-directory: Paperless/Paperless.REST
+        run: dotnet build Paperless.Rest.sln --configuration Release --no-incremental
 
       # 8 Run Unit (REST) Tests
       - name: Run Unit Tests
@@ -59,7 +59,7 @@ jobs:
         working-directory: Paperless/Tests/IntegrationTests/Paperless.REST.IntegrationTests
         run: dotnet test --configuration Release --verbosity normal --no-build
 
-      #  10️ Run Services Tests
+      # 10 Run Services Tests
       - name: Run Services Tests
         working-directory: Paperless/Tests/UnitTests/Paperless.Services.Tests
         run: dotnet test --configuration Release --verbosity normal --no-build
