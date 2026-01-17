@@ -9,7 +9,7 @@ namespace Paperless.BL.Services.Messaging
 {
     public interface IDocumentPublisher
     {
-        Task PublishDocumentAsync(Guid id, List<Category> categories);
+        Task PublishDocumentAsync(Guid id, string fileType, List<Category> categories);
         Task DeleteDocumentAsync(Guid id);
         Task DeleteDocumentsAsync();
     }

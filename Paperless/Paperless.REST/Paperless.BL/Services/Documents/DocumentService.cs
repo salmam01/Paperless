@@ -122,17 +122,8 @@ namespace Paperless.BL.Services.Documents
                 AdjustFileType(document);
                 List<Category> categories = await _categoryService.GetCategoriesAsync();
 
-                if (document.Type == "PDF")
-                {
-                    await _storageService.StoreDocumentAsync(document, content);
-                    await _documentPublisher.PublishDocumentAsync(document.Id, categories);
-                }
-                else
-                {
-                    _parser.ParseDocument(document, content);
-                    await _storageService.StoreDocumentAsync(document, content);
-                    await _documentPublisher.PublishDocumentAsync(document.Id, categories);
-                }
+                await _storageService.StoreDocumentAsync(document, content);
+                await _documentPublisher.PublishDocumentAsync(document.Id, document.Type, categories);
 
                 DocumentEntity entity = _mapper.Map<DocumentEntity>(document);
                 await _documentRepository.AddDocumentAsync(entity);
@@ -278,7 +269,7 @@ namespace Paperless.BL.Services.Documents
                 DocumentEntity? entity = await _documentRepository.GetDocumentAsync(id);
                 Document document = _mapper.Map<Document>(entity);
 
-                await _storageService.DeleteDocumentAsync(id, document.Type);
+                await _storageService.DeleteDocumentAsync(document.FilePath);
                 await _documentPublisher.DeleteDocumentAsync(id);
                 await _documentRepository.DeleteDocumentAsync(id);
             }

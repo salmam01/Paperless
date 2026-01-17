@@ -486,7 +486,7 @@ namespace Paperless.API.Controllers
                 null,
                 "loading...",
                 "loading...",
-                $"{id}.{form.FileName}",
+                $"{id}{fileType}",
                 DateTime.UtcNow,
                 fileType,
                 Math.Round(form.Length / Math.Pow(1024.0, 2), 2)

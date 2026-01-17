@@ -47,7 +47,7 @@ namespace Paperless.Services.Workers
             try
             {
                 //  Deserialize incoming payload
-                OCRPayload payload = _ocrListener.ProcessPayload(ea);
+                DocumentUploadedPayload payload = _ocrListener.ProcessPayload(ea);
 
                 _logger.LogInformation(
                     "Processing {RequestType} request for Document with ID {Id}.",
@@ -56,10 +56,11 @@ namespace Paperless.Services.Workers
                 );
 
                 //  Download file (stream) and title from MinIO
-                MemoryStream documentContent = await _storageService.DownloadDocumentAsync(payload.DocumentId.ToString());
+                string filePath = $"{payload.DocumentId.ToString()}.{payload.FileType.ToLowerInvariant()}";
+                MemoryStream documentContent = await _storageService.DownloadDocumentAsync(filePath);
                 if (documentContent.Length <= 0)
                     throw new Exception("Document stream is empty.");
-                string title = await _storageService.GetDocumentTitleAsync(payload.DocumentId.ToString());
+                string title = await _storageService.GetDocumentTitleAsync(filePath);
 
                 //  Process file to text using OCR
                 OCRResult result = _ocrService.ProcessPdf(documentContent);
@@ -68,7 +69,7 @@ namespace Paperless.Services.Workers
                 {
                     DocumentId = payload.DocumentId,
                     Title = title,
-                    OCRResult = result.PDFContent ?? "Error processing document content.",
+                    OCRResult = result.Content ?? "Error processing document content.",
                     Categories = payload.Categories
                 };
 
@@ -79,7 +80,7 @@ namespace Paperless.Services.Workers
                     ocrCompletedPayload.DocumentId,
                     ocrCompletedPayload.Title,
                     result.Pages.Count,
-                    result.PDFContent?.Length ?? 0
+                    result.Content?.Length ?? 0
                 );
 
                 //  Send OCR Result to Summary Worker through RabbitMQ

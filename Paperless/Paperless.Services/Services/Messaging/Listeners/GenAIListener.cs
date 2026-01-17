@@ -8,9 +8,14 @@ using System.Text.Json;
 
 namespace Paperless.Services.Services.Messaging.Listeners
 {
+    public enum GenAIEventType
+    {
+        DocumentUploaded,
+        DocumentOCRCompleted
+    }
     public class GenAIListener : MQBaseListener
     {
-        private const string _configName = "SummaryListener";
+        private const string _configName = "GenAIListener";
 
         public GenAIListener(
             ILogger<GenAIListener> logger,
@@ -28,14 +33,57 @@ namespace Paperless.Services.Services.Messaging.Listeners
             );
 
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[0]);
+            await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[1]);
 
             _logger.LogInformation(
                 "Declared topology for {QueueName}.",
                 _config.QueueName
             );
         }
+        public GenAIEventType HandleEventType(BasicDeliverEventArgs ea)
+        {
+            if (ea.RoutingKey == _config.RoutingKeys[0])
+                return GenAIEventType.DocumentUploaded;
+            if (ea.RoutingKey == _config.RoutingKeys[1])
+                return GenAIEventType.DocumentOCRCompleted;
 
-        public OCRCompletedPayload ProcessPayload(BasicDeliverEventArgs ea)
+            throw new InvalidOperationException($"Unknown Routing Key: {ea.RoutingKey}");
+        }
+
+        public DocumentUploadedPayload ProcessDocumentUploadedPayload(BasicDeliverEventArgs ea)
+        {
+            try
+            {
+                string body = Encoding.UTF8.GetString(ea.Body.ToArray());
+                DocumentUploadedPayload? payload = new();
+
+                if (string.IsNullOrWhiteSpace(body))
+                {
+                    _logger.LogWarning(
+                        "Received empty message on {QueueName}.",
+                        _config.QueueName
+                    );
+                    return payload;
+                }
+
+                _logger.LogInformation(
+                    "Deserializing message on {QueueName}. Message Length: {Length}",
+                    _config.QueueName,
+                    body.Length
+                );
+
+                payload = JsonSerializer.Deserialize<DocumentUploadedPayload>(body);
+
+                return payload;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to parse message on {QueueName}", _config.QueueName);
+                throw;
+            }
+        }
+
+        public OCRCompletedPayload ProcessOCRCompletedPayload(BasicDeliverEventArgs ea)
         {
             try
             {

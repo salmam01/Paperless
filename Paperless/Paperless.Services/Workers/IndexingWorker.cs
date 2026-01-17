@@ -73,6 +73,10 @@ namespace Paperless.Services.Workers
 
                         break;
 
+                    //  TODO: Change the category of a document
+                    case IndexingEventType.DocumentCategoryEdited:
+                        break;
+
                     //  Delete the document by ID
                     case IndexingEventType.DocumentDeleted:
 

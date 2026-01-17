@@ -36,12 +36,12 @@ namespace Paperless.Services.Services.Messaging.Listeners
         }
 
         //  TODO: add a Parser helper class!
-        public OCRPayload ProcessPayload(BasicDeliverEventArgs ea)
+        public DocumentUploadedPayload ProcessPayload(BasicDeliverEventArgs ea)
         {
             try
             {
                 string body = Encoding.UTF8.GetString(ea.Body.ToArray());
-                OCRPayload? payload = new();
+                DocumentUploadedPayload? payload = new();
 
                 if (string.IsNullOrWhiteSpace(body))
                 {
@@ -58,7 +58,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
                     body.Length
                 );
 
-                payload = JsonSerializer.Deserialize<OCRPayload>(body);
+                payload = JsonSerializer.Deserialize<DocumentUploadedPayload>(body);
 
                 return payload;
             }

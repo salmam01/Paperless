@@ -8,6 +8,7 @@ using Paperless.Services.Services.OCR;
 using Paperless.Services.Services.Search;
 using Paperless.Services.Workers;
 using Serilog;
+using Paperless.Services.Services.Helpers;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -34,7 +35,7 @@ builder.Services.Configure<MQPublisherConfig>(builder.Configuration.GetSection("
 
 //  Configuration for different Queues
 builder.Services.Configure<ListenerConfig>("OCRListener", builder.Configuration.GetSection("OCRListener"));
-builder.Services.Configure<ListenerConfig>("SummaryListener", builder.Configuration.GetSection("SummaryListener"));
+builder.Services.Configure<ListenerConfig>("GenAIListener", builder.Configuration.GetSection("GenAIListener"));
 builder.Services.Configure<ListenerConfig>("IndexingListener", builder.Configuration.GetSection("IndexingListener"));
 
 //  Services
@@ -44,6 +45,7 @@ builder.Services.AddSingleton<OCRService>();
 builder.Services.AddSingleton<GenAIService>();
 builder.Services.AddSingleton<IElasticRepository, ElasticService>();
 builder.Services.AddSingleton<MQPublisher>();
+builder.Services.AddSingleton<Parser>();
 
 //  Listeners
 builder.Services.AddSingleton<OCRListener>();

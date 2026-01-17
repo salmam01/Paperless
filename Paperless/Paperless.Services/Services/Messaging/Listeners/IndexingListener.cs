@@ -11,6 +11,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
     public enum IndexingEventType
     {
         SummaryCompleted,
+        DocumentCategoryEdited,
         DocumentDeleted,
         DocumentsDeleted
     }
@@ -37,6 +38,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[0]);
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[1]);
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[2]);
+            await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[3]);
 
             _logger.LogInformation(
                 "Declared topology for {QueueName}.",
@@ -49,8 +51,10 @@ namespace Paperless.Services.Services.Messaging.Listeners
             if (ea.RoutingKey == _config.RoutingKeys[0])
                 return IndexingEventType.SummaryCompleted;
             if (ea.RoutingKey == _config.RoutingKeys[1])
-                return IndexingEventType.DocumentDeleted;
+                return IndexingEventType.DocumentCategoryEdited;
             if (ea.RoutingKey == _config.RoutingKeys[2])
+                return IndexingEventType.DocumentDeleted;
+            if (ea.RoutingKey == _config.RoutingKeys[3])
                 return IndexingEventType.DocumentsDeleted;
 
             throw new InvalidOperationException($"Unknown Routing Key: {ea.RoutingKey}");
