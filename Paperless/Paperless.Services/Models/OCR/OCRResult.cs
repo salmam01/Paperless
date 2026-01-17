@@ -1,8 +1,8 @@
 ﻿namespace Paperless.Services.Models.OCR
 {
-    public record OCRResult
-    (
-        List<OCRPage> Pages,
-        string PDFContent
-    );
+    public class OCRResult
+    {
+        public List<OCRPage> Pages = [];
+        public string Content = string.Empty;
+    }
 }

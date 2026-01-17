@@ -28,7 +28,7 @@ namespace Paperless.BL.Services.Messaging
             _exchangeName = factory.ExchangeName;
         }
 
-        public async Task PublishDocumentAsync(Guid id, List<Category> categories)
+        public async Task PublishDocumentAsync(Guid id, string fileType, List<Category> categories)
         {
             try
             {
@@ -38,6 +38,7 @@ namespace Paperless.BL.Services.Messaging
                 DocumentUploadPayload payload = new DocumentUploadPayload
                 {
                     DocumentId = id,
+                    FileType = fileType,
                     Categories = categories
                 };
 
@@ -59,20 +60,40 @@ namespace Paperless.BL.Services.Messaging
                     }
                 };
 
-                await channel.BasicPublishAsync(
-                    exchange: _exchangeName,
-                    routingKey: _config.RoutingKeys[0],
-                    mandatory: true,
-                    basicProperties: properties,
-                    body: body
-                );
+                if (payload.FileType != "PDF")
+                {
+                    await channel.BasicPublishAsync(
+                        exchange: _exchangeName,
+                        routingKey: _config.RoutingKeys[0],
+                        mandatory: true,
+                        basicProperties: properties,
+                        body: body
+                    );
 
-                _logger.LogInformation(
-                    "Document with ID {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for Summary Generation.",
-                    id,
-                    _exchangeName,
-                    _config.RoutingKeys[0]
-                );
+                    _logger.LogInformation(
+                        "Document with ID {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for Summary Generation.",
+                        id,
+                        _exchangeName,
+                        _config.RoutingKeys[0]
+                    );
+                } 
+                else
+                {
+                    await channel.BasicPublishAsync(
+                        exchange: _exchangeName,
+                        routingKey: _config.RoutingKeys[1],
+                        mandatory: true,
+                        basicProperties: properties,
+                        body: body
+                    );
+
+                    _logger.LogInformation(
+                        "Document with ID {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for OCR and Summary Generation.",
+                        id,
+                        _exchangeName,
+                        _config.RoutingKeys[1]
+                    );
+                }
 
             } catch (Exception ex) {
                 _logger.LogError(
@@ -81,6 +102,65 @@ namespace Paperless.BL.Services.Messaging
                     "POST", "Business", "publishing to RabbitMQ failing."
                 );
                 throw new RabbitMQException($"Failed to publish document {id} to Message Queue.", ex);
+            }
+        }
+
+        public async Task UpdateDocumentCategoryAsync(Guid documentId, string category)
+        {
+            try
+            {
+                await using IConnection connection = await _factory.CreateConnectionAsync();
+                await using IChannel channel = await connection.CreateChannelAsync();
+
+                UpdateDocumentCategoryPayload payload = new UpdateDocumentCategoryPayload
+                {
+                    DocumentId = documentId,
+                    Category = category
+                };
+
+
+                string jsonString = JsonSerializer.Serialize(
+                    payload,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = null
+                    }
+                );
+
+                byte[] body = Encoding.UTF8.GetBytes(jsonString);
+                BasicProperties properties = new BasicProperties
+                {
+                    Persistent = true,
+                    Headers = new Dictionary<string, object?>
+                    {
+                        { "x-retry-count", 0 }
+                    }
+                };
+
+                await channel.BasicPublishAsync(
+                    exchange: _exchangeName,
+                    routingKey: _config.RoutingKeys[2],
+                    mandatory: true,
+                    basicProperties: properties,
+                    body: body
+                );
+
+                _logger.LogInformation(
+                    "Document with ID {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for OCR.",
+                    documentId,
+                    _exchangeName,
+                    _config.RoutingKeys[2]
+                );
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "DELETE", "Business", "publishing to RabbitMQ failing."
+                );
+                throw new RabbitMQException($"Failed to publish document {documentId} to Message Queue.", ex);
             }
         }
 
@@ -103,7 +183,7 @@ namespace Paperless.BL.Services.Messaging
 
                 await channel.BasicPublishAsync(
                     exchange: _exchangeName,
-                    routingKey: _config.RoutingKeys[1],
+                    routingKey: _config.RoutingKeys[3],
                     mandatory: true,
                     basicProperties: properties,
                     body: body
@@ -147,7 +227,7 @@ namespace Paperless.BL.Services.Messaging
 
                 await channel.BasicPublishAsync(
                     exchange: _exchangeName,
-                    routingKey: _config.RoutingKeys[2],
+                    routingKey: _config.RoutingKeys[4],
                     mandatory: true,
                     basicProperties: properties,
                     body: body

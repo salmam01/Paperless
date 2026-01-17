@@ -49,11 +49,12 @@ namespace Paperless.BL.Services.Storage
                     throw new InvalidOperationException("Document is Null");
                 
                 string type = document?.Type?.ToLowerInvariant() ?? "Unknown";
+                _logger.LogInformation("Document FilePath {FilePath}: ", document.FilePath);
 
                 await _minIO.PutObjectAsync(
                     new PutObjectArgs()
                         .WithBucket(_bucketName)
-                        .WithObject($"{document.Id}.{type}")
+                        .WithObject(document.FilePath)
                         .WithStreamData(content)
                         .WithObjectSize(content.Length)
                         .WithContentType($"application/{type}")
@@ -64,9 +65,10 @@ namespace Paperless.BL.Services.Storage
                 );
 
                 _logger.LogInformation(
-                    "Uploaded document with ID {Id} and Title {Title} to MinIO Bucket {BucketName} successfully.", 
+                    "Uploaded document with ID {Id}, Title {Title} and FilePath {FilePath} to MinIO Bucket {BucketName} successfully.", 
                     document.Id,
                     document.Name,
+                    document.FilePath,
                     _bucketName
                 );
             }
@@ -80,23 +82,24 @@ namespace Paperless.BL.Services.Storage
             }
         }
 
-        public async Task DeleteDocumentAsync(Guid id, string type)
+        public async Task DeleteDocumentAsync(string filePath)
         {
+            string documentId = filePath.Split('.')[0];
+
             try
             {
                 await CreateBucketIfNotExistsAsync(_bucketName);
 
-                string ft = type.ToLowerInvariant();
-
                 await _minIO.RemoveObjectAsync(
                     new RemoveObjectArgs()
                         .WithBucket(_bucketName)
-                        .WithObject($"{id}.{ft}")
+                        .WithObject($"{filePath}")
                 );
 
                 _logger.LogInformation(
-                    "Deleted document with ID {id} from MinIO Bucket {BucketName} successfully.",
-                    id,
+                    "Deleted document with ID {Id} and File Path {FilePath} from MinIO Bucket {BucketName} successfully.",
+                    documentId,
+                    filePath,
                     _bucketName
                 );
             }
@@ -105,9 +108,9 @@ namespace Paperless.BL.Services.Storage
                 _logger.LogError(
                     ex,
                     "{method} /document/{id} failed in {layer} Layer due to {reason}.",
-                    "DELETE", id, "Business", "deletion from MinIO failing."
+                    "DELETE", documentId, "Business", "deletion from MinIO failing."
                 );
-                throw new MinIOException($"Failed to delete document {id} from Storage.", ex);
+                throw new MinIOException($"Failed to delete document {documentId} from Storage.", ex);
             }
         }
 

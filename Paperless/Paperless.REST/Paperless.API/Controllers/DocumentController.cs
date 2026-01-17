@@ -298,7 +298,7 @@ namespace Paperless.API.Controllers
             }
         }
 
-        [HttpPost("{documentId}/category", Name = "PutDocumentCategory")]
+        [HttpPut("{documentId}/category", Name = "PutDocumentCategory")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -486,7 +486,7 @@ namespace Paperless.API.Controllers
                 null,
                 "loading...",
                 "loading...",
-                $"{id}.{form.FileName}",
+                $"{id}{fileType}",
                 DateTime.UtcNow,
                 fileType,
                 Math.Round(form.Length / Math.Pow(1024.0, 2), 2)
