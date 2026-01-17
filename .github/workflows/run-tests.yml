@@ -35,19 +35,26 @@ jobs:
             ${{ runner.os }}-nuget-
 
       # 5 Clean build artifacts to ensure fresh build
-      - name: Clean solution
+      - name: Clean projects
         working-directory: Paperless/Paperless.REST
-        run: dotnet clean Paperless.Rest.sln --configuration Release
+        run: |
+          dotnet clean Paperless.API/Paperless.API.csproj --configuration Release
+          dotnet clean Paperless.BL/Paperless.BL.csproj --configuration Release
+          dotnet clean Paperless.DAL/Paperless.DAL.csproj --configuration Release
 
       # 6 Restore dependencies
       - name: Restore dependencies
         working-directory: Paperless/Paperless.REST
-        run: dotnet restore Paperless.Rest.sln
+        run: |
+          dotnet restore Paperless.API/Paperless.API.csproj
+          dotnet restore Paperless.BL/Paperless.BL.csproj
+          dotnet restore Paperless.DAL/Paperless.DAL.csproj
 
-      # 7 Build solution to ensure all projects compile correctly
-      - name: Build solution
+      # 7 Build projects to ensure all projects compile correctly
+      - name: Build projects
         working-directory: Paperless/Paperless.REST
-        run: dotnet build Paperless.Rest.sln --configuration Release --no-incremental
+        run: |
+          dotnet build Paperless.API/Paperless.API.csproj --configuration Release --no-incremental
 
       # 8 Run Unit (REST) Tests
       - name: Run Unit Tests
