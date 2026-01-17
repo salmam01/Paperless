@@ -10,7 +10,7 @@ namespace Paperless.BL.Services.Storage
     public interface IStorageService
     {
         Task StoreDocumentAsync(Document document, Stream content);
-        Task DeleteDocumentAsync(Guid id, string type);
+        Task DeleteDocumentAsync(string filePath);
         Task DeleteDocumentsAsync();
 
     }

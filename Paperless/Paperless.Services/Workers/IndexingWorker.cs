@@ -69,7 +69,35 @@ namespace Paperless.Services.Workers
                             Category = payload.CategoryName.ToString()
                         };
 
-                        await _elasticService.IndexAsync(document);
+                        if (!await _elasticService.IndexAsync(document))
+                        {
+                            return;
+                        }
+
+                        break;
+
+                    //  Change the category of a document
+                    case IndexingEventType.DocumentCategoryEdited:
+                        UpdateDocumentCategoryPayload updateDocumentCategoryPayload = 
+                            _mqListener.ProcessUpdateDocumentCategoryPayload(ea);
+
+                        if (updateDocumentCategoryPayload == null || 
+                            updateDocumentCategoryPayload.DocumentId == Guid.Empty || 
+                            string.IsNullOrWhiteSpace(updateDocumentCategoryPayload.Category)
+                        ) {
+                            _logger.LogWarning(
+                                "Received invalid message from queue inside {WorkerType} Worker. Skipping processing.",
+                                "Indexing"
+                            );
+                            return;
+                        }
+
+                        if (!await _elasticService.PutDocumentCategoryAsync(
+                            updateDocumentCategoryPayload.DocumentId.ToString(), 
+                            updateDocumentCategoryPayload.Category)
+                        ) {
+                            return;
+                        }
 
                         break;
 
@@ -86,13 +114,10 @@ namespace Paperless.Services.Workers
                             return;
                         }
 
-                        _logger.LogInformation(
-                            "Processing {RequestType} request for Document with ID {Id}.",
-                            "Remove Document",
-                            id
-                        );
-
-                        await _elasticService.RemoveAsync(id);
+                        if (!await _elasticService.RemoveAsync(id))
+                        {
+                            return;
+                        }
 
                         break;
 
@@ -104,7 +129,11 @@ namespace Paperless.Services.Workers
                             "Remove All Documents"
                         );
 
-                        await _elasticService.RemoveAllAsync();
+                        long? deletedCount = await _elasticService.RemoveAllAsync();
+                        if (deletedCount == null)
+                        {
+                            return;
+                        }
 
                         break;
                 }

@@ -4,7 +4,6 @@ using Paperless.Services.Configurations;
 using Paperless.Services.Models.OCR;
 using System.Text;
 using Tesseract;
-using iText.Kernel.Pdf;
 
 
 namespace Paperless.Services.Services.OCR
@@ -78,7 +77,11 @@ namespace Paperless.Services.Services.OCR
                 finalContent.Length
             );
 
-            return new OCRResult(pages, finalContent);
+            OCRResult ocrResult = new();
+            ocrResult.Pages = pages;
+            ocrResult.Content = finalContent;
+
+            return ocrResult;
         }
 
         //  Convert the content Stream to Magick.NET 

@@ -2,7 +2,6 @@
 using Minio;
 using Minio.DataModel.Args;
 using Paperless.Services.Configurations;
-using System.IO;
 
 namespace Paperless.Services.Services.FileStorage
 {
@@ -22,11 +21,13 @@ namespace Paperless.Services.Services.FileStorage
             _logger = logger;
         }
 
-        public async Task<MemoryStream> DownloadDocumentAsync(string id)
+        public async Task<MemoryStream> DownloadDocumentAsync(string filePath)
         {
+            string id = filePath.Split('.')[0];
+
             _logger.LogInformation(
-                "Downloading document from storage. Document ID: {DocumentId}, Bucket: {BucketName}.",
-                id,
+                "Downloading document from storage. Document File Path: {FilePath}, Bucket: {BucketName}.",
+                filePath,
                 _bucketName
             );
             if (!await CheckIfBucketExists())
@@ -43,7 +44,7 @@ namespace Paperless.Services.Services.FileStorage
             var documentObject = await _minIO.GetObjectAsync(
                 new GetObjectArgs()
                     .WithBucket(_bucketName)
-                    .WithObject($"{id}.pdf")
+                    .WithObject($"{filePath}")
                     .WithCallbackStream(s => s.CopyTo(stream))
             );
 
@@ -57,12 +58,12 @@ namespace Paperless.Services.Services.FileStorage
             return stream;
         }
 
-        public async Task<string> GetDocumentTitleAsync(string id)
+        public async Task<string> GetDocumentTitleAsync(string filePath)
         {
             var documentStat = await _minIO.StatObjectAsync(
                 new StatObjectArgs()
                     .WithBucket(_bucketName)
-                    .WithObject($"{id}.pdf")
+                    .WithObject(filePath)
             );
 
             if (documentStat.MetaData.TryGetValue("title", out string? title))

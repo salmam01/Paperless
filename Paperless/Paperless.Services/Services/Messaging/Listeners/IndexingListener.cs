@@ -11,6 +11,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
     public enum IndexingEventType
     {
         SummaryCompleted,
+        DocumentCategoryEdited,
         DocumentDeleted,
         DocumentsDeleted
     }
@@ -37,6 +38,7 @@ namespace Paperless.Services.Services.Messaging.Listeners
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[0]);
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[1]);
             await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[2]);
+            await _channel.QueueBindAsync(_config.QueueName, _exchangeName, _config.RoutingKeys[3]);
 
             _logger.LogInformation(
                 "Declared topology for {QueueName}.",
@@ -49,8 +51,10 @@ namespace Paperless.Services.Services.Messaging.Listeners
             if (ea.RoutingKey == _config.RoutingKeys[0])
                 return IndexingEventType.SummaryCompleted;
             if (ea.RoutingKey == _config.RoutingKeys[1])
-                return IndexingEventType.DocumentDeleted;
+                return IndexingEventType.DocumentCategoryEdited;
             if (ea.RoutingKey == _config.RoutingKeys[2])
+                return IndexingEventType.DocumentDeleted;
+            if (ea.RoutingKey == _config.RoutingKeys[3])
                 return IndexingEventType.DocumentsDeleted;
 
             throw new InvalidOperationException($"Unknown Routing Key: {ea.RoutingKey}");
@@ -69,6 +73,35 @@ namespace Paperless.Services.Services.Messaging.Listeners
                 );
 
                 SummaryCompletedPayload? payload = JsonSerializer.Deserialize<SummaryCompletedPayload>(
+                    body,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+
+                if (payload == null)
+                    throw new InvalidOperationException("Message could not be deserialized");
+
+                return payload;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to parse message from {QueueName}", _config.QueueName);
+                throw;
+            }
+        }
+
+        public UpdateDocumentCategoryPayload ProcessUpdateDocumentCategoryPayload(BasicDeliverEventArgs ea)
+        {
+            try
+            {
+                string body = Encoding.UTF8.GetString(ea.Body.ToArray());
+
+                _logger.LogInformation(
+                    "Deserializing message on {QueueName}. Message Length: {Length}",
+                    _config.QueueName,
+                    body.Length
+                );
+
+                UpdateDocumentCategoryPayload? payload = JsonSerializer.Deserialize<UpdateDocumentCategoryPayload>(
                     body,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
                 );
