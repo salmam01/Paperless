@@ -10,7 +10,8 @@ namespace Paperless.Services.Services.Search
         //  Add or update document
         Task<bool> IndexAsync(SearchDocument document);
 
-        //  TODO: Edit category
+        //  Edit category
+        Task<bool> PutDocumentCategoryAsync(string documentId, string category);
 
         //  Remove document
         Task<bool> RemoveAsync(string id);

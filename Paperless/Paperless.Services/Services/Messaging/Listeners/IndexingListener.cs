@@ -89,6 +89,35 @@ namespace Paperless.Services.Services.Messaging.Listeners
             }
         }
 
+        public UpdateDocumentCategoryPayload ProcessUpdateDocumentCategoryPayload(BasicDeliverEventArgs ea)
+        {
+            try
+            {
+                string body = Encoding.UTF8.GetString(ea.Body.ToArray());
+
+                _logger.LogInformation(
+                    "Deserializing message on {QueueName}. Message Length: {Length}",
+                    _config.QueueName,
+                    body.Length
+                );
+
+                UpdateDocumentCategoryPayload? payload = JsonSerializer.Deserialize<UpdateDocumentCategoryPayload>(
+                    body,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+
+                if (payload == null)
+                    throw new InvalidOperationException("Message could not be deserialized");
+
+                return payload;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to parse message from {QueueName}", _config.QueueName);
+                throw;
+            }
+        }
+
         public string ProcessDeleteDocumentPayload(BasicDeliverEventArgs ea)
         {
             try

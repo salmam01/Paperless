@@ -43,7 +43,7 @@ builder.Services.AddSingleton<MQConnectionFactory>();
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<OCRService>();
 builder.Services.AddSingleton<GenAIService>();
-builder.Services.AddSingleton<IElasticRepository, ElasticService>();
+builder.Services.AddSingleton<IElasticRepository, ElasticRepository>();
 builder.Services.AddSingleton<MQPublisher>();
 builder.Services.AddSingleton<Parser>();
 

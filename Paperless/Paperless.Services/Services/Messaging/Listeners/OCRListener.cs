@@ -20,6 +20,8 @@ namespace Paperless.Services.Services.Messaging.Listeners
 
         protected override async Task DeclareTopologyAsync()
         {
+            if (_channel.IsClosed)
+
             await _channel.QueueDeclareAsync(
                 queue: _config.QueueName,
                 durable: true,

@@ -31,7 +31,7 @@ namespace Paperless.Services.Services.Messaging.Base
             CancellationToken cancellationToken
         ) {
             const int maxRetries = 10;
-            const int delayMs = 3000; // 3 seconds
+            const int delayMs = 3000;
 
             int attempt = 0;
             while (_connection == null && attempt < maxRetries)
@@ -69,7 +69,6 @@ namespace Paperless.Services.Services.Messaging.Base
                         multiple: false,
                         requeue: true
                     );
-                    //  TODO: Worker needs to stop the Listener
                     return;
                 }
 

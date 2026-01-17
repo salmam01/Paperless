@@ -105,6 +105,65 @@ namespace Paperless.BL.Services.Messaging
             }
         }
 
+        public async Task UpdateDocumentCategoryAsync(Guid documentId, string category)
+        {
+            try
+            {
+                await using IConnection connection = await _factory.CreateConnectionAsync();
+                await using IChannel channel = await connection.CreateChannelAsync();
+
+                UpdateDocumentCategoryPayload payload = new UpdateDocumentCategoryPayload
+                {
+                    DocumentId = documentId,
+                    Category = category
+                };
+
+
+                string jsonString = JsonSerializer.Serialize(
+                    payload,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = null
+                    }
+                );
+
+                byte[] body = Encoding.UTF8.GetBytes(jsonString);
+                BasicProperties properties = new BasicProperties
+                {
+                    Persistent = true,
+                    Headers = new Dictionary<string, object?>
+                    {
+                        { "x-retry-count", 0 }
+                    }
+                };
+
+                await channel.BasicPublishAsync(
+                    exchange: _exchangeName,
+                    routingKey: _config.RoutingKeys[2],
+                    mandatory: true,
+                    basicProperties: properties,
+                    body: body
+                );
+
+                _logger.LogInformation(
+                    "Document with ID {Id} published to Exchange {ExchangeName} with Routing Key {RoutingKey} for OCR.",
+                    documentId,
+                    _exchangeName,
+                    _config.RoutingKeys[2]
+                );
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "{method} /document failed in {layer} Layer due to {reason}.",
+                    "DELETE", "Business", "publishing to RabbitMQ failing."
+                );
+                throw new RabbitMQException($"Failed to publish document {documentId} to Message Queue.", ex);
+            }
+        }
+
         public async Task DeleteDocumentAsync(Guid id)
         {
             try

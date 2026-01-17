@@ -209,8 +209,8 @@ namespace Paperless.BL.Services.Documents
         public async Task UpdateDocumentCategoryAsync(Guid documentId, Guid categoryId)
         {
             _logger.LogInformation(
-                "Updating document category." +
-                "Document ID: {DocumentId}, Category ID: {Category}",
+                "Updating document category. " +
+                "Document ID: {DocumentId}, Category ID: {CategoryId}",
                 documentId,
                 categoryId
             );
@@ -219,11 +219,13 @@ namespace Paperless.BL.Services.Documents
             {
                 var category = await _categoryService.GetCategoryAsync(categoryId);
                 if (category == null)
-                    throw new ServiceException("Could not update document summary.", ExceptionType.Internal);
+                    throw new ServiceException("Could not update document category.", ExceptionType.Internal);
 
+                await _documentPublisher.UpdateDocumentCategoryAsync(documentId, category.Name);
                 await _documentRepository.UpdateDocumentCategoryAsync(documentId, categoryId);
+
                 _logger.LogInformation(
-                    "Document {DocumentId} category updated in database.",
+                    "Document {DocumentId} category updated in database successfully.",
                     documentId
                 );
             }
@@ -231,7 +233,7 @@ namespace Paperless.BL.Services.Documents
             {
                 _logger.LogError(
                     ex,
-                    "Failed to update document {DocumentId} summary in database.",
+                    "Failed to update document {DocumentId} category in database.",
                     documentId
                 );
                 throw new ServiceException("Could not update document category.", ExceptionType.Internal, ex);
