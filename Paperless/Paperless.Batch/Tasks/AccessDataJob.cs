@@ -28,7 +28,7 @@ namespace Paperless.Batch.Tasks
 
             if (accessData.Count == 0)
             {
-                _logger.LogError("No Access Data to process.");
+                _logger.LogWarning("No Access Data to process.");
                 return;
             }
 
