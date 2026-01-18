@@ -86,7 +86,7 @@ namespace Paperless.Services.Services.OCR
 
         //  Convert the content Stream to Magick.NET 
         //  Magick.NET wraps Ghostscript internally to parse PDFs to images
-        public List<MagickImage> ConvertPdfToImage(MemoryStream documentContent)
+        private List<MagickImage> ConvertPdfToImage(MemoryStream documentContent)
         {
             _logger.LogInformation(
                 "Converting PDF stream to images. Document size: {DocumentSize} bytes, DPI: {Dpi}, Max pages: {MaxPages}.",

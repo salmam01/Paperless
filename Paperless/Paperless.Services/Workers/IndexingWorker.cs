@@ -10,7 +10,7 @@ namespace Paperless.Services.Workers
     {
         private readonly ILogger _logger;
         private readonly IndexingListener _mqListener;
-        private readonly IElasticRepository _elasticService;
+        private readonly IElasticRepository _elasticRepository;
 
         public IndexingWorker(
             ILogger<IndexingWorker> logger,
@@ -19,7 +19,7 @@ namespace Paperless.Services.Workers
         ) {
             _logger = logger;
             _mqListener = mqListener;
-            _elasticService = searchService;
+            _elasticRepository = searchService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -29,7 +29,7 @@ namespace Paperless.Services.Workers
                 "Indexing"
             );
 
-            await _elasticService.CreateIndexIfNotExistsAsync();
+            await _elasticRepository.CreateIndexIfNotExistsAsync();
             await _mqListener.StartListeningAsync(HandleMessageAsync, stoppingToken);
         }
 
@@ -69,7 +69,7 @@ namespace Paperless.Services.Workers
                             Category = payload.CategoryName.ToString()
                         };
 
-                        if (!await _elasticService.IndexAsync(document))
+                        if (!await _elasticRepository.IndexAsync(document))
                         {
                             return;
                         }
@@ -92,7 +92,7 @@ namespace Paperless.Services.Workers
                             return;
                         }
 
-                        if (!await _elasticService.PutDocumentCategoryAsync(
+                        if (!await _elasticRepository.PutDocumentCategoryAsync(
                             updateDocumentCategoryPayload.DocumentId.ToString(), 
                             updateDocumentCategoryPayload.Category)
                         ) {
@@ -114,7 +114,7 @@ namespace Paperless.Services.Workers
                             return;
                         }
 
-                        if (!await _elasticService.RemoveAsync(id))
+                        if (!await _elasticRepository.RemoveAsync(id))
                         {
                             return;
                         }
@@ -129,7 +129,7 @@ namespace Paperless.Services.Workers
                             "Remove All Documents"
                         );
 
-                        long? deletedCount = await _elasticService.RemoveAllAsync();
+                        long? deletedCount = await _elasticRepository.RemoveAllAsync();
                         if (deletedCount == null)
                         {
                             return;
