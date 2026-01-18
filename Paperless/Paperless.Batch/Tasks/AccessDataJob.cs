@@ -36,13 +36,18 @@ namespace Paperless.Batch.Tasks
 
                 if (!await _repository.UpdateDocumentsAsync(accessEntryList))
                 {
-                    _logger.LogError("Failed to update Access Data list with Date {Date} in Database.",
+                    _logger.LogError("Failed to update {Count} Access Data Entries with Date {Date} in Database.",
+                        accessEntryList.AccessEntries.Count,
                         accessEntryList.AccessDate
                     );
                 }
-            }
+                _logger.LogInformation(
+                    "Added {Count} Access Entries with Date {Date} to Database successfully.",
+                    accessEntryList.AccessEntries.Count,
+                    accessEntryList.AccessDate
 
-            _logger.LogError("Failed to update access data in Database.");
+                );
+            }
         }
     }
 }

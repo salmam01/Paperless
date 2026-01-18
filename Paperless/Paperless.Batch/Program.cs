@@ -19,8 +19,6 @@ Log.Logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
-string basePath = AppContext.BaseDirectory;
-
 builder.Services.Configure<AccessDataConfiguration>(
     builder.Configuration.GetSection("AccessData")
 );
@@ -31,14 +29,7 @@ builder.Services.Configure<JobConfiguration>(
 builder.Services.AddQuartz();
 builder.Services.AddQuartzHostedService();
 builder.Services.ConfigureOptions<AccessDataJobSetup>();
-builder.Services.AddSingleton(sp =>
-{
-    var logger = sp.GetRequiredService<ILogger<AccessDataBatchProcessor>>();
-    var options = sp.GetRequiredService<IOptions<AccessDataConfiguration>>();
-    var basePath = AppContext.BaseDirectory;
-
-    return new AccessDataBatchProcessor(logger, options, basePath);
-});
+builder.Services.AddSingleton<AccessDataBatchProcessor>();
 
 builder.Services.AddSingleton<IDocumentRepository, DocumentRepository>();
 builder.Services.AddSingleton(sp =>

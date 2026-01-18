@@ -7,20 +7,20 @@ namespace Paperless.Batch.Database
     public class DocumentRepository : IDocumentRepository
     {
         private readonly DatabaseConnection _dbConnection;
-        public DocumentRepository(DatabaseConnection dbConnection)
+        private readonly ILogger<DocumentRepository> _logger;
+
+        public DocumentRepository(DatabaseConnection dbConnection, ILogger<DocumentRepository> logger)
         {
             _dbConnection = dbConnection;
+            _logger = logger;
         }
 
         //  Store incoming Access Data inside the Postgres Database
         public async Task<bool> UpdateDocumentsAsync(AccessEntryList accessEntryList)
         {
             const string query = """
-                INSERT INTO daily_access_logs (id, document_id, access_date, access_count)
+                INSERT INTO "DailyAccessLogs" ("Id", "DocumentId", "AccessDate", "AccessCount")
                 VALUES (@id, @documentId, @accessDate, @count)
-                ON CONFLICT (document_id, access_date)
-                DO UPDATE
-                SET access_count = daily_access_logs.access_count + EXCLUDED.access_count;
             """;
 
             await using NpgsqlConnection connection = await _dbConnection.OpenConnection();
@@ -37,7 +37,7 @@ namespace Paperless.Batch.Database
                         command.Parameters.Clear();
                         command.Parameters.AddWithValue("id", Guid.NewGuid());
                         command.Parameters.AddWithValue("documentId", entry.DocumentId);
-                        command.Parameters.AddWithValue("accessDate", accessEntryList.AccessDate);
+                        command.Parameters.AddWithValue("accessDate", accessEntryList.AccessDate.ToDateTime(TimeOnly.MinValue));
                         command.Parameters.AddWithValue("count", entry.AccessCount);
 
                         await command.ExecuteNonQueryAsync();
@@ -49,6 +49,7 @@ namespace Paperless.Batch.Database
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Failed to update access data for {Date}", accessEntryList.AccessDate);
                     return false;
                 }
             }
