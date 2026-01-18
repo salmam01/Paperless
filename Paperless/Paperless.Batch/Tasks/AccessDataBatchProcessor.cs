@@ -3,7 +3,7 @@ using Paperless.Batch.Configuration;
 using Paperless.Batch.Models;
 using System.Xml.Serialization;
 
-namespace Paperless.Batch
+namespace Paperless.Batch.Tasks
 {
     public class AccessDataBatchProcessor
     {
@@ -24,9 +24,9 @@ namespace Paperless.Batch
             _searchPattern = config.Value.SearchPattern;
         }
 
-        //  multiple files, each have a name
-        //  each file has multiple entries and a filename (extract date from filename)
-        //  each entry has an id and access count
+        //  Multiple XML files
+        //  Each file has a filename and multiple entries (extract date from filename)
+        //  Each entry has an ID and access count
         public List<AccessEntryList> StartProcessing()
         {
             //  Create new directory if it doesn't exist
@@ -54,11 +54,19 @@ namespace Paperless.Batch
 
                 files.Add(new AccessEntryList
                 {
-                    AccessDate = accessDate,
+                    AccessDate = DateOnly.FromDateTime(accessDate),
                     AccessEntries = entries
                 });
+
+                if (entries.Count == 0)
+                {
+                    _logger.LogWarning("Skipping file {File}", file);
+                    continue;
+                }
+
+                File.Move(file, Path.Combine(_archiveFolder, Path.GetFileName(file)));
             }
-                
+
             return files;
         }
 
@@ -92,10 +100,13 @@ namespace Paperless.Batch
             string fileName = Path.GetFileName(filePath);
             string[] substrings = fileName.Split('_');
 
-            DateTime.TryParse(
+            if (!DateTime.TryParse(
                 substrings[1],
-                out DateTime accessDate
-            );
+                out DateTime accessDate))
+            {
+                _logger.LogError("Invalid Date in filename {FileName}.", fileName);
+                throw new InvalidOperationException("Invalid Date in filename.");
+            }
 
             return accessDate;
         }

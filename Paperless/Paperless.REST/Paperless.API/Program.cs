@@ -29,9 +29,9 @@ IConfiguration config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
     .Build();
 
-//  Logger configuration
+//  Serilog Configuration
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(config)
+    .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
 //  Automapper configuration
