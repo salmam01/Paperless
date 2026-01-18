@@ -16,7 +16,7 @@ namespace Paperless.Services.Workers
         private readonly StorageService _storageService;
         private readonly Parser _parser;
         private readonly GenAIService _genAIService;
-        private readonly ResultClient _workerResultsService;
+        private readonly ResultClient _resultClient;
 
         public GenAIWorker(
             ILogger<GenAIWorker> logger,
@@ -33,7 +33,7 @@ namespace Paperless.Services.Workers
             _storageService = storageService;
             _parser = parser;
             _genAIService = genAIService;
-            _workerResultsService = workerResultsService;
+            _resultClient = workerResultsService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -83,7 +83,7 @@ namespace Paperless.Services.Workers
                 }
 
                 //  Send OCR, Summary and Category results to REST server and IndexingWorker
-                await _workerResultsService.PostWorkerResultsAsync(summaryPayload);
+                await _resultClient.PostWorkerResultsAsync(summaryPayload);
                 await _mqPublisher.PublishSummaryResult(summaryPayload);
             }
             catch (Exception ex)

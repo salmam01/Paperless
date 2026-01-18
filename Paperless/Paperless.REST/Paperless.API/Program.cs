@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Paperless.API.DTOs;
 using Paperless.BL.Configurations;
-using Paperless.BL.Helpers;
 using Paperless.BL.Models.Domain;
 using Paperless.BL.Services.Categories;
 using Paperless.BL.Services.Documents;
@@ -63,7 +62,6 @@ builder.Services.AddDbContext<PaperlessDbContext>(optionsbuilder =>
     optionsbuilder.UseNpgsql(builder.Configuration["ConnectionString"])
 );
 
-builder.Services.AddSingleton<Parser>();
 builder.Services.AddSingleton<IStorageService, StorageService>();
 builder.Services.AddSingleton<IDocumentSearchService, DocumentSearchService>();
 builder.Services.AddSingleton<MQConnectionFactory>();

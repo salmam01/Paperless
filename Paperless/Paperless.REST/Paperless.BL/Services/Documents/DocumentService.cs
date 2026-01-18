@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Paperless.BL.Exceptions;
-using Paperless.BL.Helpers;
 using Paperless.BL.Models.Domain;
 using Paperless.BL.Models.DTOs;
 using Paperless.BL.Services.Categories;
@@ -21,7 +20,6 @@ namespace Paperless.BL.Services.Documents
         IDocumentSearchService searchService,
         IDocumentPublisher documentPublisher,
         IStorageService storageService,
-        Parser parser,
         IMapper mapper, 
         ILogger<DocumentService> logger
     ) : IDocumentService
@@ -31,7 +29,6 @@ namespace Paperless.BL.Services.Documents
         private readonly IDocumentSearchService _searchService = searchService;
         private readonly IDocumentPublisher _documentPublisher = documentPublisher;
         private readonly IStorageService _storageService = storageService;
-        private readonly Parser _parser = parser;
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<DocumentService> _logger = logger;
 
