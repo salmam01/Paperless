@@ -3,7 +3,7 @@ using Paperless.Batch.Configuration;
 using Paperless.Batch.Models;
 using System.Xml.Serialization;
 
-namespace Paperless.Batch
+namespace Paperless.Batch.Tasks
 {
     public class AccessDataBatchProcessor
     {
@@ -14,19 +14,17 @@ namespace Paperless.Batch
 
         public AccessDataBatchProcessor(
             ILogger<AccessDataBatchProcessor> logger,
-            IOptions<AccessDataConfiguration> config,
-            string basePath
+            IOptions<AccessDataConfiguration> config
         ) {
             _logger = logger;
-
-            _inputFolder = Path.Combine(basePath, config.Value.InputFolder);
-            _archiveFolder = Path.Combine(basePath, config.Value.ArchiveFolder);
+            _inputFolder = config.Value.InputFolder;
+            _archiveFolder = config.Value.ArchiveFolder;
             _searchPattern = config.Value.SearchPattern;
         }
 
-        //  multiple files, each have a name
-        //  each file has multiple entries and a filename (extract date from filename)
-        //  each entry has an id and access count
+        //  Multiple XML files
+        //  Each file has a filename and multiple entries (extract date from filename)
+        //  Each entry has an ID and access count
         public List<AccessEntryList> StartProcessing()
         {
             //  Create new directory if it doesn't exist
@@ -47,25 +45,41 @@ namespace Paperless.Batch
                 xmlFiles.Length
             );
 
-            foreach(string file in xmlFiles)
+            //  Store date and all entries inside each file in a list
+            foreach (string file in xmlFiles)
             {
                 List<AccessEntry> entries = DeserializeFile(file);
-                DateTime accessDate = ExtractFileDate(file);
+                string accessDate = ExtractFileDate(file);
 
                 files.Add(new AccessEntryList
                 {
-                    AccessDate = accessDate,
+                    AccessDate = DateOnly.Parse(accessDate),
                     AccessEntries = entries
                 });
+
+                if (entries.Count == 0)
+                {
+                    _logger.LogWarning("Skipping file {File}", file);
+                    continue;
+                }
+
+                _logger.LogInformation(
+                    "Processed file {FileName} with date {AccessDate} and {Count} Access Entries successfully. Adding file to Archive folder.",
+                    Path.GetFileName(file),
+                    accessDate,
+                    entries.Count
+                );
+
+                File.Move(file, Path.Combine(_archiveFolder, Path.GetFileName(file)));
             }
-                
+
             return files;
         }
 
         private List<AccessEntry> DeserializeFile(string filePath)
         {
             string fileName = Path.GetFileName(filePath);
-            List<AccessEntry> entries = new();
+            List<AccessEntry> entries = [];
 
             try
             {
@@ -87,17 +101,26 @@ namespace Paperless.Batch
             return entries;
         }
 
-        private DateTime ExtractFileDate(string filePath)
+        private string ExtractFileDate(string filePath)
         {
             string fileName = Path.GetFileName(filePath);
             string[] substrings = fileName.Split('_');
 
-            DateTime.TryParse(
-                substrings[1],
-                out DateTime accessDate
-            );
+            if (substrings[1].Length == 0)
+            {
+                _logger.LogError("Invalid Date in filename {FileName}.", fileName);
+                throw new InvalidOperationException("Invalid Date in filename.");
+            }
 
-            return accessDate;
+            //  Seperate .xml from date
+            string[] dateOnly = substrings[1].Split('.');
+            if (dateOnly[0].Length == 0)
+            {
+                _logger.LogError("Invalid Date in filename {FileName}.", fileName);
+                throw new InvalidOperationException("Invalid Date in filename.");
+            }
+
+            return dateOnly[0];
         }
     }
 }

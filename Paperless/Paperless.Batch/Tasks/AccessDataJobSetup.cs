@@ -2,7 +2,7 @@
 using Paperless.Batch.Configuration;
 using Quartz;
 
-namespace Paperless.Batch
+namespace Paperless.Batch.Tasks
 {
     public class AccessDataJobSetup : IConfigureOptions<QuartzOptions>
     {

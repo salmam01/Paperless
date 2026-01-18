@@ -34,17 +34,39 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      # 5 Run Unit (REST) Tests
+      # 5 Clean build artifacts to ensure fresh build
+      - name: Clean projects
+        working-directory: Paperless/Paperless.REST
+        run: |
+          dotnet clean Paperless.API/Paperless.API.csproj --configuration Release
+          dotnet clean Paperless.BL/Paperless.BL.csproj --configuration Release
+          dotnet clean Paperless.DAL/Paperless.DAL.csproj --configuration Release
+
+      # 6 Restore dependencies
+      - name: Restore dependencies
+        working-directory: Paperless/Paperless.REST
+        run: |
+          dotnet restore Paperless.API/Paperless.API.csproj
+          dotnet restore Paperless.BL/Paperless.BL.csproj
+          dotnet restore Paperless.DAL/Paperless.DAL.csproj
+
+      # 7 Build projects to ensure all projects compile correctly
+      - name: Build projects
+        working-directory: Paperless/Paperless.REST
+        run: |
+          dotnet build Paperless.API/Paperless.API.csproj --configuration Release --no-incremental
+
+      # 8 Run Unit (REST) Tests
       - name: Run Unit Tests
         working-directory: Paperless/Tests/UnitTests/Paperless.REST.Tests
-        run: dotnet test --configuration Release --verbosity normal
+        run: dotnet test --configuration Release --verbosity normal --no-build
 
-      # 6 Run Integration Tests
+      # 9 Run Integration Tests
       - name: Run Integration Tests
         working-directory: Paperless/Tests/IntegrationTests/Paperless.REST.IntegrationTests
-        run: dotnet test --configuration Release --verbosity normal
+        run: dotnet test --configuration Release --verbosity normal --no-build
 
-      # 7 Run Services Tests
+      # 10 Run Services Tests
       - name: Run Services Tests
         working-directory: Paperless/Tests/UnitTests/Paperless.Services.Tests
-        run: dotnet test --configuration Release --verbosity normal
+        run: dotnet test --configuration Release --verbosity normal --no-build

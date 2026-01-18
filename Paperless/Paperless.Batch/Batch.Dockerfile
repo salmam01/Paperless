@@ -32,5 +32,8 @@ WORKDIR /app
 # Copy published DLLs
 COPY --from=publish /app/publish .
 
+# Copy AccessData folder into container
+COPY Paperless.Batch/AccessData /app/AccessData
+
 # Start Batch Application
 ENTRYPOINT ["dotnet", "Paperless.Batch.dll"]
