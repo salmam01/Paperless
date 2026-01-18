@@ -1,0 +1,11 @@
+<ArrayOfAccessEntry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <AccessEntry>
+    <DocumentId>95cfa6df-ebbc-41fc-aba3-cada89dea8ab</DocumentId>
+    <AccessCount>2</AccessCount>
+  </AccessEntry>
+  <AccessEntry>
+    <DocumentId>e26c23e3-14b1-4b8d-9dc8-3d749f5a0a91</DocumentId>
+    <AccessCount>7</AccessCount>
+  </AccessEntry>
+</ArrayOfAccessEntry>
